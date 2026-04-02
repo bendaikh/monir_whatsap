@@ -245,7 +245,8 @@
                 loadingChats: false,
                 
                 init() {
-                    this.socket = io('http://localhost:3000');
+                    const whatsappServiceUrl = '{{ env('WHATSAPP_SERVICE_URL', 'http://127.0.0.1:3000') }}';
+                    this.socket = io(whatsappServiceUrl);
                     
                     this.socket.on('qr-code', (data) => {
                         console.log('QR Code received');
@@ -258,7 +259,7 @@
                         
                         // Save to database
                         try {
-                            const response = await fetch('/customer/whatsapp/save-connection', {
+                            const response = await fetch('/app/whatsapp/save-connection', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -364,12 +365,12 @@
                 },
                 
                 async disconnectProfile(profileId) {
-                    if (!confirm('Are you sure you want to disconnect this WhatsApp profile?')) {
+                    if (!confirm('Are you sure you want to DELETE this WhatsApp profile? This action cannot be undone and will remove all conversations and messages.')) {
                         return;
                     }
                     
                     try {
-                        const response = await fetch(`/customer/whatsapp/disconnect/${profileId}`, {
+                        const response = await fetch(`/app/whatsapp/disconnect/${profileId}`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -381,9 +382,12 @@
                         
                         if (data.success) {
                             window.location.reload();
+                        } else {
+                            alert('Failed to delete profile: ' + (data.message || 'Unknown error'));
                         }
                     } catch (error) {
-                        console.error('Error disconnecting profile:', error);
+                        console.error('Error deleting profile:', error);
+                        alert('Failed to delete profile. Please try again.');
                     }
                 },
                 

@@ -13,6 +13,7 @@ class WhatsappProfile extends Model
         'profile_picture',
         'qr_code',
         'status',
+        'session_id',
         'session_data',
         'is_active',
         'last_connected_at',

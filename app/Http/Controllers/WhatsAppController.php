@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\WhatsappProfile;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Services\AiChatService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -128,15 +129,14 @@ class WhatsAppController extends Controller
         $profile = WhatsappProfile::where('id', $profileId)
             ->where('user_id', auth()->id())
             ->firstOrFail();
-            
-        $profile->update([
-            'status' => 'disconnected',
-            'is_active' => false
-        ]);
+        
+        // Delete the profile and all related data
+        // Note: Conversations and messages will be deleted via cascade if set up in migration
+        $profile->delete();
         
         return response()->json([
             'success' => true,
-            'message' => 'WhatsApp profile disconnected successfully.'
+            'message' => 'WhatsApp profile deleted successfully.'
         ]);
     }
     
@@ -212,27 +212,50 @@ class WhatsAppController extends Controller
     private function handleQrScanned($data)
     {
         $sessionId = $data['session_id'] ?? null;
+        $userId = $data['user_id'] ?? null;
+        $phone = $data['phone'] ?? null;
         
-        if (!$sessionId) {
+        if (!$sessionId || !$userId || !$phone) {
+            \Log::warning('WhatsApp QR scanned but missing required data', $data);
             return;
         }
         
-        $userId = session('user_id');
+        \Log::info('Saving WhatsApp connection', [
+            'session_id' => $sessionId,
+            'user_id' => $userId,
+            'name' => $data['name'] ?? 'WhatsApp User',
+            'phone' => $phone
+        ]);
         
-        WhatsappProfile::updateOrCreate(
-            [
+        // First check if profile exists by phone_number (unique constraint)
+        $profile = WhatsappProfile::where('phone_number', $phone)->first();
+        
+        if ($profile) {
+            // Update existing profile
+            $profile->update([
                 'session_id' => $sessionId,
-            ],
-            [
                 'user_id' => $userId,
                 'name' => $data['name'] ?? 'WhatsApp User',
-                'phone_number' => $data['phone'] ?? 'Unknown',
                 'profile_picture' => $data['profile_picture'] ?? null,
                 'status' => 'connected',
                 'is_active' => true,
                 'last_connected_at' => now()
-            ]
-        );
+            ]);
+            \Log::info('WhatsApp profile updated successfully', ['id' => $profile->id]);
+        } else {
+            // Create new profile
+            $profile = WhatsappProfile::create([
+                'phone_number' => $phone,
+                'session_id' => $sessionId,
+                'user_id' => $userId,
+                'name' => $data['name'] ?? 'WhatsApp User',
+                'profile_picture' => $data['profile_picture'] ?? null,
+                'status' => 'connected',
+                'is_active' => true,
+                'last_connected_at' => now()
+            ]);
+            \Log::info('WhatsApp profile created successfully', ['id' => $profile->id]);
+        }
     }
     
     private function handleIncomingMessage($data)
@@ -247,7 +270,7 @@ class WhatsAppController extends Controller
         $conversation = Conversation::firstOrCreate(
             [
                 'whatsapp_profile_id' => $profileId,
-                'contact_number' => $fromNumber
+                'contact_phone' => $fromNumber
             ],
             [
                 'contact_name' => $data['contact_name'] ?? $fromNumber,
@@ -269,5 +292,150 @@ class WhatsAppController extends Controller
         $conversation->update([
             'last_message_at' => now()
         ]);
+    }
+    
+    /**
+     * Process incoming message and generate AI response
+     */
+    public function processMessageWithAi(Request $request)
+    {
+        try {
+            $sessionId = $request->input('session_id');
+            $userId = $request->input('user_id');
+            $from = $request->input('from');
+            $messageContent = $request->input('message');
+            $messageId = $request->input('message_id');
+            $contactName = $request->input('contact_name');
+            
+            \Log::info('Processing message with AI', [
+                'session_id' => $sessionId,
+                'user_id' => $userId,
+                'from' => $from,
+                'message' => $messageContent
+            ]);
+            
+            // Skip if message is empty or null (media messages, etc.)
+            if (empty($messageContent)) {
+                \Log::info('Skipping empty/null message');
+                return response()->json(['success' => true, 'ai_response' => null]);
+            }
+            
+            // Find the WhatsApp profile
+            $profile = WhatsappProfile::where('session_id', $sessionId)
+                ->where('user_id', $userId)
+                ->first();
+                
+            if (!$profile) {
+                \Log::warning('WhatsApp profile not found', [
+                    'session_id' => $sessionId,
+                    'user_id' => $userId
+                ]);
+                return response()->json(['success' => false, 'error' => 'Profile not found']);
+            }
+            
+            \Log::info('Found WhatsApp profile', ['profile_id' => $profile->id]);
+            
+            // Find or create conversation
+            $conversation = Conversation::firstOrCreate(
+                [
+                    'whatsapp_profile_id' => $profile->id,
+                    'contact_phone' => $from
+                ],
+                [
+                    'contact_name' => $contactName ?? $from,
+                    'last_message_at' => now()
+                ]
+            );
+            
+            \Log::info('Conversation found/created', ['conversation_id' => $conversation->id]);
+            
+            // Save the incoming message
+            Message::create([
+                'conversation_id' => $conversation->id,
+                'whatsapp_profile_id' => $profile->id,
+                'message_id' => $messageId,
+                'sender' => 'incoming',
+                'content' => $messageContent,
+                'type' => 'text',
+                'status' => 'received',
+                'timestamp' => now()
+            ]);
+            
+            $conversation->update(['last_message_at' => now()]);
+            
+            // Check if AI auto-reply is enabled
+            $aiService = new AiChatService($profile->user);
+            $autoReplyEnabled = $aiService->isAutoReplyEnabled();
+            
+            \Log::info('AI auto-reply check', [
+                'user_id' => $userId,
+                'enabled' => $autoReplyEnabled
+            ]);
+            
+            if (!$autoReplyEnabled) {
+                \Log::info('AI auto-reply is disabled for user', ['user_id' => $userId]);
+                return response()->json(['success' => true, 'ai_response' => null]);
+            }
+            
+            // Get conversation history for context (last 10 messages)
+            $history = Message::where('conversation_id', $conversation->id)
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get()
+                ->reverse()
+                ->map(function ($msg) {
+                    return [
+                        'sender' => $msg->sender,
+                        'content' => $msg->content
+                    ];
+                })
+                ->toArray();
+            
+            \Log::info('Generating AI response', ['history_count' => count($history)]);
+            
+            // Generate AI response
+            $aiResponse = $aiService->generateResponse($messageContent, $history);
+            
+            \Log::info('AI response result', ['has_response' => !empty($aiResponse)]);
+            
+            if ($aiResponse) {
+                // Save AI response to database
+                Message::create([
+                    'conversation_id' => $conversation->id,
+                    'whatsapp_profile_id' => $profile->id,
+                    'message_id' => 'ai_' . Str::uuid(),
+                    'sender' => 'outgoing',
+                    'content' => $aiResponse,
+                    'type' => 'text',
+                    'status' => 'sent',
+                    'timestamp' => now()
+                ]);
+                
+                $conversation->update(['last_message_at' => now()]);
+                
+                \Log::info('AI response generated', [
+                    'conversation_id' => $conversation->id,
+                    'response_length' => strlen($aiResponse)
+                ]);
+                
+                return response()->json([
+                    'success' => true,
+                    'ai_response' => $aiResponse
+                ]);
+            }
+            
+            return response()->json(['success' => true, 'ai_response' => null]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error processing message with AI', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

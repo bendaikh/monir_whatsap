@@ -8,8 +8,9 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "http://127.0.0.1:6500",
-        methods: ["GET", "POST"]
+        origin: process.env.LARAVEL_URL || "http://127.0.0.1:6500",
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 
@@ -102,22 +103,50 @@ io.on('connection', (socket) => {
             
             const info = client.info;
             
-            // Send connection success to frontend
-            socket.emit('whatsapp-connected', {
+            // Store client first
+            clients.set(sessionId, client);
+            
+            const connectionData = {
                 sessionId,
                 userId,
                 phone: info.wid.user,
                 name: info.pushname,
                 platform: info.platform
-            });
-
-            // Store client
-            clients.set(sessionId, client);
+            };
+            
+            // Broadcast to ALL connected clients (not just the one who initiated)
+            io.emit('whatsapp-connected', connectionData);
+            
+            // Also save directly to Laravel backend
+            try {
+                const laravelUrl = process.env.LARAVEL_URL || 'http://127.0.0.1:6500';
+                const response = await fetch(`${laravelUrl}/webhook/whatsapp`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        type: 'qr_scanned',
+                        session_id: sessionId,
+                        user_id: userId,
+                        phone: info.wid.user,
+                        name: info.pushname
+                    })
+                });
+                console.log('Saved connection to Laravel:', response.status);
+            } catch (error) {
+                console.error('Failed to save connection to Laravel:', error.message);
+            }
         });
 
         // Message event
         client.on('message', async (message) => {
             console.log('Message received:', message.from, message.body);
+            
+            // Skip if message is from us
+            if (message.fromMe) {
+                return;
+            }
             
             const chat = await message.getChat();
             const contact = await message.getContact();
@@ -136,9 +165,56 @@ io.on('connection', (socket) => {
                 sender: message.fromMe ? 'outgoing' : 'incoming'
             };
             
-            // Broadcast message to all connected clients (not just the one that initialized)
+            // Broadcast message to all connected clients
             io.emit('new-message', messageData);
             console.log('Broadcasted message to all clients');
+            
+            // Send to Laravel for AI processing (only for incoming messages)
+            if (!message.fromMe) {
+                console.log('Attempting to send message to Laravel for AI processing...');
+                try {
+                    const laravelUrl = process.env.LARAVEL_URL || 'http://127.0.0.1:6500';
+                    const processUrl = `${laravelUrl}/api/whatsapp/process-message`;
+                    console.log('Sending request to:', processUrl);
+                    const response = await fetch(processUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            session_id: sessionId,
+                            user_id: userId,
+                            from: message.from,
+                            message: message.body,
+                            message_id: message.id._serialized,
+                            contact_name: contact.pushname || contact.name || message.from
+                        })
+                    });
+                    
+                    console.log('Laravel API response status:', response.status);
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log('Laravel API response:', result);
+                        
+                        // If AI generated a response, send it
+                        if (result.ai_response) {
+                            console.log('Sending AI response:', result.ai_response);
+                            await client.sendMessage(message.from, result.ai_response);
+                            console.log('AI response sent successfully');
+                        } else {
+                            console.log('No AI response generated');
+                        }
+                    } else {
+                        console.error('Laravel API returned error status:', response.status);
+                        const errorText = await response.text();
+                        console.error('Error response:', errorText);
+                    }
+                } catch (error) {
+                    console.error('Error processing message with AI:', error.message);
+                    console.error('Full error:', error);
+                }
+            }
         });
 
         // Disconnected event
@@ -174,21 +250,36 @@ io.on('connection', (socket) => {
         const client = clients.get(sessionId);
 
         if (!client) {
+            console.error('Client not found for session:', sessionId);
             socket.emit('error', { message: 'Client not found' });
             return;
         }
 
         try {
-            const chatId = to.includes('@c.us') ? to : `${to}@c.us`;
+            // Check if client is ready
+            const state = await client.getState();
+            console.log('Client state before sending:', state);
+            
+            if (state !== 'CONNECTED') {
+                console.error('Client not connected, state:', state);
+                socket.emit('error', { message: 'WhatsApp is not connected. Please reconnect.' });
+                return;
+            }
+
+            // Don't modify the chat ID if it already has @ symbol (like @lid or @c.us)
+            const chatId = to.includes('@') ? to : `${to}@c.us`;
+            console.log('Sending message to:', chatId, 'Message:', message);
+            
             const sentMessage = await client.sendMessage(chatId, message);
+            console.log('Message sent successfully:', sentMessage.id._serialized);
             
             socket.emit('message-sent', {
                 messageId: sentMessage.id._serialized,
                 timestamp: sentMessage.timestamp
             });
         } catch (error) {
-            console.error('Error sending message:', error);
-            socket.emit('error', { message: 'Failed to send message' });
+            console.error('Error sending message:', error.message || error);
+            socket.emit('error', { message: 'Failed to send message: ' + (error.message || 'Unknown error') });
         }
     });
 
@@ -301,8 +392,9 @@ app.get('/api/status', (req, res) => {
     });
 });
 
-const PORT = process.env.WHATSAPP_PORT || 3000;
+const PORT = process.env.PORT || process.env.WHATSAPP_PORT || 3000;
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`WhatsApp service running on port ${PORT}`);
+    console.log(`Laravel URL: ${process.env.LARAVEL_URL || 'http://127.0.0.1:6500'}`);
 });

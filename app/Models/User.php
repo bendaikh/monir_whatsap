@@ -54,6 +54,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(WhatsappProfile::class);
     }
+
+    public function aiApiSetting()
+    {
+        return $this->hasOne(AiApiSetting::class);
+    }
     
     public function subscriptions()
     {

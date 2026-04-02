@@ -29,6 +29,32 @@
         <span>{{ session('success') }}</span>
     </div>
     @endif
+    
+    @if(session('warning'))
+    <div class="mb-6 bg-yellow-500/20 border border-yellow-500/50 text-yellow-400 px-4 py-3 rounded-lg flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>{{ session('warning') }}</span>
+    </div>
+    @endif
+
+    @php
+        $aiSetting = \App\Models\AiApiSetting::where('user_id', auth()->id())->first();
+        $hasAiConfigured = $aiSetting && (!empty($aiSetting->openai_api_key_encrypted) || !empty($aiSetting->anthropic_api_key_encrypted));
+    @endphp
+
+    @if(!$hasAiConfigured)
+    <div class="mb-6 bg-purple-500/20 border border-purple-500/50 text-purple-300 px-4 py-3 rounded-lg flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <div>
+            <span class="font-semibold">AI Landing Page Feature Requires Configuration</span>
+            <span class="block text-sm mt-1">Please <a href="{{ route('app.ai-settings') }}" class="underline hover:text-purple-200">configure your AI API settings</a> to use the AI landing page generation feature.</span>
+        </div>
+    </div>
+    @endif
 
     @if($errors->any())
     <div class="mb-6 bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg">
@@ -52,7 +78,29 @@
             
             <!-- Product Information Card -->
             <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6">
-                <h3 class="text-xl font-bold text-white mb-6">Product Information</h3>
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-white">Product Information</h3>
+                    <button 
+                        type="button" 
+                        id="aiGenerateBtn"
+                        class="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-lg transition flex items-center gap-2 text-sm"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        <span id="aiGenerateBtnText">AI Generate Landing Page</span>
+                    </button>
+                </div>
+                
+                <div id="aiNotice" class="mb-4 bg-blue-500/20 border border-blue-500/50 text-blue-400 px-4 py-3 rounded-lg flex items-start gap-2 hidden">
+                    <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <div>
+                        <p class="font-semibold">AI Landing Page Generation</p>
+                        <p class="text-sm mt-1">Fill in the product details below, then click the button above to generate a professional landing page using AI.</p>
+                    </div>
+                </div>
                 
                 <div class="space-y-4">
                     <!-- Product Name -->
@@ -217,6 +265,23 @@
                 <h3 class="text-xl font-bold text-white mb-6">Settings</h3>
                 
                 <div class="space-y-4">
+                    <!-- AI Landing Page Generation Toggle -->
+                    <div class="flex items-center justify-between pb-4 border-b border-white/10">
+                        <div>
+                            <label for="generate_landing_page" class="block text-sm font-medium text-gray-300">AI Landing Page</label>
+                            <p class="text-xs text-gray-500 mt-1">Automatically generate a professional landing page using AI</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                id="generate_landing_page" 
+                                name="generate_landing_page" 
+                                class="sr-only peer"
+                            />
+                            <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-blue-600"></div>
+                        </label>
+                    </div>
+                    
                     <!-- Active Status -->
                     <div class="flex items-center justify-between">
                         <div>
@@ -295,5 +360,54 @@
                 reader.readAsDataURL(file);
             }
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const generateToggle = document.getElementById('generate_landing_page');
+            const aiNotice = document.getElementById('aiNotice');
+            
+            generateToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    aiNotice.classList.remove('hidden');
+                } else {
+                    aiNotice.classList.add('hidden');
+                }
+            });
+
+            const aiGenerateBtn = document.getElementById('aiGenerateBtn');
+            const aiGenerateBtnText = document.getElementById('aiGenerateBtnText');
+            
+            aiGenerateBtn.addEventListener('click', function() {
+                const nameField = document.getElementById('name');
+                const descriptionField = document.getElementById('description');
+                const categoryField = document.getElementById('category_id');
+                const priceField = document.getElementById('price');
+                
+                if (!nameField.value || !priceField.value) {
+                    alert('Please fill in at least the product name and price before generating the landing page.');
+                    return;
+                }
+                
+                const generateToggle = document.getElementById('generate_landing_page');
+                generateToggle.checked = true;
+                aiNotice.classList.remove('hidden');
+                
+                const notification = document.createElement('div');
+                notification.className = 'fixed top-4 right-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3';
+                notification.innerHTML = `
+                    <svg class="w-6 h-6 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <div>
+                        <p class="font-semibold">AI Landing Page Enabled</p>
+                        <p class="text-sm">Your landing page will be generated when you create the product</p>
+                    </div>
+                `;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 4000);
+            });
+        });
     </script>
 @endsection

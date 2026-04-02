@@ -59,6 +59,47 @@ class ProductController extends Controller
             ->limit(4)
             ->get();
 
+        // Check if multi-language landing page exists
+        if ($product->landing_page_fr || $product->landing_page_en || $product->landing_page_ar) {
+            return view('product-landing', compact('product', 'relatedProducts'));
+        }
+
         return view('product-detail', compact('product', 'relatedProducts'));
+    }
+
+    public function submitLead(Request $request, $slug)
+    {
+        $userId = auth()->check() ? auth()->id() : \App\Models\User::first()->id;
+        
+        $product = Product::where('slug', $slug)
+            ->where('is_active', true)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'note' => 'nullable|string|max:1000',
+            'language' => 'required|in:fr,en,ar',
+        ]);
+
+        \App\Models\ProductLead::create([
+            'product_id' => $product->id,
+            'user_id' => $product->user_id,
+            'name' => $validated['name'],
+            'phone' => $validated['phone'],
+            'note' => $validated['note'],
+            'language' => $validated['language'],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        $successMessages = [
+            'fr' => 'Merci ! Nous vous contactons bientôt.',
+            'en' => 'Thank you! We will contact you soon.',
+            'ar' => 'شكرا لك! سنتصل بك قريبا.',
+        ];
+
+        return back()->with('success', $successMessages[$validated['language']] ?? $successMessages['fr']);
     }
 }

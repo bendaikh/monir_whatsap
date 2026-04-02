@@ -6,9 +6,160 @@
         </div>
     </x-slot>
 
+    @if (session('success'))
+        <div class="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+            {{ session('success') }}
+        </div>
+    @endif
+    @if (session('openai_success'))
+        <div class="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+            {{ session('openai_success') }}
+        </div>
+    @endif
+    @if (session('openai_error'))
+        <div class="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {{ session('openai_error') }}
+        </div>
+    @endif
+    @if (session('anthropic_success'))
+        <div class="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+            {{ session('anthropic_success') }}
+        </div>
+    @endif
+    @if (session('anthropic_error'))
+        <div class="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {{ session('anthropic_error') }}
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Left Column - Settings -->
         <div class="lg:col-span-2 space-y-6">
+            <!-- OpenAI connection -->
+            <div id="openai-connect" class="scroll-mt-6 bg-[#0f1c2e] border border-white/10 rounded-xl p-6">
+                <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">Connexion OpenAI</h3>
+                        <p class="text-sm text-gray-400 mt-1">Collez votre clé API (sk-…). Elle est chiffrée côté serveur et n’apparaît jamais en clair après enregistrement.</p>
+                    </div>
+                    @if($aiSetting && $aiSetting->openai_api_key_encrypted)
+                        <span class="inline-flex items-center rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-300">Clé enregistrée</span>
+                    @else
+                        <span class="inline-flex items-center rounded-full bg-amber-500/15 px-3 py-1 text-xs font-medium text-amber-200">Non configuré</span>
+                    @endif
+                </div>
+
+                <form method="POST" action="{{ route('app.ai-settings.openai.save') }}" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label for="openai_api_key" class="block text-sm font-medium text-gray-300 mb-2">Clé API</label>
+                        <input type="password" name="openai_api_key" id="openai_api_key" autocomplete="off"
+                            class="w-full px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none transition"
+                            placeholder="{{ $aiSetting && $aiSetting->openai_api_key_encrypted ? 'Nouvelle clé pour remplacer l’actuelle' : 'sk-...' }}">
+                        @error('openai_api_key')
+                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="openai_model" class="block text-sm font-medium text-gray-300 mb-2">Modèle par défaut</label>
+                        <input type="text" name="openai_model" id="openai_model" required
+                            value="{{ old('openai_model', optional($aiSetting)->openai_model ?? 'gpt-4o') }}"
+                            class="w-full px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg text-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none transition"
+                            placeholder="gpt-4o">
+                        @error('openai_model')
+                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-3 text-sm text-gray-300 cursor-pointer select-none p-3 bg-[#0a1628] rounded-lg border border-white/10 hover:border-emerald-500/50 transition">
+                            <input type="checkbox" name="auto_reply_enabled" value="1" 
+                                {{ optional($aiSetting)->auto_reply_enabled ? 'checked' : '' }}
+                                class="rounded border-white/20 bg-[#0a1628] text-emerald-500 focus:ring-emerald-500/30">
+                            <div>
+                                <div class="font-medium text-white">Enable AI Auto-Reply on WhatsApp</div>
+                                <div class="text-xs text-gray-400 mt-0.5">AI will automatically respond to incoming WhatsApp messages</div>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer select-none">
+                            <input type="checkbox" name="clear_openai_key" value="1" class="rounded border-white/20 bg-[#0a1628] text-cyan-500 focus:ring-cyan-500/30">
+                            Supprimer la clé enregistrée
+                        </label>
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        <button type="submit" class="px-5 py-2.5 bg-cyan-500 hover:bg-cyan-600 text-white text-sm font-semibold rounded-lg transition">
+                            Enregistrer
+                        </button>
+                    </div>
+                </form>
+
+                @if($aiSetting && $aiSetting->openai_api_key_encrypted)
+                    <form method="POST" action="{{ route('app.ai-settings.openai.test') }}" class="mt-4 pt-4 border-t border-white/10">
+                        @csrf
+                        <button type="submit" class="px-5 py-2.5 bg-[#0a1628] border border-white/15 hover:border-cyan-500/50 text-white text-sm font-medium rounded-lg transition">
+                            Tester la connexion OpenAI
+                        </button>
+                    </form>
+                @endif
+            </div>
+
+            <!-- Anthropic connection -->
+            <div id="anthropic-connect" class="scroll-mt-6 bg-[#0f1c2e] border border-white/10 rounded-xl p-6">
+                <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">Connexion Anthropic (Claude)</h3>
+                        <p class="text-sm text-gray-400 mt-1">Alternative à OpenAI. Collez votre clé API Anthropic (sk-ant-…). Elle est chiffrée côté serveur.</p>
+                    </div>
+                    @if($aiSetting && $aiSetting->anthropic_api_key_encrypted)
+                        <span class="inline-flex items-center rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-300">Clé enregistrée</span>
+                    @else
+                        <span class="inline-flex items-center rounded-full bg-amber-500/15 px-3 py-1 text-xs font-medium text-amber-200">Non configuré</span>
+                    @endif
+                </div>
+
+                <form method="POST" action="{{ route('app.ai-settings.anthropic.save') }}" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label for="anthropic_api_key" class="block text-sm font-medium text-gray-300 mb-2">Clé API Anthropic</label>
+                        <input type="password" name="anthropic_api_key" id="anthropic_api_key" autocomplete="off"
+                            class="w-full px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition"
+                            placeholder="{{ $aiSetting && $aiSetting->anthropic_api_key_encrypted ? 'Nouvelle clé pour remplacer l\'actuelle' : 'sk-ant-...' }}">
+                        @error('anthropic_api_key')
+                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="anthropic_model" class="block text-sm font-medium text-gray-300 mb-2">Modèle par défaut</label>
+                        <select name="anthropic_model" id="anthropic_model" required
+                            class="w-full px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition">
+                            <option value="claude-3-5-sonnet-20241022" {{ old('anthropic_model', optional($aiSetting)->anthropic_model ?? 'claude-3-5-sonnet-20241022') == 'claude-3-5-sonnet-20241022' ? 'selected' : '' }}>Claude 3.5 Sonnet (Recommended)</option>
+                            <option value="claude-3-5-haiku-20241022" {{ old('anthropic_model', optional($aiSetting)->anthropic_model) == 'claude-3-5-haiku-20241022' ? 'selected' : '' }}>Claude 3.5 Haiku (Faster, Cheaper)</option>
+                            <option value="claude-3-opus-20240229" {{ old('anthropic_model', optional($aiSetting)->anthropic_model) == 'claude-3-opus-20240229' ? 'selected' : '' }}>Claude 3 Opus (Most Capable)</option>
+                        </select>
+                        @error('anthropic_model')
+                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer select-none">
+                        <input type="checkbox" name="clear_anthropic_key" value="1" class="rounded border-white/20 bg-[#0a1628] text-purple-500 focus:ring-purple-500/30">
+                        Supprimer la clé enregistrée
+                    </label>
+                    <div class="flex flex-wrap gap-3">
+                        <button type="submit" class="px-5 py-2.5 bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold rounded-lg transition">
+                            Enregistrer
+                        </button>
+                    </div>
+                </form>
+
+                @if($aiSetting && $aiSetting->anthropic_api_key_encrypted)
+                    <form method="POST" action="{{ route('app.ai-settings.anthropic.test') }}" class="mt-4 pt-4 border-t border-white/10">
+                        @csrf
+                        <button type="submit" class="px-5 py-2.5 bg-[#0a1628] border border-white/15 hover:border-purple-500/50 text-white text-sm font-medium rounded-lg transition">
+                            Tester la connexion Anthropic
+                        </button>
+                    </form>
+                @endif
+            </div>
+
             <!-- WhatsApp Profile Selection -->
             <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6">
                 <h3 class="text-lg font-semibold text-white mb-4">Profil WhatsApp</h3>

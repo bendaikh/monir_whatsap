@@ -5,12 +5,33 @@ use App\Http\Controllers\CustomerDashboardController;
 use App\Http\Controllers\WhatsAppController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+
+// Fallback storage route for hosts without symlink support
+Route::get('/storage/{path}', function ($path) {
+    $fullPath = storage_path('app/public/' . $path);
+    
+    if (!file_exists($fullPath)) {
+        abort(404);
+    }
+    
+    $mimeType = mime_content_type($fullPath);
+    
+    return response()->file($fullPath, [
+        'Content-Type' => $mimeType,
+        'Cache-Control' => 'public, max-age=31536000',
+    ]);
+})->where('path', '.*')->name('storage.serve');
 
 Route::get('/', [ProductController::class, 'index'])->name('home');
 Route::get('/product/{slug}', [ProductController::class, 'show'])->name('product.show');
+Route::post('/product/{slug}/submit-lead', [ProductController::class, 'submitLead'])->name('product.submit-lead');
 
 // WhatsApp Webhook (no auth required for external services)
 Route::post('/webhook/whatsapp', [WhatsAppController::class, 'webhook'])->name('whatsapp.webhook');
+
+// API route for Node.js to process messages (no auth)
+Route::post('/api/whatsapp/process-message', [WhatsAppController::class, 'processMessageWithAi']);
 
 // Dashboard - redirects to main dashboard
 Route::get('/dashboard', function () {
@@ -28,13 +49,19 @@ Route::middleware(['auth'])->prefix('app')->name('app.')->group(function () {
     Route::get('/dashboard', [CustomerDashboardController::class, 'dashboard'])->name('dashboard');
     Route::get('/whatsapp', [CustomerDashboardController::class, 'whatsapp'])->name('whatsapp');
     Route::get('/ai-settings', [CustomerDashboardController::class, 'aiSettings'])->name('ai-settings');
+    Route::post('/ai-settings/openai', [CustomerDashboardController::class, 'saveOpenAiSettings'])->name('ai-settings.openai.save');
+    Route::post('/ai-settings/openai/test', [CustomerDashboardController::class, 'testOpenAiConnection'])->name('ai-settings.openai.test');
+    Route::post('/ai-settings/anthropic', [CustomerDashboardController::class, 'saveAnthropicSettings'])->name('ai-settings.anthropic.save');
+    Route::post('/ai-settings/anthropic/test', [CustomerDashboardController::class, 'testAnthropicConnection'])->name('ai-settings.anthropic.test');
     Route::get('/conversations', [CustomerDashboardController::class, 'conversations'])->name('conversations');
     Route::get('/conversations/{id}', [CustomerDashboardController::class, 'conversationDetail'])->name('conversation.detail');
     Route::get('/orders', [CustomerDashboardController::class, 'orders'])->name('orders');
     Route::get('/products', [CustomerDashboardController::class, 'products'])->name('products');
     Route::get('/products/create', [CustomerDashboardController::class, 'productsCreate'])->name('products.create');
     Route::post('/products', [CustomerDashboardController::class, 'productsStore'])->name('products.store');
+    Route::post('/products/{id}/generate-landing-page', [CustomerDashboardController::class, 'generateLandingPage'])->name('products.generate-landing-page');
     Route::get('/campaigns', [CustomerDashboardController::class, 'campaigns'])->name('campaigns');
+    Route::get('/leads', [CustomerDashboardController::class, 'leads'])->name('leads');
     
     // Categories
     Route::get('/categories', [CustomerDashboardController::class, 'categories'])->name('categories');
