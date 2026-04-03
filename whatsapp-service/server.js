@@ -10,6 +10,8 @@ const fs = require('fs');
 function findChromiumPath() {
     const possiblePaths = [
         process.env.PUPPETEER_EXECUTABLE_PATH,
+        '/usr/bin/google-chrome-stable',
+        '/usr/bin/google-chrome',
         '/usr/bin/chromium',
         '/usr/bin/chromium-browser',
         '/nix/var/nix/profiles/default/bin/chromium',
@@ -17,7 +19,7 @@ function findChromiumPath() {
     
     // Try to find chromium using 'which' command
     try {
-        const whichResult = execSync('which chromium 2>/dev/null || which chromium-browser 2>/dev/null', { encoding: 'utf8' }).trim();
+        const whichResult = execSync('which google-chrome-stable 2>/dev/null || which chromium 2>/dev/null || which chromium-browser 2>/dev/null', { encoding: 'utf8' }).trim();
         if (whichResult) {
             possiblePaths.unshift(whichResult);
         }
@@ -25,26 +27,23 @@ function findChromiumPath() {
         // which command failed, continue with other methods
     }
     
-    // Try to find in /nix/store
-    try {
-        const nixStoreResult = execSync('find /nix/store -name chromium -type f -executable 2>/dev/null | head -n1', { encoding: 'utf8' }).trim();
-        if (nixStoreResult) {
-            possiblePaths.unshift(nixStoreResult);
-        }
-    } catch (e) {
-        // find command failed
-    }
-    
     // Check which path actually exists
     for (const path of possiblePaths) {
         if (path && fs.existsSync(path)) {
-            console.log('✓ Found working Chromium at:', path);
+            console.log('✓ Found working Chrome/Chromium at:', path);
             return path;
         }
     }
     
-    console.error('✗ No Chromium executable found. Tried:', possiblePaths);
-    throw new Error('Chromium not found. Please ensure Chromium is installed.');
+    console.error('✗ No Chrome/Chromium executable found. Tried:', possiblePaths);
+    console.error('Available binaries in /usr/bin:');
+    try {
+        const bins = execSync('ls -la /usr/bin/ | grep -i chrome', { encoding: 'utf8' });
+        console.error(bins);
+    } catch (e) {
+        console.error('Could not list /usr/bin contents');
+    }
+    throw new Error('Chrome/Chromium not found. Please ensure Chrome is installed.');
 }
 
 const app = express();
