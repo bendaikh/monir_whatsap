@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "production": "NODE_ENV=production node server.js"
+    "production": "NODE_ENV=production node server.js",
+    "postinstall": "echo 'Skipping Puppeteer Chromium download'"
   },
   "engines": {
     "node": ">=18.0.0",
@@ -18,7 +19,7 @@
     "socket.io": "^4.6.1",
     "whatsapp-web.js": "^1.23.0"
   },
-  "config": {
-    "puppeteer_skip_chromium_download": "true"
+  "puppeteer": {
+    "skipDownload": true
   }
 }

@@ -9,7 +9,7 @@ nixPkgs = [
 ]
 
 [phases.install]
-cmds = ["npm install"]
+cmds = ["PUPPETEER_SKIP_DOWNLOAD=true npm install"]
 
 [start]
-cmd = "PUPPETEER_EXECUTABLE_PATH=$(which chromium) npm start"
+cmd = "sh -c 'export PUPPETEER_EXECUTABLE_PATH=$(which chromium) && node server.js'"
