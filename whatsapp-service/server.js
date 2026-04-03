@@ -117,7 +117,7 @@ io.on('connection', (socket) => {
             puppeteer: {
                 headless: true,
                 executablePath: executablePath,
-                protocolTimeout: 60000, // 60 seconds (default is 30s)
+                protocolTimeout: 90000, // 90 seconds
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
@@ -125,10 +125,24 @@ io.on('connection', (socket) => {
                     '--disable-accelerated-2d-canvas',
                     '--no-first-run',
                     '--no-zygote',
+                    '--single-process', // Use single process to save memory
                     '--disable-gpu',
-                    '--disable-extensions'
+                    '--disable-extensions',
+                    '--disable-software-rasterizer',
+                    '--disable-dev-tools',
+                    '--no-default-browser-check',
+                    '--disable-background-networking',
+                    '--disable-sync',
+                    '--metrics-recording-only',
+                    '--mute-audio',
+                    '--disable-background-timer-throttling',
+                    '--disable-renderer-backgrounding',
+                    '--disable-backgrounding-occluded-windows'
                 ]
-            }
+            },
+            // Limit cache and data
+            qrMaxRetries: 3,
+            takeoverOnConflict: true
         });
 
         // QR Code event
@@ -362,18 +376,34 @@ io.on('connection', (socket) => {
 
         try {
             const chats = await client.getChats();
-            const chatList = await Promise.all(chats.map(async (chat) => {
-                const contact = await chat.getContact();
-                const lastMessage = chat.lastMessage;
-                
-                return {
-                    id: chat.id._serialized,
-                    name: chat.name || contact.pushname || contact.number,
-                    isGroup: chat.isGroup,
-                    unreadCount: chat.unreadCount,
-                    timestamp: chat.timestamp,
-                    lastMessage: lastMessage ? lastMessage.body : null
-                };
+            // Limit to 50 most recent chats to save memory
+            const limitedChats = chats.slice(0, 50);
+            
+            const chatList = await Promise.all(limitedChats.map(async (chat) => {
+                try {
+                    const contact = await chat.getContact();
+                    const lastMessage = chat.lastMessage;
+                    
+                    return {
+                        id: chat.id._serialized,
+                        name: chat.name || contact.pushname || contact.number,
+                        isGroup: chat.isGroup,
+                        unreadCount: chat.unreadCount,
+                        timestamp: chat.timestamp,
+                        lastMessage: lastMessage ? lastMessage.body : null
+                    };
+                } catch (err) {
+                    console.error('Error processing chat:', err.message);
+                    // Return basic info if contact fetch fails
+                    return {
+                        id: chat.id._serialized,
+                        name: chat.name || 'Unknown',
+                        isGroup: chat.isGroup,
+                        unreadCount: chat.unreadCount,
+                        timestamp: chat.timestamp,
+                        lastMessage: null
+                    };
+                }
             }));
 
             socket.emit('chats-list', { sessionId, chats: chatList });
