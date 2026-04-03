@@ -117,6 +117,7 @@ io.on('connection', (socket) => {
             puppeteer: {
                 headless: true,
                 executablePath: executablePath,
+                protocolTimeout: 60000, // 60 seconds (default is 30s)
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
