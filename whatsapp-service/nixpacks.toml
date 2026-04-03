@@ -12,4 +12,4 @@ nixPkgs = [
 cmds = ["npm install"]
 
 [start]
-cmd = "npm start"
+cmd = "PUPPETEER_EXECUTABLE_PATH=$(which chromium) npm start"

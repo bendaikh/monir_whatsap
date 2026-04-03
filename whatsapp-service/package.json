@@ -17,5 +17,8 @@
     "qrcode": "^1.5.3",
     "socket.io": "^4.6.1",
     "whatsapp-web.js": "^1.23.0"
+  },
+  "config": {
+    "puppeteer_skip_chromium_download": "true"
   }
 }
