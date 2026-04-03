@@ -125,7 +125,6 @@ io.on('connection', (socket) => {
                     '--disable-accelerated-2d-canvas',
                     '--no-first-run',
                     '--no-zygote',
-                    '--single-process', // Use single process to save memory
                     '--disable-gpu',
                     '--disable-extensions',
                     '--disable-software-rasterizer',
@@ -134,10 +133,7 @@ io.on('connection', (socket) => {
                     '--disable-background-networking',
                     '--disable-sync',
                     '--metrics-recording-only',
-                    '--mute-audio',
-                    '--disable-background-timer-throttling',
-                    '--disable-renderer-backgrounding',
-                    '--disable-backgrounding-occluded-windows'
+                    '--mute-audio'
                 ]
             },
             // Limit cache and data
