@@ -83,7 +83,7 @@ class ProductController extends Controller
             'language' => 'required|in:fr,en,ar',
         ]);
 
-        \App\Models\ProductLead::create([
+        $lead = \App\Models\ProductLead::create([
             'product_id' => $product->id,
             'user_id' => $product->user_id,
             'name' => $validated['name'],
@@ -93,6 +93,8 @@ class ProductController extends Controller
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
+
+        \App\Jobs\PushOrderToExternalApi::dispatch($lead);
 
         $successMessages = [
             'fr' => 'Merci ! Nous vous contactons bientôt.',

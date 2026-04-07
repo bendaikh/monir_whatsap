@@ -28,6 +28,9 @@ class User extends Authenticatable
         'subscription_plan',
         'subscription_ends_at',
         'is_active',
+        'external_api_url',
+        'external_api_key_encrypted',
+        'external_api_enabled',
     ];
 
     /**
@@ -47,6 +50,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'subscription_ends_at' => 'datetime',
             'is_active' => 'boolean',
+            'external_api_enabled' => 'boolean',
         ];
     }
     

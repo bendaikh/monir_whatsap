@@ -36,7 +36,7 @@
             </div>
 
             <!-- Orders Card -->
-            <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6">
+            <a href="{{ route('app.leads') }}" class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6 hover:border-purple-500/30 transition">
                 <div class="flex items-center justify-between mb-4">
                     <div class="p-3 bg-purple-500/20 rounded-lg">
                         <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,7 +48,7 @@
                     <p class="text-3xl font-bold text-white">{{ $stats['orders'] }}</p>
                     <p class="text-sm text-gray-400 mt-1 uppercase tracking-wide">Commandes</p>
                 </div>
-            </div>
+            </a>
 
             <!-- Active Profiles Card -->
             <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6">

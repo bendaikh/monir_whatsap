@@ -234,7 +234,8 @@
                 <h3 class="text-xl font-bold text-white mb-6">Product Images</h3>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Upload Images</label>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Upload Images (Multiple)</label>
+                    <p class="text-xs text-gray-500 mb-3">First image will be set as main image by default. You can change it later.</p>
                     <div class="border-2 border-dashed border-white/10 rounded-lg p-8 text-center hover:border-emerald-500/50 transition">
                         <input 
                             type="file" 
@@ -250,13 +251,33 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                             </svg>
                             <p class="text-gray-400 mb-1">Click to upload images</p>
-                            <p class="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
+                            <p class="text-xs text-gray-500">PNG, JPG, GIF up to 2MB each</p>
                         </label>
                     </div>
-                    <div id="imagePreview" class="grid grid-cols-4 gap-4 mt-4"></div>
+                    <div id="imagePreview" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4"></div>
+                    <input type="hidden" id="mainImageIndex" name="main_image_index" value="0">
                     @error('images')
                         <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
                     @enderror
+                </div>
+            </div>
+
+            <!-- Landing Page Sections (Image with Description) -->
+            <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6">
+                <div class="mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Landing Page Sections</h3>
+                        <p class="text-xs text-gray-500 mt-1">Auto-created from uploaded images. AI will generate titles & descriptions when you enable AI Landing Page Generation.</p>
+                    </div>
+                </div>
+                
+                <div id="landingSectionsContainer" class="space-y-4">
+                    <div class="text-center py-8 text-gray-500 text-sm" id="noSectionsMessage">
+                        <svg class="w-12 h-12 text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        Upload images above to auto-create sections
+                    </div>
                 </div>
             </div>
 
@@ -353,11 +374,18 @@
     </div>
 
     <script>
+        let sectionCounter = 0;
+        let uploadedFiles = [];
+
         function previewImages(event) {
             const preview = document.getElementById('imagePreview');
+            const container = document.getElementById('landingSectionsContainer');
             preview.innerHTML = '';
+            container.innerHTML = '';
             
             const files = event.target.files;
+            uploadedFiles = Array.from(files);
+            
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 const reader = new FileReader();
@@ -368,14 +396,58 @@
                     div.innerHTML = `
                         <img src="${e.target.result}" class="w-full h-32 object-cover rounded-lg border border-white/10" />
                         <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition rounded-lg flex items-center justify-center">
-                            <span class="text-white text-xs">Image ${i + 1}</span>
+                            <span class="text-white text-xs">Image ${i + 1}${i === 0 ? ' (Hero)' : ''}</span>
                         </div>
                     `;
                     preview.appendChild(div);
+                    
+                    // Auto-create landing section for each image (except first one which is hero)
+                    if (i > 0) {
+                        createAutoLandingSection(i, e.target.result);
+                    }
                 }
                 
                 reader.readAsDataURL(file);
             }
+            
+            sectionCounter = files.length - 1; // Exclude hero image from counter
+        }
+
+        function createAutoLandingSection(imageIndex, imageDataUrl) {
+            const container = document.getElementById('landingSectionsContainer');
+            const noSectionsMsg = document.getElementById('noSectionsMessage');
+            if (noSectionsMsg) {
+                noSectionsMsg.style.display = 'none';
+            }
+            
+            const sectionId = imageIndex - 1; // 0-based for sections (since we skip hero)
+            
+            const sectionDiv = document.createElement('div');
+            sectionDiv.className = 'border border-cyan-500/30 rounded-lg p-4 bg-[#0a1628]';
+            sectionDiv.id = `section-${sectionId}`;
+            sectionDiv.innerHTML = `
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-sm font-semibold text-cyan-400">Section ${sectionId + 1} - Image ${imageIndex + 1}</h4>
+                    <span class="text-xs text-gray-500 px-2 py-1 bg-purple-900/30 rounded">AI will generate descriptions</span>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <div class="mb-2">
+                            <img src="${imageDataUrl}" class="w-full h-32 object-cover rounded-lg border border-white/10" />
+                        </div>
+                        <input type="hidden" name="landing_sections[${sectionId}][auto_generated]" value="1">
+                        <input type="hidden" name="landing_sections[${sectionId}][image_index]" value="${imageIndex}">
+                    </div>
+                    <div class="bg-purple-500/10 border border-purple-500/30 rounded p-3 text-center">
+                        <svg class="w-8 h-8 text-purple-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        <p class="text-xs text-purple-300">AI will generate titles and descriptions in French, English, and Arabic for this image when you enable AI Landing Page Generation</p>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(sectionDiv);
         }
 
         document.addEventListener('DOMContentLoaded', function() {

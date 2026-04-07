@@ -233,6 +233,99 @@
                 </div>
             </div>
 
+            <!-- Landing Page Sections (Image with Description) -->
+            <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Landing Page Sections</h3>
+                        <p class="text-xs text-gray-500 mt-1">Add images with descriptions for your landing page (optional)</p>
+                    </div>
+                    <button 
+                        type="button" 
+                        onclick="addLandingSection()"
+                        class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-lg transition flex items-center gap-2 text-sm"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Add Section
+                    </button>
+                </div>
+                
+                <div id="landingSectionsContainer" class="space-y-4">
+                    @if($product->landing_page_sections && count($product->landing_page_sections) > 0)
+                        @foreach($product->landing_page_sections as $index => $section)
+                        <div class="border border-white/10 rounded-lg p-4 bg-[#0a1628]" id="existing-section-{{ $index }}">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-sm font-semibold text-gray-300">Section {{ $index + 1 }}</h4>
+                                <button type="button" onclick="removeExistingSection({{ $index }})" 
+                                        class="text-red-400 hover:text-red-300 transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="space-y-3">
+                                @if(!empty($section['image']))
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-400 mb-1">Current Image</label>
+                                    <img src="{{ \Storage::url($section['image']) }}" class="w-full h-32 object-cover rounded-lg border border-white/10" />
+                                </div>
+                                @endif
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-400 mb-1">Replace Image</label>
+                                    <input type="file" 
+                                           name="landing_sections[{{ $index }}][image]" 
+                                           accept="image/*"
+                                           class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-cyan-600 file:text-white hover:file:bg-cyan-700 cursor-pointer">
+                                    <input type="hidden" name="landing_sections[{{ $index }}][existing_image]" value="{{ $section['image'] ?? '' }}">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-400 mb-1">Title (FR)</label>
+                                    <input type="text" 
+                                           name="landing_sections[{{ $index }}][title_fr]" 
+                                           value="{{ old('landing_sections.'.$index.'.title_fr', $section['title_fr'] ?? '') }}"
+                                           class="w-full px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-400 mb-1">Description (FR)</label>
+                                    <textarea name="landing_sections[{{ $index }}][description_fr]" 
+                                              rows="2"
+                                              class="w-full px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">{{ old('landing_sections.'.$index.'.description_fr', $section['description_fr'] ?? '') }}</textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-400 mb-1">Title (EN)</label>
+                                    <input type="text" 
+                                           name="landing_sections[{{ $index }}][title_en]" 
+                                           value="{{ old('landing_sections.'.$index.'.title_en', $section['title_en'] ?? '') }}"
+                                           class="w-full px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-400 mb-1">Description (EN)</label>
+                                    <textarea name="landing_sections[{{ $index }}][description_en]" 
+                                              rows="2"
+                                              class="w-full px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">{{ old('landing_sections.'.$index.'.description_en', $section['description_en'] ?? '') }}</textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-400 mb-1">Title (AR)</label>
+                                    <input type="text" 
+                                           name="landing_sections[{{ $index }}][title_ar]" 
+                                           value="{{ old('landing_sections.'.$index.'.title_ar', $section['title_ar'] ?? '') }}"
+                                           class="w-full px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-400 mb-1">Description (AR)</label>
+                                    <textarea name="landing_sections[{{ $index }}][description_ar]" 
+                                              rows="2"
+                                              class="w-full px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">{{ old('landing_sections.'.$index.'.description_ar', $section['description_ar'] ?? '') }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    @endif
+                </div>
+            </div>
+
             <!-- Settings Card -->
             <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6">
                 <h3 class="text-xl font-bold text-white mb-6">Settings</h3>
@@ -292,6 +385,8 @@
     </div>
 
     <script>
+        let sectionCounter = {{ $product->landing_page_sections ? count($product->landing_page_sections) : 0 }};
+
         function previewImages(event) {
             const preview = document.getElementById('imagePreview');
             preview.innerHTML = '';
@@ -313,6 +408,110 @@
                     preview.appendChild(div);
                 }
                 
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function addLandingSection() {
+            const container = document.getElementById('landingSectionsContainer');
+            const sectionId = sectionCounter++;
+            
+            const sectionDiv = document.createElement('div');
+            sectionDiv.className = 'border border-white/10 rounded-lg p-4 bg-[#0a1628]';
+            sectionDiv.id = `section-${sectionId}`;
+            sectionDiv.innerHTML = `
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-sm font-semibold text-gray-300">Section ${sectionId + 1}</h4>
+                    <button type="button" onclick="removeLandingSection(${sectionId})" 
+                            class="text-red-400 hover:text-red-300 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Section Image</label>
+                        <input type="file" 
+                               name="landing_sections[${sectionId}][image]" 
+                               accept="image/*"
+                               onchange="previewSectionImage(event, ${sectionId})"
+                               class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-cyan-600 file:text-white hover:file:bg-cyan-700 cursor-pointer">
+                        <div id="section-image-preview-${sectionId}" class="mt-2"></div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Title (FR)</label>
+                        <input type="text" 
+                               name="landing_sections[${sectionId}][title_fr]" 
+                               placeholder="e.g., Protection efficace"
+                               class="w-full px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Description (FR)</label>
+                        <textarea name="landing_sections[${sectionId}][description_fr]" 
+                                  rows="2"
+                                  placeholder="Description en français..."
+                                  class="w-full px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Title (EN)</label>
+                        <input type="text" 
+                               name="landing_sections[${sectionId}][title_en]" 
+                               placeholder="e.g., Effective protection"
+                               class="w-full px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Description (EN)</label>
+                        <textarea name="landing_sections[${sectionId}][description_en]" 
+                                  rows="2"
+                                  placeholder="Description in English..."
+                                  class="w-full px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Title (AR)</label>
+                        <input type="text" 
+                               name="landing_sections[${sectionId}][title_ar]" 
+                               placeholder="مثال: حماية فعّالة"
+                               class="w-full px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Description (AR)</label>
+                        <textarea name="landing_sections[${sectionId}][description_ar]" 
+                                  rows="2"
+                                  placeholder="الوصف بالعربية..."
+                                  class="w-full px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"></textarea>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(sectionDiv);
+        }
+
+        function removeLandingSection(sectionId) {
+            const section = document.getElementById(`section-${sectionId}`);
+            if (section) {
+                section.remove();
+            }
+        }
+
+        function removeExistingSection(sectionId) {
+            const section = document.getElementById(`existing-section-${sectionId}`);
+            if (section && confirm('Are you sure you want to remove this section?')) {
+                section.remove();
+            }
+        }
+
+        function previewSectionImage(event, sectionId) {
+            const preview = document.getElementById(`section-image-preview-${sectionId}`);
+            const file = event.target.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-32 object-cover rounded-lg border border-white/10" />
+                    `;
+                }
                 reader.readAsDataURL(file);
             }
         }

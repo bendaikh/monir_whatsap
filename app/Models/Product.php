@@ -18,6 +18,8 @@ class Product extends Model
         'stock',
         'sku',
         'images',
+        'main_image',
+        'image_descriptions',
         'ai_generated_images',
         'ai_images_status',
         'ai_images_progress',
@@ -34,11 +36,13 @@ class Product extends Model
         'landing_page_fr',
         'landing_page_en',
         'landing_page_ar',
-        'landing_page_status'
+        'landing_page_status',
+        'landing_page_sections'
     ];
 
     protected $casts = [
         'images' => 'array',
+        'image_descriptions' => 'array',
         'ai_generated_images' => 'array',
         'price' => 'decimal:2',
         'compare_at_price' => 'decimal:2',
@@ -48,6 +52,7 @@ class Product extends Model
         'landing_page_fr' => 'array',
         'landing_page_en' => 'array',
         'landing_page_ar' => 'array',
+        'landing_page_sections' => 'array',
     ];
 
     protected static function boot()
@@ -71,11 +76,47 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
+    /**
+     * Resolve a stored path or URL to a usable browser URL (public disk, absolute URL, or site-relative).
+     */
+    public static function resolvePublicImageUrl(?string $path): ?string
+    {
+        if ($path === null || $path === '') {
+            return null;
+        }
+
+        $path = trim($path);
+        if (preg_match('#^https?://#i', $path)) {
+            return $path;
+        }
+
+        if (str_starts_with($path, '/')) {
+            return $path;
+        }
+
+        return \Storage::disk('public')->url($path);
+    }
+
     public function getFirstImageAttribute()
     {
-        if (!empty($this->images) && isset($this->images[0])) {
-            return \Storage::url($this->images[0]);
+        $candidates = [];
+        if ($this->main_image) {
+            $candidates[] = $this->main_image;
         }
+        if (! empty($this->images) && isset($this->images[0])) {
+            $candidates[] = $this->images[0];
+        }
+        if (! empty($this->ai_generated_images) && isset($this->ai_generated_images[0])) {
+            $candidates[] = $this->ai_generated_images[0];
+        }
+
+        foreach ($candidates as $raw) {
+            $url = self::resolvePublicImageUrl($raw);
+            if ($url !== null && $url !== '') {
+                return $url;
+            }
+        }
+
         return 'https://via.placeholder.com/400x400/e5e7eb/6b7280?text=No+Image';
     }
 
@@ -96,15 +137,21 @@ class Product extends Model
     {
         $images = [];
         
-        if (!empty($this->images)) {
+        if (! empty($this->images)) {
             foreach ($this->images as $image) {
-                $images[] = \Storage::url($image);
+                $resolved = self::resolvePublicImageUrl($image);
+                if ($resolved) {
+                    $images[] = $resolved;
+                }
             }
         }
-        
-        if (!empty($this->ai_generated_images)) {
+
+        if (! empty($this->ai_generated_images)) {
             foreach ($this->ai_generated_images as $image) {
-                $images[] = $image;
+                $resolved = self::resolvePublicImageUrl($image);
+                if ($resolved) {
+                    $images[] = $resolved;
+                }
             }
         }
         

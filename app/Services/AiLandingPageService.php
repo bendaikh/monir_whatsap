@@ -53,6 +53,30 @@ class AiLandingPageService
 
         $instruction = $languageInstructions[$language] ?? $languageInstructions['fr'];
 
+        // Count product images (excluding the first/main image)
+        $images = $product->images ?? [];
+        $imageSectionCount = max(0, count($images) - 1);
+        
+        $imageSectionsPrompt = '';
+        if ($imageSectionCount > 0) {
+            $imageSectionsPrompt = ",
+    \"image_sections\": [
+        " . implode(",\n        ", array_fill(0, $imageSectionCount, "{\"title\": \"Catchy benefit title (5-8 words)\", \"description\": \"2-3 sentences describing this specific benefit/feature of the product\"}")) . "
+    ]";
+            
+            $imageSectionsInstructions = "
+
+IMPORTANT - IMAGE SECTIONS:
+- This product has {$imageSectionCount} feature images that will be displayed on the landing page
+- Generate EXACTLY {$imageSectionCount} image_sections, one for each image
+- Each section should highlight a DIFFERENT benefit, feature, or use case
+- Think of these like the sections you see on professional landing pages where each image shows a different product advantage
+- Examples: \"Effective sun protection\", \"Easy to install\", \"Premium quality materials\", \"Perfect for families\"
+- Make each title unique and each description persuasive and specific";
+        } else {
+            $imageSectionsInstructions = '';
+        }
+
         return "You are a professional marketing copywriter and landing page designer. {$instruction}.
 
 Create compelling landing page content for the following product:
@@ -100,7 +124,7 @@ Generate a professional, conversion-optimized landing page in JSON format with t
     \"form_name_placeholder\": \"Name input placeholder\",
     \"form_phone_placeholder\": \"Phone input placeholder\",
     \"form_note_placeholder\": \"Note input placeholder\",
-    \"form_submit_button\": \"Submit button text\"
+    \"form_submit_button\": \"Submit button text\"{$imageSectionsPrompt}
 }
 
 CRITICAL INSTRUCTIONS FOR TESTIMONIALS:
@@ -111,7 +135,7 @@ CRITICAL INSTRUCTIONS FOR TESTIMONIALS:
 - Mention specific aspects of the product, delivery, quality, or customer service
 - Write as if you are real customers sharing their genuine experience
 - DO NOT use generic phrases like \"testimonial text\", \"great product\", or placeholders
-- Each testimonial must be unique and believable
+- Each testimonial must be unique and believable{$imageSectionsInstructions}
 
 Other requirements:
 - Make content specific to {$categoryName} category and this exact product
@@ -250,6 +274,139 @@ Other requirements:
             $updateData['landing_page_content'] = $landingPageData['fr']['full_description'] ?? null;
         }
 
+        // Generate landing page sections from product images (excluding the first/main image)
+        $landingSections = $this->generateLandingSectionsFromImages($product, $landingPageData);
+        
+        // Force update the landing_page_sections field
+        $updateData['landing_page_sections'] = $landingSections;
+
         $product->update($updateData);
+        
+        Log::info('Landing page data saved for product: ' . $product->id, [
+            'sections_count' => count($landingSections)
+        ]);
+    }
+
+    /**
+     * Generate landing page sections from product images with AI-generated descriptions
+     */
+    protected function generateLandingSectionsFromImages(Product $product, array $landingPageData): array
+    {
+        $images = $product->images ?? [];
+        
+        // Skip if no images or only 1 image (which is the main/hero image)
+        if (count($images) <= 1) {
+            return [];
+        }
+
+        // Get AI-generated image sections if available from landing page data
+        // Check both top-level and language-nested data
+        $imageSectionsFr = $landingPageData['fr']['image_sections'] ?? $landingPageData['image_sections'] ?? null;
+        $imageSectionsEn = $landingPageData['en']['image_sections'] ?? $landingPageData['image_sections'] ?? null;
+        $imageSectionsAr = $landingPageData['ar']['image_sections'] ?? $landingPageData['image_sections'] ?? null;
+
+        $sections = [];
+        
+        // Skip the first image (it's the hero/main image), use remaining images
+        $sectionImages = array_slice($images, 1);
+        
+        foreach ($sectionImages as $index => $imagePath) {
+            $section = [
+                'image' => $imagePath,
+                'title_fr' => $imageSectionsFr[$index]['title'] ?? '',
+                'description_fr' => $imageSectionsFr[$index]['description'] ?? '',
+                'title_en' => $imageSectionsEn[$index]['title'] ?? $imageSectionsFr[$index]['title'] ?? '',
+                'description_en' => $imageSectionsEn[$index]['description'] ?? $imageSectionsFr[$index]['description'] ?? '',
+                'title_ar' => $imageSectionsAr[$index]['title'] ?? $imageSectionsFr[$index]['title'] ?? '',
+                'description_ar' => $imageSectionsAr[$index]['description'] ?? $imageSectionsFr[$index]['description'] ?? '',
+            ];
+            
+            // If AI didn't provide enough sections, use generic ones based on product info
+            if (empty($section['title_fr'])) {
+                $section['title_fr'] = "Détail du produit " . ($index + 1);
+                $section['description_fr'] = "Découvrez la qualité exceptionnelle de notre " . $product->name . ".";
+            }
+            
+            $sections[] = $section;
+        }
+
+        return $sections;
+    }
+
+    /**
+     * Generate image section descriptions using AI
+     */
+    public function generateImageSections(Product $product, array $languages = ['fr', 'en', 'ar']): array
+    {
+        if (!$this->aiSetting) {
+            throw new \Exception('AI API settings not configured.');
+        }
+
+        $images = $product->images ?? [];
+        
+        // Skip if no images or only 1 image
+        if (count($images) <= 1) {
+            return [];
+        }
+
+        $imageCount = count($images) - 1; // Exclude first/main image
+        $categoryName = $product->category ? $product->category->name : 'General';
+
+        $results = [];
+        foreach ($languages as $language) {
+            $prompt = $this->buildImageSectionsPrompt($product, $categoryName, $imageCount, $language);
+
+            if (!empty($this->aiSetting->openai_api_key_encrypted)) {
+                $results[$language] = $this->generateWithOpenAI($prompt);
+            } elseif (!empty($this->aiSetting->anthropic_api_key_encrypted)) {
+                $results[$language] = $this->generateWithAnthropic($prompt);
+            }
+        }
+
+        return $results;
+    }
+
+    protected function buildImageSectionsPrompt(Product $product, string $categoryName, int $imageCount, string $language = 'fr'): string
+    {
+        $languageInstructions = [
+            'fr' => 'Generate all content in French (Français)',
+            'en' => 'Generate all content in English',
+            'ar' => 'Generate all content in Arabic (العربية)'
+        ];
+
+        $instruction = $languageInstructions[$language] ?? $languageInstructions['fr'];
+
+        return "You are a professional marketing copywriter. {$instruction}.
+
+Create compelling section titles and descriptions for product images on a landing page.
+
+Product Name: {$product->name}
+Category: {$categoryName}
+Description: {$product->description}
+
+This product has {$imageCount} feature images (excluding the main hero image).
+Generate a title and description for EACH of the {$imageCount} images.
+
+The sections should highlight different aspects/benefits/uses of the product, similar to how professional landing pages show:
+- Product benefits
+- Key features
+- Use cases
+- Quality highlights
+
+Generate JSON with this exact format:
+{
+    \"image_sections\": [
+        {\"title\": \"Short catchy title (5-8 words)\", \"description\": \"Detailed description of this feature/benefit (2-3 sentences)\"},
+        {\"title\": \"Short catchy title (5-8 words)\", \"description\": \"Detailed description of this feature/benefit (2-3 sentences)\"}
+    ]
+}
+
+Requirements:
+- Generate EXACTLY {$imageCount} sections (one for each image)
+- Each title should be unique and highlight a different benefit
+- Descriptions should be persuasive and specific to the product
+- Focus on benefits, not just features
+- Make content specific to {$categoryName} category
+- Return ONLY valid JSON, no markdown or extra text";
     }
 }

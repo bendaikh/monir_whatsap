@@ -63,6 +63,11 @@ Route::middleware(['auth'])->prefix('app')->name('app.')->group(function () {
     Route::get('/products/{id}/edit', [CustomerDashboardController::class, 'productsEdit'])->name('products.edit');
     Route::put('/products/{id}', [CustomerDashboardController::class, 'productsUpdate'])->name('products.update');
     Route::delete('/products/{id}', [CustomerDashboardController::class, 'productsDestroy'])->name('products.destroy');
+    Route::get('/products/{id}/landing-builder', [CustomerDashboardController::class, 'landingPageBuilder'])->name('products.landing-builder');
+    Route::post('/products/{id}/landing-builder', [CustomerDashboardController::class, 'saveLandingPageBuilder'])->name('products.save-landing-builder');
+    Route::post('/products/{id}/upload-image', [CustomerDashboardController::class, 'uploadProductImage'])->name('products.upload-image');
+    Route::post('/products/{id}/set-main-image', [CustomerDashboardController::class, 'setMainImage'])->name('products.set-main-image');
+    Route::post('/products/{id}/update-image-description', [CustomerDashboardController::class, 'updateImageDescription'])->name('products.update-image-description');
     Route::post('/products/{id}/generate-landing-page', [CustomerDashboardController::class, 'generateLandingPage'])->name('products.generate-landing-page');
     Route::post('/products/{id}/generate-images', [CustomerDashboardController::class, 'generateProductImages'])->name('products.generate-images');
     Route::get('/products/{id}/image-progress', [CustomerDashboardController::class, 'checkImageGenerationProgress'])->name('products.image-progress');
@@ -90,6 +95,11 @@ Route::middleware(['auth'])->prefix('app')->name('app.')->group(function () {
     Route::post('/tiktok-ads', [SocialMediaAdsController::class, 'saveTikTokSettings'])->name('tiktok-ads.save');
     Route::post('/tiktok-ads/test', [SocialMediaAdsController::class, 'testTikTokConnection'])->name('tiktok-ads.test');
     Route::post('/tiktok-ads/disconnect', [SocialMediaAdsController::class, 'disconnectTikTok'])->name('tiktok-ads.disconnect');
+    
+    // External API Integration
+    Route::get('/external-api-settings', [CustomerDashboardController::class, 'externalApiSettings'])->name('external-api-settings');
+    Route::post('/external-api-settings', [CustomerDashboardController::class, 'saveExternalApiSettings'])->name('external-api-settings.save');
+    Route::post('/external-api-settings/test', [CustomerDashboardController::class, 'testExternalApiConnection'])->name('external-api-settings.test');
     
     // WhatsApp Routes
     Route::post('/whatsapp/generate-qr', [WhatsAppController::class, 'generateQrCode'])->name('whatsapp.generate-qr');

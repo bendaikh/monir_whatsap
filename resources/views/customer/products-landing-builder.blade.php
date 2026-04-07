@@ -1,0 +1,323 @@
+@extends('layouts.customer')
+
+@section('content')
+@php
+    $sectionsJson = json_encode($product->landing_page_sections ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+    $pageDataFrJson = json_encode($product->landing_page_fr ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+    $pageDataEnJson = json_encode($product->landing_page_en ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+    $pageDataArJson = json_encode($product->landing_page_ar ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+@endphp
+
+<div x-data="landingPageBuilder()" x-init="init()" class="min-h-screen">
+    <div class="fixed top-0 left-0 right-0 bg-[#0f1c2e] border-b border-white/10 z-50 shadow-lg">
+        <div class="px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a href="{{ route('app.products') }}" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Back
+                </a>
+                <h1 class="text-xl font-bold text-white">Edit Landing Page: {{ $product->name }}</h1>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <div class="flex gap-2 bg-gray-800 rounded-lg p-1">
+                    <button type="button" x-on:click="currentLang = 'fr'" 
+                            x-bind:class="currentLang === 'fr' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'"
+                            class="px-3 py-2 rounded font-medium text-sm transition">
+                        FR
+                    </button>
+                    <button type="button" x-on:click="currentLang = 'en'" 
+                            x-bind:class="currentLang === 'en' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'"
+                            class="px-3 py-2 rounded font-medium text-sm transition">
+                        EN
+                    </button>
+                    <button type="button" x-on:click="currentLang = 'ar'" 
+                            x-bind:class="currentLang === 'ar' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'"
+                            class="px-3 py-2 rounded font-medium text-sm transition">
+                        AR
+                    </button>
+                </div>
+                
+                <a href="{{ route('product.show', $product->slug) }}" target="_blank" 
+                   class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                    Preview Live
+                </a>
+                
+                <button type="button" x-on:click="saveChanges()" x-bind:disabled="saving"
+                        class="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-600 text-white font-bold rounded-lg transition flex items-center gap-2">
+                    <svg class="w-5 h-5" x-bind:class="{'animate-spin': saving}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span x-text="saving ? 'Saving...' : 'Save Changes'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="pt-20">
+        <div x-show="showSuccess" x-transition 
+             class="fixed top-24 right-6 bg-emerald-500 text-white px-6 py-3 rounded-lg shadow-xl z-50 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <span>Changes saved successfully!</span>
+        </div>
+
+        <div class="container mx-auto px-4 py-8 space-y-8">
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+                    </svg>
+                    Hero Section
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <span x-text="'Hero Title (' + currentLang.toUpperCase() + ')'"></span>
+                        </label>
+                        <input type="text" 
+                               x-bind:value="(pageData[currentLang] && pageData[currentLang].hero_title) || ''"
+                               x-on:input="if (!pageData[currentLang]) pageData[currentLang] = {}; pageData[currentLang].hero_title = $event.target.value"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 font-bold text-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Enter hero title">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <span x-text="'Hero Description (' + currentLang.toUpperCase() + ')'"></span>
+                        </label>
+                        <textarea x-bind:value="(pageData[currentLang] && pageData[currentLang].hero_description) || ''"
+                                  x-on:input="if (!pageData[currentLang]) pageData[currentLang] = {}; pageData[currentLang].hero_description = $event.target.value"
+                                  rows="4"
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  placeholder="Enter hero description"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+                        </svg>
+                        Product Sections
+                    </h2>
+                    <button type="button" x-on:click="addSection()"
+                            class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Add Section
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <template x-for="(section, index) in sections" x-bind:key="index">
+                        <div class="border-2 border-gray-200 hover:border-purple-400 rounded-xl p-6 transition relative">
+                            <div class="absolute top-4 right-4 flex gap-2">
+                                <button type="button" x-on:click="moveSection(index, 'up')" x-show="index > 0"
+                                        class="p-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                    </svg>
+                                </button>
+                                <button type="button" x-on:click="moveSection(index, 'down')" x-show="index < sections.length - 1"
+                                        class="p-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                <button type="button" x-on:click="deleteSection(index)"
+                                        class="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div class="grid md:grid-cols-2 gap-6 pr-32">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Section Image</label>
+                                    <div x-show="section.image" class="relative mb-3">
+                                        <img x-bind:src="section.image && section.image.startsWith('http') ? section.image : '/storage/' + section.image" 
+                                             class="w-full h-48 object-cover rounded-lg border border-gray-300"
+                                             onerror="this.src='https://via.placeholder.com/400x300?text=Image+Not+Found'">
+                                        <button type="button" x-on:click="section.image = null"
+                                                class="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <label x-show="!section.image" 
+                                           class="block w-full h-48 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 transition cursor-pointer flex flex-col items-center justify-center">
+                                        <svg class="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                        <span class="text-sm text-gray-500">Click to upload</span>
+                                        <input type="file" accept="image/*" class="hidden" x-on:change="uploadSectionImage($event, index)">
+                                    </label>
+                                </div>
+
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                                            <span x-text="'Title (' + currentLang.toUpperCase() + ')'"></span>
+                                        </label>
+                                        <input type="text" 
+                                               x-bind:value="section['title_' + currentLang]"
+                                               x-on:input="section['title_' + currentLang] = $event.target.value"
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 text-sm focus:ring-2 focus:ring-purple-500"
+                                               placeholder="Enter title">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                                            <span x-text="'Description (' + currentLang.toUpperCase() + ')'"></span>
+                                        </label>
+                                        <textarea x-bind:value="section['description_' + currentLang]"
+                                                  x-on:input="section['description_' + currentLang] = $event.target.value"
+                                                  rows="5"
+                                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 text-sm focus:ring-2 focus:ring-purple-500"
+                                                  placeholder="Enter description"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div x-show="sections.length === 0" class="text-center py-12 border-2 border-dashed border-gray-300 rounded-xl">
+                        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                        </svg>
+                        <p class="text-gray-500 text-lg mb-4">No sections yet</p>
+                        <button type="button" x-on:click="addSection()"
+                                class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition">
+                            Add Your First Section
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+function landingPageBuilder() {
+    return {
+        currentLang: 'fr',
+        saving: false,
+        showSuccess: false,
+        sections: {!! $sectionsJson !!},
+        pageData: {
+            fr: {!! $pageDataFrJson !!},
+            en: {!! $pageDataEnJson !!},
+            ar: {!! $pageDataArJson !!}
+        },
+        
+        init() {
+            console.log('Landing page builder initialized');
+        },
+        
+        addSection() {
+            this.sections.push({
+                title_fr: '',
+                description_fr: '',
+                title_en: '',
+                description_en: '',
+                title_ar: '',
+                description_ar: '',
+                image: null
+            });
+        },
+        
+        deleteSection(index) {
+            if (confirm('Are you sure you want to delete this section?')) {
+                this.sections.splice(index, 1);
+            }
+        },
+        
+        moveSection(index, direction) {
+            var newIndex = direction === 'up' ? index - 1 : index + 1;
+            if (newIndex >= 0 && newIndex < this.sections.length) {
+                var temp = this.sections[index];
+                this.sections[index] = this.sections[newIndex];
+                this.sections[newIndex] = temp;
+            }
+        },
+        
+        uploadSectionImage(event, index) {
+            var file = event.target.files[0];
+            if (!file) return;
+            
+            var formData = new FormData();
+            formData.append('image', file);
+            var self = this;
+            
+            fetch('{{ route("app.products.upload-image", $product->id) }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: formData
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    self.sections[index].image = data.path;
+                } else {
+                    alert('Failed to upload image');
+                }
+            })
+            .catch(function(error) {
+                console.error('Upload error:', error);
+                alert('Failed to upload image');
+            });
+        },
+        
+        saveChanges() {
+            this.saving = true;
+            var self = this;
+            
+            fetch('{{ route("app.products.save-landing-builder", $product->id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    sections: this.sections,
+                    page_data: this.pageData
+                })
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    self.showSuccess = true;
+                    setTimeout(function() {
+                        self.showSuccess = false;
+                    }, 3000);
+                } else {
+                    alert('Failed to save changes');
+                }
+            })
+            .catch(function(error) {
+                console.error('Save error:', error);
+                alert('Failed to save changes');
+            })
+            .finally(function() {
+                self.saving = false;
+            });
+        }
+    };
+}
+</script>
+@endsection

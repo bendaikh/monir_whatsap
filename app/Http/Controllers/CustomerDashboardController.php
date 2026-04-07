@@ -25,12 +25,12 @@ class CustomerDashboardController extends Controller
             'messages' => Message::whereHas('whatsappProfile', function($q) use ($user) {
                 $q->where('user_id', $user->id);
             })->count(),
-            'orders' => 0, // Placeholder
+            'orders' => \App\Models\ProductLead::where('user_id', $user->id)->count(),
             'active_profiles' => WhatsappProfile::where('user_id', $user->id)
                 ->where('status', 'connected')
                 ->count(),
-            'ai_tokens' => 0, // Placeholder
-            'sales_percentage' => 0, // Placeholder
+            'ai_tokens' => 0,
+            'sales_percentage' => 0,
         ];
         
         $recent_conversations = Conversation::whereHas('whatsappProfile', function($q) use ($user) {
@@ -265,6 +265,14 @@ class CustomerDashboardController extends Controller
             'images.*' => 'image|max:2048',
             'stock' => 'nullable|integer|min:0',
             'sku' => 'nullable|string|max:255',
+            'landing_sections' => 'nullable|array',
+            'landing_sections.*.image' => 'nullable|image|max:2048',
+            'landing_sections.*.title_fr' => 'nullable|string|max:255',
+            'landing_sections.*.description_fr' => 'nullable|string',
+            'landing_sections.*.title_en' => 'nullable|string|max:255',
+            'landing_sections.*.description_en' => 'nullable|string',
+            'landing_sections.*.title_ar' => 'nullable|string|max:255',
+            'landing_sections.*.description_ar' => 'nullable|string',
         ]);
         
         $validated['user_id'] = auth()->id();
@@ -279,6 +287,44 @@ class CustomerDashboardController extends Controller
                 $imagePaths[] = $image->store('products', 'public');
             }
             $validated['images'] = $imagePaths;
+        }
+        
+        if ($request->has('landing_sections')) {
+            $landingSections = [];
+            foreach ($request->input('landing_sections', []) as $index => $section) {
+                // Check if this is an auto-generated section (no descriptions yet, AI will fill them)
+                if (!empty($section['auto_generated'])) {
+                    $imageIndex = $section['image_index'] ?? 0;
+                    // Store placeholder - AI will fill this when landing page is generated
+                    $sectionData = [
+                        'image_index' => $imageIndex,
+                        'pending_ai' => true, // Mark for AI generation
+                    ];
+                    $landingSections[] = $sectionData;
+                } else {
+                    // Manual section with custom data
+                    $sectionData = [
+                        'title_fr' => $section['title_fr'] ?? '',
+                        'description_fr' => $section['description_fr'] ?? '',
+                        'title_en' => $section['title_en'] ?? '',
+                        'description_en' => $section['description_en'] ?? '',
+                        'title_ar' => $section['title_ar'] ?? '',
+                        'description_ar' => $section['description_ar'] ?? '',
+                    ];
+                    
+                    if ($request->hasFile("landing_sections.{$index}.image")) {
+                        $sectionData['image'] = $request->file("landing_sections.{$index}.image")->store('products/landing-sections', 'public');
+                    }
+                    
+                    if (!empty($sectionData['title_fr']) || !empty($sectionData['description_fr'])) {
+                        $landingSections[] = $sectionData;
+                    }
+                }
+            }
+            
+            if (!empty($landingSections)) {
+                $validated['landing_page_sections'] = $landingSections;
+            }
         }
         
         if ($request->boolean('generate_landing_page')) {
@@ -337,6 +383,15 @@ class CustomerDashboardController extends Controller
             'images.*' => 'image|max:2048',
             'stock' => 'nullable|integer|min:0',
             'sku' => 'nullable|string|max:255',
+            'landing_sections' => 'nullable|array',
+            'landing_sections.*.image' => 'nullable|image|max:2048',
+            'landing_sections.*.existing_image' => 'nullable|string',
+            'landing_sections.*.title_fr' => 'nullable|string|max:255',
+            'landing_sections.*.description_fr' => 'nullable|string',
+            'landing_sections.*.title_en' => 'nullable|string|max:255',
+            'landing_sections.*.description_en' => 'nullable|string',
+            'landing_sections.*.title_ar' => 'nullable|string|max:255',
+            'landing_sections.*.description_ar' => 'nullable|string',
         ]);
         
         $validated['is_active'] = $request->has('is_active');
@@ -349,6 +404,32 @@ class CustomerDashboardController extends Controller
                 $imagePaths[] = $image->store('products', 'public');
             }
             $validated['images'] = $imagePaths;
+        }
+        
+        if ($request->has('landing_sections')) {
+            $landingSections = [];
+            foreach ($request->input('landing_sections', []) as $index => $section) {
+                $sectionData = [
+                    'title_fr' => $section['title_fr'] ?? '',
+                    'description_fr' => $section['description_fr'] ?? '',
+                    'title_en' => $section['title_en'] ?? '',
+                    'description_en' => $section['description_en'] ?? '',
+                    'title_ar' => $section['title_ar'] ?? '',
+                    'description_ar' => $section['description_ar'] ?? '',
+                ];
+                
+                if ($request->hasFile("landing_sections.{$index}.image")) {
+                    $sectionData['image'] = $request->file("landing_sections.{$index}.image")->store('products/landing-sections', 'public');
+                } elseif (!empty($section['existing_image'])) {
+                    $sectionData['image'] = $section['existing_image'];
+                }
+                
+                if (!empty($sectionData['title_fr']) || !empty($sectionData['description_fr'])) {
+                    $landingSections[] = $sectionData;
+                }
+            }
+            
+            $validated['landing_page_sections'] = $landingSections;
         }
         
         // Handle image deletion
@@ -436,6 +517,112 @@ class CustomerDashboardController extends Controller
             'images' => $product->ai_generated_images ?? [],
         ]);
     }
+
+    public function landingPageBuilder($id)
+    {
+        $product = \App\Models\Product::where('user_id', auth()->id())->findOrFail($id);
+        
+        return view('customer.products-landing-builder', compact('product'));
+    }
+
+    public function saveLandingPageBuilder(Request $request, $id)
+    {
+        $product = \App\Models\Product::where('user_id', auth()->id())->findOrFail($id);
+        
+        $validated = $request->validate([
+            'sections' => 'nullable|array',
+            'sections.*.title_fr' => 'nullable|string|max:255',
+            'sections.*.description_fr' => 'nullable|string',
+            'sections.*.title_en' => 'nullable|string|max:255',
+            'sections.*.description_en' => 'nullable|string',
+            'sections.*.title_ar' => 'nullable|string|max:255',
+            'sections.*.description_ar' => 'nullable|string',
+            'sections.*.image' => 'nullable|string',
+            'page_data' => 'nullable|array',
+            'page_data.fr' => 'nullable|array',
+            'page_data.en' => 'nullable|array',
+            'page_data.ar' => 'nullable|array',
+        ]);
+        
+        $product->update([
+            'landing_page_sections' => $validated['sections'] ?? [],
+            'landing_page_fr' => $validated['page_data']['fr'] ?? [],
+            'landing_page_en' => $validated['page_data']['en'] ?? [],
+            'landing_page_ar' => $validated['page_data']['ar'] ?? [],
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Landing page updated successfully!'
+        ]);
+    }
+
+    public function uploadProductImage(Request $request, $id)
+    {
+        $product = \App\Models\Product::where('user_id', auth()->id())->findOrFail($id);
+        
+        $request->validate([
+            'image' => 'required|image|max:2048'
+        ]);
+        
+        $path = $request->file('image')->store('products/landing-sections', 'public');
+        $url = \Storage::url($path);
+        
+        return response()->json([
+            'success' => true,
+            'url' => $url,
+            'path' => $path
+        ]);
+    }
+
+    public function setMainImage(Request $request, $id)
+    {
+        $product = \App\Models\Product::where('user_id', auth()->id())->findOrFail($id);
+        
+        $validated = $request->validate([
+            'image_path' => 'required|string'
+        ]);
+        
+        $images = $product->images ?? [];
+        $imagePath = $validated['image_path'];
+        
+        // Remove from current position and add to front
+        $images = array_values(array_diff($images, [$imagePath]));
+        array_unshift($images, $imagePath);
+        
+        $product->update(['images' => $images]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Main image updated successfully!'
+        ]);
+    }
+
+    public function updateImageDescription(Request $request, $id)
+    {
+        $product = \App\Models\Product::where('user_id', auth()->id())->findOrFail($id);
+        
+        $validated = $request->validate([
+            'image_path' => 'required|string',
+            'description_fr' => 'nullable|string',
+            'description_en' => 'nullable|string',
+            'description_ar' => 'nullable|string',
+        ]);
+        
+        $imageDescriptions = $product->image_descriptions ?? [];
+        $imageDescriptions[$validated['image_path']] = [
+            'fr' => $validated['description_fr'] ?? '',
+            'en' => $validated['description_en'] ?? '',
+            'ar' => $validated['description_ar'] ?? '',
+        ];
+        
+        $product->update(['image_descriptions' => $imageDescriptions]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Image description updated successfully!'
+        ]);
+    }
     
     public function campaigns()
     {
@@ -509,5 +696,62 @@ class CustomerDashboardController extends Controller
         $category->delete();
         
         return redirect()->route('app.categories')->with('success', 'Category deleted successfully!');
+    }
+
+    public function externalApiSettings()
+    {
+        $user = auth()->user();
+        return view('customer.external-api-settings', compact('user'));
+    }
+
+    public function saveExternalApiSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'external_api_url' => 'nullable|url|max:500',
+            'external_api_key' => 'nullable|string|max:2048',
+            'external_api_enabled' => 'nullable|boolean',
+            'clear_external_api_key' => 'nullable|boolean',
+        ]);
+
+        $user = $request->user();
+        
+        $user->external_api_url = $validated['external_api_url'] ?? null;
+        $user->external_api_enabled = $request->boolean('external_api_enabled');
+
+        if ($request->boolean('clear_external_api_key')) {
+            $user->external_api_key_encrypted = null;
+        } elseif (!empty($validated['external_api_key'])) {
+            $user->external_api_key_encrypted = \Crypt::encryptString(trim($validated['external_api_key']));
+        }
+
+        $user->save();
+
+        return redirect()
+            ->route('app.external-api-settings')
+            ->with('success', 'External API settings saved successfully!');
+    }
+
+    public function testExternalApiConnection(Request $request)
+    {
+        $user = $request->user();
+        
+        if (!$user->external_api_enabled || !$user->external_api_url || !$user->external_api_key_encrypted) {
+            return redirect()
+                ->route('app.external-api-settings')
+                ->with('error', 'Please configure all API settings before testing.');
+        }
+
+        $apiService = new \App\Services\ExternalApiService($user);
+        $result = $apiService->testConnection();
+
+        if ($result['success']) {
+            return redirect()
+                ->route('app.external-api-settings')
+                ->with('success', 'Connection successful! Your API is working correctly.');
+        }
+
+        return redirect()
+            ->route('app.external-api-settings')
+            ->with('error', 'Connection failed: ' . $result['message']);
     }
 }
