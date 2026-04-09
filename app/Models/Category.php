@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 class Category extends Model
 {
     protected $fillable = [
+        'store_id',
         'name',
         'slug',
         'description',
@@ -30,6 +31,11 @@ class Category extends Model
                 $category->slug = Str::slug($category->name);
             }
         });
+    }
+
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
     }
 
     public function products()

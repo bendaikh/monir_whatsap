@@ -24,6 +24,26 @@
                     </div>
                 </div>
 
+                <!-- Store Selector -->
+                @if(isset($activeStore) && $activeStore)
+                    <div class="px-3 py-3 border-b border-white/10">
+                        <a href="{{ route('stores.dashboard') }}" class="flex items-center justify-between p-2.5 rounded-lg hover:bg-white/5 transition group">
+                            <div class="flex items-center gap-2 flex-1 min-w-0">
+                                <svg class="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                </svg>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs text-emerald-400 font-medium">Current Store</p>
+                                    <p class="text-sm font-semibold text-white truncate">{{ $activeStore->name }}</p>
+                                </div>
+                            </div>
+                            <svg class="w-4 h-4 text-emerald-400 opacity-0 group-hover:opacity-100 transition flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/>
+                            </svg>
+                        </a>
+                    </div>
+                @endif
+
                 <!-- Navigation -->
                 <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto" x-data="{ socialMediaOpen: {{ request()->routeIs('app.facebook-ads') || request()->routeIs('app.tiktok-ads') ? 'true' : 'false' }}, aiApiOpen: {{ request()->routeIs('app.ai-settings') ? 'true' : 'false' }}, productsOpen: {{ request()->routeIs('app.products*') || request()->routeIs('app.categories*') ? 'true' : 'false' }} }">
                     <a href="{{ route('app.dashboard') }}" class="{{ request()->routeIs('app.dashboard') ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-400 hover:bg-white/5' }} flex items-center gap-3 px-3 py-2.5 rounded-lg transition">
@@ -158,23 +178,45 @@
 
                 <!-- User Profile -->
                 <div class="px-3 py-4 border-t border-white/10">
-                    <div class="flex items-center gap-3 px-3 py-2">
-                        <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center">
-                            <span class="text-white font-semibold text-sm">{{ substr(auth()->user()->name, 0, 1) }}</span>
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="flex items-center gap-3 px-3 py-2 w-full rounded-lg hover:bg-white/5 transition">
+                            <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="text-white font-semibold text-sm">{{ substr(auth()->user()->name, 0, 1) }}</span>
+                            </div>
+                            <div class="flex-1 min-w-0 text-left">
+                                <p class="text-sm font-medium text-white truncate">{{ auth()->user()->name }}</p>
+                                <p class="text-xs text-gray-400 truncate">{{ auth()->user()->subscription_plan ?? 'Free' }}</p>
+                            </div>
+                            <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+
+                        <div x-show="open" @click.away="open = false" x-cloak class="absolute bottom-full left-0 right-0 mb-2 bg-[#1a2332] rounded-lg shadow-lg py-1 border border-white/10">
+                            @if(auth()->user()->role === 'superadmin')
+                                <a href="{{ route('superadmin.dashboard') }}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 transition">
+                                    Super Admin
+                                </a>
+                                <div class="border-t border-white/10 my-1"></div>
+                            @endif
+                            <a href="{{ route('stores.dashboard') }}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 transition">
+                                My Stores
+                            </a>
+                            <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 transition">
+                                Profile Settings
+                            </a>
+                            <div class="border-t border-white/10 my-1"></div>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 transition">
+                                    Log Out
+                                </button>
+                            </form>
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-white truncate">{{ auth()->user()->name }}</p>
-                            <p class="text-xs text-gray-400 truncate">{{ auth()->user()->subscription_plan ?? 'Free' }}</p>
-                        </div>
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="text-gray-400 hover:text-white transition">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                                </svg>
-                            </button>
-                        </form>
                     </div>
+                    <style>
+                        [x-cloak] { display: none !important; }
+                    </style>
                 </div>
             </div>
         </aside>

@@ -8,6 +8,7 @@ class WebsiteSettings extends Model
 {
     protected $fillable = [
         'user_id',
+        'store_id',
         'site_name',
         'site_description',
         'site_logo',
@@ -50,10 +51,20 @@ class WebsiteSettings extends Model
         return $this->belongsTo(User::class);
     }
 
-    public static function getSettings($userId)
+    public function store()
     {
+        return $this->belongsTo(Store::class);
+    }
+
+    public static function getSettings($userId, $storeId = null)
+    {
+        $where = ['user_id' => $userId];
+        if ($storeId) {
+            $where['store_id'] = $storeId;
+        }
+        
         return static::firstOrCreate(
-            ['user_id' => $userId],
+            $where,
             [
                 'site_name' => config('app.name'),
                 'hero_title' => 'Welcome to our store',

@@ -68,4 +68,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Subscription::class);
     }
+
+    public function stores()
+    {
+        return $this->hasMany(Store::class);
+    }
 }

@@ -20,5 +20,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         \Illuminate\Support\Facades\Blade::component('layouts.customer', 'customer-layout');
+        \Illuminate\Support\Facades\Blade::component('layouts.stores', 'stores-layout');
+        
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Store::class, \App\Policies\StorePolicy::class);
     }
 }

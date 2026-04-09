@@ -5,6 +5,7 @@ use App\Http\Controllers\CustomerDashboardController;
 use App\Http\Controllers\WhatsAppController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SocialMediaAdsController;
+use App\Http\Controllers\SuperAdminController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
@@ -24,9 +25,13 @@ Route::get('/storage/{path}', function ($path) {
     ]);
 })->where('path', '.*')->name('storage.serve');
 
-Route::get('/', [ProductController::class, 'index'])->name('home');
-Route::get('/product/{slug}', [ProductController::class, 'show'])->name('product.show');
-Route::post('/product/{slug}/submit-lead', [ProductController::class, 'submitLead'])->name('product.submit-lead');
+Route::get('/', function () {
+    return redirect()->route('login');
+});
+
+Route::get('/store/{subdomain}', [ProductController::class, 'index'])->name('store.home');
+Route::get('/store/{subdomain}/product/{slug}', [ProductController::class, 'show'])->name('store.product.show');
+Route::post('/store/{subdomain}/product/{slug}/submit-lead', [ProductController::class, 'submitLead'])->name('store.product.submit-lead');
 
 // WhatsApp Webhook (no auth required for external services)
 Route::post('/webhook/whatsapp', [WhatsAppController::class, 'webhook'])->name('whatsapp.webhook');
@@ -34,9 +39,9 @@ Route::post('/webhook/whatsapp', [WhatsAppController::class, 'webhook'])->name('
 // API route for Node.js to process messages (no auth)
 Route::post('/api/whatsapp/process-message', [WhatsAppController::class, 'processMessageWithAi']);
 
-// Dashboard - redirects to main dashboard
+// Dashboard - redirects to stores management
 Route::get('/dashboard', function () {
-    return redirect()->route('app.dashboard');
+    return redirect()->route('stores.dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -45,8 +50,19 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Main App Routes (for all authenticated users)
-Route::middleware(['auth'])->prefix('app')->name('app.')->group(function () {
+// Store Management Routes (must come before app routes)
+Route::middleware(['auth'])->prefix('stores')->name('stores.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\StoreManagementController::class, 'dashboard'])->name('dashboard');
+    Route::get('/create', [\App\Http\Controllers\StoreManagementController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\StoreManagementController::class, 'store'])->name('store');
+    Route::get('/{store}/edit', [\App\Http\Controllers\StoreManagementController::class, 'edit'])->name('edit');
+    Route::put('/{store}', [\App\Http\Controllers\StoreManagementController::class, 'update'])->name('update');
+    Route::delete('/{store}', [\App\Http\Controllers\StoreManagementController::class, 'destroy'])->name('destroy');
+    Route::post('/{store}/switch', [\App\Http\Controllers\StoreManagementController::class, 'switchStore'])->name('switch');
+});
+
+// Main App Routes (for all authenticated users) - requires active store selection
+Route::middleware(['auth', 'require.store'])->prefix('app')->name('app.')->group(function () {
     Route::get('/dashboard', [CustomerDashboardController::class, 'dashboard'])->name('dashboard');
     Route::get('/whatsapp', [CustomerDashboardController::class, 'whatsapp'])->name('whatsapp');
     Route::get('/ai-settings', [CustomerDashboardController::class, 'aiSettings'])->name('ai-settings');
@@ -109,6 +125,22 @@ Route::middleware(['auth'])->prefix('app')->name('app.')->group(function () {
     Route::get('/whatsapp/{profile}/conversations', [WhatsAppController::class, 'getConversations'])->name('whatsapp.conversations');
     Route::get('/whatsapp/conversations/{conversation}/messages', [WhatsAppController::class, 'getMessages'])->name('whatsapp.messages');
     Route::post('/whatsapp/conversations/{conversation}/send', [WhatsAppController::class, 'sendMessage'])->name('whatsapp.send');
+});
+
+// SuperAdmin Routes
+Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('superadmin.')->group(function () {
+    Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/customers', [SuperAdminController::class, 'customers'])->name('customers');
+    Route::get('/analytics', [SuperAdminController::class, 'analytics'])->name('analytics');
+    
+    // Store Management
+    Route::get('/stores', [SuperAdminController::class, 'stores'])->name('stores');
+    Route::post('/stores', [SuperAdminController::class, 'storeStore'])->name('stores.store');
+    Route::get('/stores/create', [SuperAdminController::class, 'storeCreate'])->name('stores.create');
+    Route::get('/stores/{store}/edit', [SuperAdminController::class, 'storeEdit'])->name('stores.edit');
+    Route::put('/stores/{store}', [SuperAdminController::class, 'storeUpdate'])->name('stores.update');
+    Route::delete('/stores/{store}', [SuperAdminController::class, 'storeDestroy'])->name('stores.destroy');
+    Route::post('/stores/{store}/switch', [SuperAdminController::class, 'switchStore'])->name('stores.switch');
 });
 
 require __DIR__.'/auth.php';

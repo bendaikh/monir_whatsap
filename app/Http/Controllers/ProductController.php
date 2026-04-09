@@ -3,77 +3,86 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Store;
 use App\Models\Category;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index(Request $request)
+    public function index($subdomain, Request $request)
     {
-        // Get website settings for the first user (or current user if logged in)
-        $userId = auth()->check() ? auth()->id() : \App\Models\User::first()->id;
-        $settings = \App\Models\WebsiteSettings::getSettings($userId);
+        $store = Store::where('subdomain', $subdomain)
+            ->where('is_active', true)
+            ->firstOrFail();
         
-        // Filter products by user_id to show only products belonging to the website owner
+        $settings = \App\Models\WebsiteSettings::getSettings($store->user_id, $store->id);
+        
+        if (!$settings) {
+            $settings = \App\Models\WebsiteSettings::getSettings($store->user_id, $store->id);
+        }
+        
         $query = Product::with('category')
             ->where('is_active', true)
-            ->where('user_id', $userId);
+            ->where('store_id', $store->id);
 
-        // Filter by category
         if ($request->has('category')) {
             $query->whereHas('category', function($q) use ($request) {
                 $q->where('slug', $request->category);
             });
         }
 
-        // Search
         if ($request->has('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
         $products = $query->orderBy('order')->orderBy('created_at', 'desc')->paginate(12);
-        $categories = Category::where('is_active', true)->orderBy('order')->get();
+        $categories = Category::where('is_active', true)
+            ->where('store_id', $store->id)
+            ->orderBy('order')
+            ->get();
         $featuredProducts = Product::where('is_active', true)
             ->where('is_featured', true)
-            ->where('user_id', $userId)
+            ->where('store_id', $store->id)
             ->limit(8)
             ->get();
 
-        return view('welcome', compact('products', 'categories', 'featuredProducts', 'settings'));
+        return view('welcome', compact('products', 'categories', 'featuredProducts', 'settings', 'store'));
     }
 
-    public function show($slug)
+    public function show($subdomain, $slug)
     {
-        // Get the user ID for filtering
-        $userId = auth()->check() ? auth()->id() : \App\Models\User::first()->id;
+        $store = Store::where('subdomain', $subdomain)
+            ->where('is_active', true)
+            ->firstOrFail();
         
         $product = Product::where('slug', $slug)
             ->where('is_active', true)
-            ->where('user_id', $userId)
+            ->where('store_id', $store->id)
             ->firstOrFail();
             
         $relatedProducts = Product::where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->where('is_active', true)
-            ->where('user_id', $userId)
+            ->where('store_id', $store->id)
             ->limit(4)
             ->get();
 
-        // Check if multi-language landing page exists
         if ($product->landing_page_fr || $product->landing_page_en || $product->landing_page_ar) {
-            return view('product-landing', compact('product', 'relatedProducts'));
+            return view('product-landing', compact('product', 'relatedProducts', 'store'));
         }
 
-        return view('product-detail', compact('product', 'relatedProducts'));
+        return view('product-detail', compact('product', 'relatedProducts', 'store'));
     }
 
-    public function submitLead(Request $request, $slug)
+    public function submitLead(Request $request, $subdomain, $slug)
     {
-        $userId = auth()->check() ? auth()->id() : \App\Models\User::first()->id;
+        $store = Store::where('subdomain', $subdomain)
+            ->where('is_active', true)
+            ->firstOrFail();
         
         $product = Product::where('slug', $slug)
             ->where('is_active', true)
-            ->where('user_id', $userId)
+            ->where('store_id', $store->id)
             ->firstOrFail();
 
         $validated = $request->validate([

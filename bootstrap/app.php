@@ -13,9 +13,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
+            'require.store' => \App\Http\Middleware\RequireActiveStore::class,
         ]);
         
-        // Exclude webhook routes from CSRF verification
+        $middleware->web(append: [
+            \App\Http\Middleware\SetActiveStore::class,
+        ]);
+        
         $middleware->validateCsrfTokens(except: [
             'webhook/*',
             'api/whatsapp/*',

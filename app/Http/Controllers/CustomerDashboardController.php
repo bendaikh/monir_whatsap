@@ -14,9 +14,15 @@ use Illuminate\Support\Facades\Http;
 
 class CustomerDashboardController extends Controller
 {
+    protected function getActiveStoreId()
+    {
+        return session('active_store_id');
+    }
+
     public function dashboard()
     {
         $user = auth()->user();
+        $storeId = $this->getActiveStoreId();
         
         $stats = [
             'conversations' => Conversation::whereHas('whatsappProfile', function($q) use ($user) {
@@ -241,14 +247,30 @@ class CustomerDashboardController extends Controller
     public function products()
     {
         $user = auth()->user();
-        $products = \App\Models\Product::where('user_id', $user->id)->latest()->paginate(10);
+        $storeId = $this->getActiveStoreId();
+        
+        $query = \App\Models\Product::where('user_id', $user->id);
+        
+        if ($storeId) {
+            $query->where('store_id', $storeId);
+        }
+        
+        $products = $query->latest()->paginate(10);
         
         return view('customer.products', compact('products'));
     }
     
     public function productsCreate()
     {
-        $categories = \App\Models\Category::where('is_active', true)->orderBy('order')->orderBy('name')->get();
+        $storeId = $this->getActiveStoreId();
+        
+        $query = \App\Models\Category::where('is_active', true);
+        
+        if ($storeId) {
+            $query->where('store_id', $storeId);
+        }
+        
+        $categories = $query->orderBy('order')->orderBy('name')->get();
         
         return view('customer.products-create', compact('categories'));
     }
@@ -276,6 +298,7 @@ class CustomerDashboardController extends Controller
         ]);
         
         $validated['user_id'] = auth()->id();
+        $validated['store_id'] = $this->getActiveStoreId();
         $validated['slug'] = \Str::slug($validated['name']) . '-' . time();
         $validated['is_active'] = $request->has('is_active');
         $validated['is_featured'] = $request->has('is_featured');
@@ -642,7 +665,15 @@ class CustomerDashboardController extends Controller
     
     public function categories()
     {
-        $categories = \App\Models\Category::orderBy('order')->orderBy('name')->get();
+        $storeId = $this->getActiveStoreId();
+        
+        $query = \App\Models\Category::orderBy('order')->orderBy('name');
+        
+        if ($storeId) {
+            $query->where('store_id', $storeId);
+        }
+        
+        $categories = $query->get();
         return view('customer.categories', compact('categories'));
     }
     
@@ -658,6 +689,7 @@ class CustomerDashboardController extends Controller
         
         $validated['slug'] = \Str::slug($validated['name']);
         $validated['is_active'] = $request->has('is_active');
+        $validated['store_id'] = $this->getActiveStoreId();
         
         \App\Models\Category::create($validated);
         
