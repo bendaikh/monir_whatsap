@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->boolean('has_promotions')->default(false)->after('has_variations');
+            $table->boolean('has_promotions')->default(false);
         });
     }
 
