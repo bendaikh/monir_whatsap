@@ -18,6 +18,8 @@ class Product extends Model
         'compare_at_price',
         'stock',
         'sku',
+        'has_variations',
+        'has_promotions',
         'images',
         'main_image',
         'image_descriptions',
@@ -47,6 +49,8 @@ class Product extends Model
         'ai_generated_images' => 'array',
         'price' => 'decimal:2',
         'compare_at_price' => 'decimal:2',
+        'has_variations' => 'boolean',
+        'has_promotions' => 'boolean',
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
         'landing_page_features' => 'array',
@@ -92,15 +96,26 @@ class Product extends Model
         }
 
         $path = trim($path);
+        
+        // If it's already a full URL, return as-is
         if (preg_match('#^https?://#i', $path)) {
             return $path;
         }
 
+        // If it's already a site-relative path starting with /
         if (str_starts_with($path, '/')) {
             return $path;
         }
+        
+        // If it's already starting with /storage/, return as-is
+        if (str_starts_with($path, 'storage/')) {
+            return '/' . $path;
+        }
 
-        return \Storage::disk('public')->url($path);
+        // Build a relative URL to avoid APP_URL issues
+        // Remove any leading slashes and build the path
+        $cleanPath = ltrim($path, '/');
+        return '/storage/' . $cleanPath;
     }
 
     public function getFirstImageAttribute()
@@ -166,6 +181,90 @@ class Product extends Model
         }
         
         return $images;
+    }
+
+    public function variations()
+    {
+        return $this->hasMany(ProductVariation::class);
+    }
+
+    public function activeVariations()
+    {
+        return $this->hasMany(ProductVariation::class)->where('is_active', true)->orderBy('order');
+    }
+
+    public function defaultVariation()
+    {
+        return $this->hasOne(ProductVariation::class)->where('is_default', true);
+    }
+
+    public function getPriceRangeAttribute()
+    {
+        if (!$this->has_variations) {
+            return null;
+        }
+
+        $variations = $this->activeVariations;
+        if ($variations->isEmpty()) {
+            return null;
+        }
+
+        $minPrice = $variations->min('price');
+        $maxPrice = $variations->max('price');
+
+        if ($minPrice == $maxPrice) {
+            return number_format($minPrice, 2) . ' MAD';
+        }
+
+        return number_format($minPrice, 2) . ' - ' . number_format($maxPrice, 2) . ' MAD';
+    }
+
+    public function getTotalStockAttribute()
+    {
+        if (!$this->has_variations) {
+            return $this->stock;
+        }
+
+        return $this->variations()->sum('stock');
+    }
+
+    public function promotions()
+    {
+        return $this->hasMany(ProductPromotion::class)->orderBy('min_quantity');
+    }
+
+    public function activePromotions()
+    {
+        return $this->hasMany(ProductPromotion::class)->where('is_active', true)->orderBy('min_quantity');
+    }
+
+    public function getPriceForQuantity($quantity, $variationId = null)
+    {
+        if (!$this->has_promotions) {
+            return $variationId ? $this->variations()->find($variationId)?->price : $this->price;
+        }
+
+        $query = $this->promotions()->where('is_active', true);
+        
+        if ($variationId) {
+            $query->where('product_variation_id', $variationId);
+        } else {
+            $query->whereNull('product_variation_id');
+        }
+
+        $promotion = $query->where('min_quantity', '<=', $quantity)
+            ->where(function($q) use ($quantity) {
+                $q->whereNull('max_quantity')
+                  ->orWhere('max_quantity', '>=', $quantity);
+            })
+            ->orderBy('min_quantity', 'desc')
+            ->first();
+
+        if ($promotion) {
+            return $promotion->price;
+        }
+
+        return $variationId ? $this->variations()->find($variationId)?->price : $this->price;
     }
 }
 

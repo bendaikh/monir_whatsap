@@ -59,6 +59,7 @@ Route::middleware(['auth'])->prefix('stores')->name('stores.')->group(function (
     Route::put('/{store}', [\App\Http\Controllers\StoreManagementController::class, 'update'])->name('update');
     Route::delete('/{store}', [\App\Http\Controllers\StoreManagementController::class, 'destroy'])->name('destroy');
     Route::post('/{store}/switch', [\App\Http\Controllers\StoreManagementController::class, 'switchStore'])->name('switch');
+    Route::put('/{store}/domain', [\App\Http\Controllers\StoreManagementController::class, 'updateDomain'])->name('update-domain');
 });
 
 // Main App Routes (for all authenticated users) - requires active store selection

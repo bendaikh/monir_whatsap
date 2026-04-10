@@ -9,9 +9,15 @@ use Illuminate\Support\Facades\Storage;
 
 class WebsiteCustomizationController extends Controller
 {
+    protected function getActiveStoreId()
+    {
+        return session('active_store_id');
+    }
+
     public function index()
     {
-        $settings = WebsiteSettings::getSettings(auth()->id());
+        $storeId = $this->getActiveStoreId();
+        $settings = WebsiteSettings::getSettings(auth()->id(), $storeId);
         return view('customer.website-customization', compact('settings'));
     }
 
@@ -49,7 +55,8 @@ class WebsiteCustomizationController extends Controller
             'site_favicon' => 'nullable|image|max:1024',
         ]);
 
-        $settings = WebsiteSettings::getSettings(auth()->id());
+        $storeId = $this->getActiveStoreId();
+        $settings = WebsiteSettings::getSettings(auth()->id(), $storeId);
 
         // Handle file uploads
         if ($request->hasFile('site_logo')) {
@@ -110,15 +117,38 @@ class WebsiteCustomizationController extends Controller
 
     public function preview()
     {
-        $settings = WebsiteSettings::getSettings(auth()->id());
+        $storeId = $this->getActiveStoreId();
+        $settings = WebsiteSettings::getSettings(auth()->id(), $storeId);
         
-        // Get the same data as the home page
-        $query = \App\Models\Product::with('category')->where('is_active', true);
+        // Get the same data as the home page - filtered by store
+        $query = \App\Models\Product::with('category')
+            ->where('is_active', true)
+            ->when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            });
+            
         $products = $query->orderBy('order')->orderBy('created_at', 'desc')->paginate(12);
-        $categories = \App\Models\Category::where('is_active', true)->orderBy('order')->get();
-        $featuredProducts = \App\Models\Product::where('is_active', true)->where('is_featured', true)->limit(8)->get();
         
-        return view('welcome', compact('products', 'categories', 'featuredProducts', 'settings'))
+        $categories = \App\Models\Category::where('is_active', true)
+            ->when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->orderBy('order')
+            ->get();
+            
+        $featuredProducts = \App\Models\Product::where('is_active', true)
+            ->where('is_featured', true)
+            ->when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->limit(8)
+            ->get();
+        
+        // Create a fake store object for preview
+        $store = new \stdClass();
+        $store->subdomain = 'preview';
+        
+        return view('welcome', compact('products', 'categories', 'featuredProducts', 'settings', 'store'))
             ->with('isPreview', true);
     }
 }

@@ -28,12 +28,12 @@
                                 <a href="{{ route('superadmin.dashboard') }}" class="{{ request()->routeIs('superadmin.dashboard') ? 'border-emerald-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition">
                                     Dashboard
                                 </a>
-                                <a href="{{ route('superadmin.customers') }}" class="{{ request()->routeIs('superadmin.customers') ? 'border-emerald-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition">
+                                {{-- <a href="{{ route('superadmin.customers') }}" class="{{ request()->routeIs('superadmin.customers') ? 'border-emerald-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition">
                                     Customers
                                 </a>
                                 <a href="{{ route('superadmin.analytics') }}" class="{{ request()->routeIs('superadmin.analytics') ? 'border-emerald-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition">
                                     Analytics
-                                </a>
+                                </a> --}}
                             @endif
                         </div>
                     </div>

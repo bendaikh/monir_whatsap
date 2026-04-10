@@ -13,7 +13,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     @if($settings->site_favicon)
-    <link rel="icon" href="{{ Storage::url($settings->site_favicon) }}">
+    <link rel="icon" href="/storage/{{ $settings->site_favicon }}">
     @endif
     <style>
         :root {
@@ -50,15 +50,15 @@
             <div class="flex justify-between items-center h-20">
                 <div class="flex items-center">
                     @if($settings->site_logo)
-                    <img src="{{ Storage::url($settings->site_logo) }}" alt="{{ $settings->site_name }}" class="h-12">
+                    <img src="/storage/{{ $settings->site_logo }}" alt="{{ $settings->site_name }}" class="h-12">
                     @else
-                    <a href="{{ route('home') }}" class="text-3xl font-bold bg-gradient-to-r from-emerald-500 to-blue-600 bg-clip-text text-transparent">
+                    <a href="{{ route('store.home', $store->subdomain) }}" class="text-3xl font-bold bg-gradient-to-r from-emerald-500 to-blue-600 bg-clip-text text-transparent">
                         {{ $settings->site_name }}
                     </a>
                     @endif
                 </div>
                 <div class="hidden md:flex items-center gap-8">
-                    <a href="{{ route('home') }}" class="text-gray-700 hover:text-emerald-600 font-medium transition">Home</a>
+                    <a href="{{ route('store.home', $store->subdomain) }}" class="text-gray-700 hover:text-emerald-600 font-medium transition">Home</a>
                     <a href="#categories" class="text-gray-700 hover:text-emerald-600 font-medium transition">Categories</a>
                     <a href="#featured" class="text-gray-700 hover:text-emerald-600 font-medium transition">Featured</a>
                     <a href="#contact" class="text-gray-700 hover:text-emerald-600 font-medium transition">Contact</a>
@@ -133,7 +133,7 @@
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                 @foreach($categories as $category)
-                <a href="{{ route('home', ['category' => $category->slug]) }}" class="group bg-gradient-to-br rounded-xl p-8 text-center hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1" style="background: linear-gradient(to bottom right, {{ $category->color }}20, {{ $category->color }}10)">
+                <a href="{{ route('store.home', ['subdomain' => $store->subdomain, 'category' => $category->slug]) }}" class="group bg-gradient-to-br rounded-xl p-8 text-center hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1" style="background: linear-gradient(to bottom right, {{ $category->color }}20, {{ $category->color }}10)">
                     <span class="material-icons text-5xl mb-4" style="color: {{ $category->color }}">{{ $category->icon }}</span>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">{{ $category->name }}</h3>
                     <span class="material-icons text-gray-400">arrow_back_ios</span>
@@ -179,7 +179,7 @@
                             @endif
                         </div>
                         <h3 class="font-bold text-gray-900 mb-3 group-hover:text-emerald-600 transition line-clamp-2">{{ $product->name }}</h3>
-                        <a href="{{ route('product.show', $product->slug) }}" class="block w-full py-3 text-white text-center rounded-lg font-medium transition" style="background-color: {{ $settings->primary_color }}">
+                        <a href="{{ route('store.product.show', [$store->subdomain, $product->slug]) }}" class="block w-full py-3 text-white text-center rounded-lg font-medium transition" style="background-color: {{ $settings->primary_color }}">
                             View Details
                         </a>
                     </div>
@@ -228,7 +228,7 @@
                             @endif
                         </div>
                         <h3 class="font-bold text-gray-900 mb-3 group-hover:text-emerald-600 transition line-clamp-2">{{ $product->name }}</h3>
-                        <a href="{{ route('product.show', $product->slug) }}" class="block w-full py-3 text-white text-center rounded-lg font-medium transition" style="background-color: {{ $settings->primary_color }}">
+                        <a href="{{ route('store.product.show', [$store->subdomain, $product->slug]) }}" class="block w-full py-3 text-white text-center rounded-lg font-medium transition" style="background-color: {{ $settings->primary_color }}">
                             View Details
                         </a>
                     </div>
@@ -348,21 +348,21 @@
                     <h3 class="font-bold text-lg mb-4">Categories</h3>
                     <ul class="space-y-2 text-sm text-gray-400">
                         @foreach($categories->take(4) as $category)
-                        <li><a href="{{ route('home', ['category' => $category->slug]) }}" class="hover:text-emerald-400 transition">{{ $category->name }}</a></li>
+                        <li><a href="{{ route('store.home', ['subdomain' => $store->subdomain, 'category' => $category->slug]) }}" class="hover:text-emerald-400 transition">{{ $category->name }}</a></li>
                         @endforeach
                     </ul>
                 </div>
                 <div>
                     <h3 class="font-bold text-lg mb-4">Quick Links</h3>
                     <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="{{ route('home') }}" class="hover:text-emerald-400 transition">Home</a></li>
+                        <li><a href="{{ route('store.home', $store->subdomain) }}" class="hover:text-emerald-400 transition">Home</a></li>
                         <li><a href="#featured" class="hover:text-emerald-400 transition">Featured Products</a></li>
                         <li><a href="#contact" class="hover:text-emerald-400 transition">Contact</a></li>
                     </ul>
                 </div>
                 <div>
                     @if($settings->site_logo)
-                    <img src="{{ Storage::url($settings->site_logo) }}" alt="{{ $settings->site_name }}" class="h-12 mb-4">
+                    <img src="/storage/{{ $settings->site_logo }}" alt="{{ $settings->site_name }}" class="h-12 mb-4">
                     @else
                     <div class="text-2xl font-bold bg-gradient-to-r from-emerald-500 to-blue-600 bg-clip-text text-transparent mb-4">{{ $settings->site_name }}</div>
                     @endif

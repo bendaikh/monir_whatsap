@@ -14,12 +14,12 @@
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 <div class="flex items-center">
-                    <a href="{{ route('home') }}" class="text-3xl font-bold bg-gradient-to-r from-emerald-500 to-blue-600 bg-clip-text text-transparent">
+                    <a href="{{ route('store.home', $store->subdomain) }}" class="text-3xl font-bold bg-gradient-to-r from-emerald-500 to-blue-600 bg-clip-text text-transparent">
                         {{ config('app.name') }}
                     </a>
                 </div>
                 <div class="hidden md:flex items-center gap-8">
-                    <a href="{{ route('home') }}" class="text-gray-700 hover:text-emerald-600 font-medium transition">
+                    <a href="{{ route('store.home', $store->subdomain) }}" class="text-gray-700 hover:text-emerald-600 font-medium transition">
                         <span class="material-icons align-middle mr-1">arrow_back</span>
                         Back to Store
                     </a>
@@ -108,7 +108,7 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                 @foreach($product->images as $image)
                 <div class="relative group overflow-hidden rounded-2xl shadow-lg">
-                    <img src="{{ Storage::url($image) }}" alt="{{ $product->name }}" class="w-full h-64 object-cover transform group-hover:scale-110 transition">
+                    <img src="/storage/{{ $image }}" alt="{{ $product->name }}" class="w-full h-64 object-cover transform group-hover:scale-110 transition">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
                 </div>
                 @endforeach
@@ -129,7 +129,7 @@
                     @if($product->images && count($product->images) > 1)
                     <div class="grid grid-cols-4 gap-4 mt-6">
                         @foreach(array_slice($product->images, 1, 4) as $image)
-                        <img src="{{ Storage::url($image) }}" alt="{{ $product->name }}" class="w-full h-24 object-cover rounded-lg">
+                        <img src="/storage/{{ $image }}" alt="{{ $product->name }}" class="w-full h-24 object-cover rounded-lg">
                         @endforeach
                     </div>
                     @endif
@@ -144,23 +144,129 @@
                     
                     <div class="flex items-center gap-6 mb-8">
                         <div>
-                            <div class="text-4xl font-bold text-purple-600">{{ number_format($product->price, 2) }} MAD</div>
-                            @if($product->compare_at_price && $product->compare_at_price > $product->price)
-                            <div class="text-lg line-through text-gray-500">{{ number_format($product->compare_at_price, 2) }} MAD</div>
+                            @if($product->has_variations && $product->activeVariations->isNotEmpty())
+                                <div class="text-4xl font-bold text-purple-600" id="variationPrice">
+                                    {{ $product->price_range }}
+                                </div>
+                            @else
+                                <div class="text-4xl font-bold text-purple-600">{{ number_format($product->price, 2) }} MAD</div>
+                                @if($product->compare_at_price && $product->compare_at_price > $product->price)
+                                <div class="text-lg line-through text-gray-500">{{ number_format($product->compare_at_price, 2) }} MAD</div>
+                                @endif
                             @endif
                         </div>
-                        @if($product->discount_percentage)
+                        @if(!$product->has_variations && $product->discount_percentage)
                         <div class="bg-red-500 text-white px-4 py-2 rounded-full font-bold">
                             -{{ $product->discount_percentage }}%
                         </div>
                         @endif
                     </div>
+
+                    <!-- Quantity-Based Promotions -->
+                    @if($product->has_promotions && $product->activePromotions->isNotEmpty())
+                    <div class="mb-8 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-6 border border-yellow-200 shadow-lg">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Special Quantity Pricing
+                        </h3>
+                        <p class="text-sm text-gray-600 mb-4">Save more when you buy more items</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            @foreach($product->activePromotions as $promotion)
+                            <div class="bg-white rounded-xl p-4 border-2 border-yellow-300 hover:border-yellow-500 transition shadow-md">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="text-sm font-semibold text-yellow-700">
+                                        Buy {{ $promotion->quantity_range }}
+                                    </div>
+                                    @if($promotion->discount_percentage > 0)
+                                    <div class="bg-yellow-500 text-white px-2 py-1 rounded-lg text-xs font-bold">
+                                        -{{ $promotion->discount_percentage }}%
+                                    </div>
+                                    @endif
+                                </div>
+                                <div class="text-3xl font-bold text-gray-800">{{ number_format($promotion->price, 2) }} <span class="text-base text-gray-600">MAD</span></div>
+                                <div class="text-xs text-gray-500 mt-1">per item</div>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+
+                    @if($product->has_variations && $product->activeVariations->isNotEmpty())
+                    <!-- Variations Selector -->
+                    <div class="mb-8 p-6 bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl border border-purple-200">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-800">Select Options:</h3>
+                        
+                        <div class="space-y-4" id="variationsContainer">
+                            @foreach($product->activeVariations as $index => $variation)
+                            @php
+                                // Build display name from attributes
+                                $displayName = '';
+                                if (!empty($variation->attributes) && is_array($variation->attributes)) {
+                                    $attrParts = [];
+                                    foreach ($variation->attributes as $key => $value) {
+                                        $attrParts[] = ucfirst($key) . ': ' . $value;
+                                    }
+                                    $displayName = implode(' / ', $attrParts);
+                                }
+                                if (empty($displayName)) {
+                                    $displayName = 'Option ' . ($index + 1);
+                                }
+                            @endphp
+                            <label class="block p-4 bg-white rounded-xl border-2 cursor-pointer hover:border-purple-500 transition variation-option {{ $variation->is_default ? 'border-purple-500 bg-purple-50' : 'border-gray-200' }}"
+                                   data-variation-id="{{ $variation->id }}"
+                                   data-price="{{ $variation->price }}"
+                                   data-compare-price="{{ $variation->compare_at_price ?? 0 }}"
+                                   data-stock="{{ $variation->stock }}"
+                                   data-discount="{{ $variation->discount_percentage }}">
+                                <div class="flex items-start gap-4">
+                                    <input type="radio" 
+                                           name="selected_variation" 
+                                           value="{{ $variation->id }}" 
+                                           class="mt-1 w-5 h-5 text-purple-600"
+                                           {{ $variation->is_default ? 'checked' : '' }}
+                                           onchange="updateVariationDisplay(this)">
+                                    <div class="flex-1">
+                                        <div class="flex items-start justify-between flex-wrap gap-3">
+                                            <div>
+                                                <div class="font-bold text-gray-900 text-lg mb-1">{{ $displayName }}</div>
+                                                @if($variation->sku)
+                                                <div class="text-xs text-gray-500 font-mono">{{ Str::limit($variation->sku, 30) }}</div>
+                                                @endif
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="text-xl font-bold text-purple-600">{{ number_format($variation->price, 2) }} MAD</div>
+                                                @if($variation->compare_at_price && $variation->compare_at_price > $variation->price)
+                                                <div class="text-sm line-through text-gray-500">{{ number_format($variation->compare_at_price, 2) }} MAD</div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
+                                            <div class="text-sm text-gray-600 flex items-center gap-2">
+                                                <span class="material-icons text-sm">inventory_2</span>
+                                                <span>Stock: {{ $variation->stock }}</span>
+                                            </div>
+                                            @if($variation->discount_percentage)
+                                            <div class="inline-block text-xs bg-red-500 text-white px-3 py-1 rounded-full font-bold">
+                                                -{{ $variation->discount_percentage }}%
+                                            </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
                     
                     <div class="prose prose-lg max-w-none mb-8 text-gray-700">
                         {!! nl2br(e($product->description)) !!}
                     </div>
                     
-                    @if($product->stock !== null)
+                    @if(!$product->has_variations && $product->stock !== null)
                     <div class="mb-6 flex items-center gap-2 text-gray-600">
                         <span class="material-icons">inventory_2</span>
                         <span>Stock: {{ $product->stock }}</span>
@@ -213,7 +319,7 @@
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 @foreach($relatedProducts as $related)
-                <a href="{{ route('product.show', $related->slug) }}" class="group">
+                <a href="{{ route('store.product.show', [$store->subdomain, $related->slug]) }}" class="group">
                     <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition transform hover:-translate-y-2">
                         <div class="relative overflow-hidden">
                             <img src="{{ $related->first_image }}" alt="{{ $related->name }}" class="w-full h-64 object-cover group-hover:scale-110 transition">
@@ -246,5 +352,47 @@
             <p class="text-lg">&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
         </div>
     </footer>
+
+    @if($product->has_variations)
+    <script>
+        function updateVariationDisplay(radio) {
+            const option = radio.closest('.variation-option');
+            const price = parseFloat(option.dataset.price);
+            const comparePrice = parseFloat(option.dataset.comparePrice) || 0;
+            const stock = option.dataset.stock;
+            const discount = option.dataset.discount;
+            
+            // Remove active state from all options
+            document.querySelectorAll('.variation-option').forEach(opt => {
+                opt.classList.remove('border-purple-500', 'bg-purple-50');
+                opt.classList.add('border-gray-200');
+            });
+            
+            // Add active state to selected option
+            option.classList.remove('border-gray-200');
+            option.classList.add('border-purple-500', 'bg-purple-50');
+            
+            // Update price display
+            const priceContainer = document.getElementById('variationPrice');
+            if (priceContainer) {
+                let priceHtml = `<div class="text-4xl font-bold text-purple-600">${price.toFixed(2)} MAD</div>`;
+                
+                if (comparePrice > price) {
+                    priceHtml += `<div class="text-lg line-through text-gray-500">${comparePrice.toFixed(2)} MAD</div>`;
+                }
+                
+                priceContainer.innerHTML = priceHtml;
+            }
+        }
+        
+        // Set default variation on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const defaultRadio = document.querySelector('input[name="selected_variation"]:checked');
+            if (defaultRadio) {
+                updateVariationDisplay(defaultRadio);
+            }
+        });
+    </script>
+    @endif
 </body>
 </html>

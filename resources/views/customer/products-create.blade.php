@@ -226,6 +226,135 @@
                             @enderror
                         </div>
                     </div>
+
+                    <!-- Product Variations Toggle -->
+                    <div class="border-t border-white/10 pt-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label for="has_variations" class="block text-sm font-medium text-gray-300">Product has variations</label>
+                                <p class="text-xs text-gray-500 mt-1">Enable if this product comes in different sizes, colors, or other options</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <!-- Hidden input to ensure a value is always sent -->
+                                <input type="hidden" name="has_variations" value="0">
+                                <input 
+                                    type="checkbox" 
+                                    id="has_variations" 
+                                    name="has_variations" 
+                                    value="1"
+                                    class="sr-only peer"
+                                    {{ old('has_variations') ? 'checked' : '' }}
+                                    onchange="toggleVariations(this.checked)"
+                                />
+                                <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Variations Card -->
+            <div id="variationsCard" class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6 hidden">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Product Variations</h3>
+                        <p class="text-xs text-gray-500 mt-1">Add different options for this product (e.g., sizes, colors)</p>
+                    </div>
+                    <button 
+                        type="button" 
+                        onclick="addVariation()"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition flex items-center gap-2 text-sm"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Add Variation
+                    </button>
+                </div>
+
+                <div id="variationsContainer" class="space-y-4">
+                    <!-- Variations will be added here dynamically -->
+                </div>
+
+                <div id="noVariationsMessage" class="text-center py-8 text-gray-500 text-sm">
+                    <svg class="w-12 h-12 text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                    </svg>
+                    Click "Add Variation" to create your first product variation
+                </div>
+                </div>
+            </div>
+
+            <!-- Quantity-Based Promotions Card -->
+            <div id="promotionsCard" class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                            <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Quantity-Based Pricing
+                        </h3>
+                        <p class="text-xs text-gray-500 mt-1">Set special prices when customers buy multiple items</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="hidden" name="has_promotions" value="0">
+                            <input 
+                                type="checkbox" 
+                                id="has_promotions" 
+                                name="has_promotions" 
+                                value="1"
+                                class="sr-only peer"
+                                onchange="togglePromotions(this.checked)"
+                            />
+                            <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-600"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="promotionsContent" class="hidden">
+                    <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-4">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div class="text-sm text-blue-300">
+                                <p class="font-semibold mb-1">How it works:</p>
+                                <ul class="list-disc list-inside space-y-1 text-xs">
+                                    <li>Set different prices based on quantity purchased</li>
+                                    <li>Example: Buy 1 for 100 MAD, Buy 2 for 90 MAD each, Buy 3+ for 80 MAD each</li>
+                                    <li>Promotions apply automatically at checkout</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-sm font-semibold text-gray-300">Pricing Tiers</h4>
+                        <button 
+                            type="button" 
+                            onclick="addPromotion()"
+                            class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded-lg transition flex items-center gap-2 text-sm"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Add Tier
+                        </button>
+                    </div>
+
+                    <div id="promotionsContainer" class="space-y-3">
+                        <!-- Promotions will be added here dynamically -->
+                    </div>
+
+                    <div id="noPromotionsMessage" class="text-center py-8 text-gray-500 text-sm">
+                        <svg class="w-12 h-12 text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p>Click <strong>"Add Tier"</strong> above to create quantity-based pricing</p>
+                        <p class="text-xs mt-1 text-yellow-400">Example: Buy 2+ items → Pay 90 MAD each instead of 100 MAD</p>
+                    </div>
                 </div>
             </div>
 
@@ -376,6 +505,311 @@
     <script>
         let sectionCounter = 0;
         let uploadedFiles = [];
+        let variationCounter = 0;
+        let promotionCounter = 0;
+
+        function togglePromotions(enabled) {
+            const promotionsContent = document.getElementById('promotionsContent');
+            if (enabled) {
+                promotionsContent.classList.remove('hidden');
+            } else {
+                promotionsContent.classList.add('hidden');
+            }
+        }
+
+        function addPromotion() {
+            const container = document.getElementById('promotionsContainer');
+            const noPromotionsMsg = document.getElementById('noPromotionsMessage');
+            
+            if (noPromotionsMsg) {
+                noPromotionsMsg.style.display = 'none';
+            }
+            
+            const promotionId = promotionCounter++;
+            
+            const promotionDiv = document.createElement('div');
+            promotionDiv.className = 'border border-yellow-500/30 rounded-lg p-4 bg-[#0a1628] relative';
+            promotionDiv.id = `promotion-${promotionId}`;
+            promotionDiv.innerHTML = `
+                <button 
+                    type="button" 
+                    onclick="removePromotion(${promotionId})"
+                    class="absolute top-4 right-4 text-red-400 hover:text-red-300 transition"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+                
+                <div class="grid grid-cols-3 gap-3 mb-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Min Quantity *</label>
+                        <input 
+                            type="number" 
+                            name="promotions[${promotionId}][min_quantity]" 
+                            min="1"
+                            required
+                            placeholder="e.g., 2"
+                            class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        />
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Max Quantity</label>
+                        <input 
+                            type="number" 
+                            name="promotions[${promotionId}][max_quantity]" 
+                            min="1"
+                            placeholder="Leave empty for unlimited"
+                            class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        />
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Price per Unit (MAD) *</label>
+                        <input 
+                            type="number" 
+                            name="promotions[${promotionId}][price]" 
+                            step="0.01"
+                            min="0"
+                            required
+                            placeholder="e.g., 90.00"
+                            class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        />
+                    </div>
+                </div>
+                
+                <div class="bg-yellow-500/10 border border-yellow-500/20 rounded p-2 text-xs text-yellow-300">
+                    <strong>Example:</strong> Min: 2, Max: 4, Price: 90.00 → Customers buying 2-4 items pay 90 MAD per item
+                </div>
+            `;
+            
+            container.appendChild(promotionDiv);
+        }
+
+        function removePromotion(promotionId) {
+            const promotionDiv = document.getElementById(`promotion-${promotionId}`);
+            if (promotionDiv) {
+                promotionDiv.remove();
+            }
+            
+            const container = document.getElementById('promotionsContainer');
+            if (container.children.length === 0) {
+                document.getElementById('noPromotionsMessage').style.display = 'block';
+            }
+        }
+
+        function toggleVariations(enabled) {
+            const variationsCard = document.getElementById('variationsCard');
+            const priceField = document.getElementById('price');
+            const comparePriceField = document.getElementById('compare_at_price');
+            const stockField = document.getElementById('stock');
+            const skuField = document.getElementById('sku');
+            const basicPriceFields = [priceField, comparePriceField, stockField, skuField];
+            
+            if (enabled) {
+                variationsCard.classList.remove('hidden');
+                // Disable and clear basic price/stock fields when variations are enabled
+                basicPriceFields.forEach(field => {
+                    if (field) {
+                        field.disabled = true;
+                        field.classList.add('opacity-50', 'cursor-not-allowed');
+                        // Remove required attribute and set value to empty or 0
+                        field.removeAttribute('required');
+                        if (field.type === 'number') {
+                            field.value = '0';
+                        }
+                    }
+                });
+            } else {
+                variationsCard.classList.add('hidden');
+                // Re-enable basic price/stock fields
+                basicPriceFields.forEach(field => {
+                    if (field) {
+                        field.disabled = false;
+                        field.classList.remove('opacity-50', 'cursor-not-allowed');
+                        // Re-add required attribute for price field
+                        if (field.id === 'price') {
+                            field.setAttribute('required', 'required');
+                        }
+                    }
+                });
+            }
+        }
+
+        function addVariation() {
+            const container = document.getElementById('variationsContainer');
+            const noVariationsMsg = document.getElementById('noVariationsMessage');
+            
+            if (noVariationsMsg) {
+                noVariationsMsg.style.display = 'none';
+            }
+            
+            const variationId = variationCounter++;
+            
+            const variationDiv = document.createElement('div');
+            variationDiv.className = 'border border-blue-500/30 rounded-lg p-4 bg-[#0a1628] relative';
+            variationDiv.id = `variation-${variationId}`;
+            variationDiv.innerHTML = `
+                <button 
+                    type="button" 
+                    onclick="removeVariation(${variationId})"
+                    class="absolute top-4 right-4 text-red-400 hover:text-red-300 transition"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+                
+                <h4 class="text-sm font-semibold text-blue-400 mb-4">Variation ${variationId + 1}</h4>
+                
+                <div class="space-y-3">
+                    <!-- Attributes Section -->
+                    <div class="border border-white/10 rounded-lg p-3">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="text-xs font-medium text-gray-300">Attributes</label>
+                            <button 
+                                type="button" 
+                                onclick="addAttribute(${variationId})"
+                                class="text-xs px-2 py-1 bg-cyan-600 hover:bg-cyan-700 text-white rounded transition"
+                            >
+                                + Add Attribute
+                            </button>
+                        </div>
+                        <div id="attributes-container-${variationId}" class="space-y-2">
+                            <!-- Attributes will be added here -->
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">e.g., Color: Red, Size: Large</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-300 mb-1">Price (MAD) *</label>
+                            <input 
+                                type="number" 
+                                name="variations[${variationId}][price]" 
+                                step="0.01"
+                                min="0"
+                                required
+                                class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="0.00"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-medium text-gray-300 mb-1">Compare at Price</label>
+                            <input 
+                                type="number" 
+                                name="variations[${variationId}][compare_at_price]" 
+                                step="0.01"
+                                min="0"
+                                class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="0.00"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-300 mb-1">Stock *</label>
+                            <input 
+                                type="number" 
+                                name="variations[${variationId}][stock]" 
+                                min="0"
+                                value="0"
+                                required
+                                class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="0"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-medium text-gray-300 mb-1">SKU</label>
+                            <input 
+                                type="text" 
+                                name="variations[${variationId}][sku]" 
+                                class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="SKU-${variationId + 1}"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-4">
+                        <label class="flex items-center gap-2">
+                            <input 
+                                type="checkbox" 
+                                name="variations[${variationId}][is_default]" 
+                                value="1"
+                                class="rounded bg-[#0f1c2e] border-white/10 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span class="text-xs text-gray-300">Default variation</span>
+                        </label>
+                        
+                        <label class="flex items-center gap-2">
+                            <input 
+                                type="checkbox" 
+                                name="variations[${variationId}][is_active]" 
+                                value="1"
+                                checked
+                                class="rounded bg-[#0f1c2e] border-white/10 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span class="text-xs text-gray-300">Active</span>
+                        </label>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(variationDiv);
+            
+            // Add first attribute by default
+            addAttribute(variationId);
+        }
+
+        function addAttribute(variationId) {
+            const container = document.getElementById(`attributes-container-${variationId}`);
+            const attributeId = container.children.length;
+            
+            const attributeDiv = document.createElement('div');
+            attributeDiv.className = 'flex gap-2';
+            attributeDiv.innerHTML = `
+                <input 
+                    type="text" 
+                    name="variations[${variationId}][attributes][${attributeId}][name]" 
+                    placeholder="Attribute (e.g., Color)"
+                    class="flex-1 px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                />
+                <input 
+                    type="text" 
+                    name="variations[${variationId}][attributes][${attributeId}][value]" 
+                    placeholder="Value (e.g., Red)"
+                    class="flex-1 px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                />
+                <button 
+                    type="button" 
+                    onclick="this.parentElement.remove()"
+                    class="text-red-400 hover:text-red-300"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            `;
+            
+            container.appendChild(attributeDiv);
+        }
+
+        function removeVariation(variationId) {
+            const variationDiv = document.getElementById(`variation-${variationId}`);
+            if (variationDiv) {
+                variationDiv.remove();
+            }
+            
+            // Show no variations message if no variations left
+            const container = document.getElementById('variationsContainer');
+            if (container.children.length === 0) {
+                document.getElementById('noVariationsMessage').style.display = 'block';
+            }
+        }
 
         function previewImages(event) {
             const preview = document.getElementById('imagePreview');

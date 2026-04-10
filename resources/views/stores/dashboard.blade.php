@@ -124,7 +124,15 @@
                                                     </span>
                                                 @endif
                                             </div>
-                                            <p class="text-sm text-gray-600 mt-1">{{ $store->subdomain }}.yourdomain.com</p>
+                                            <p class="text-sm text-gray-600 mt-1">
+                                                @if($store->domain)
+                                                    <span class="font-semibold text-indigo-600">{{ $store->domain }}</span>
+                                                    <span class="text-gray-400 mx-2">•</span>
+                                                    <span class="text-gray-500">{{ $store->subdomain }}.yourdomain.com</span>
+                                                @else
+                                                    {{ $store->subdomain }}.yourdomain.com
+                                                @endif
+                                            </p>
                                             @if($store->description)
                                                 <p class="text-sm text-gray-500 mt-2">{{ $store->description }}</p>
                                             @endif
@@ -144,6 +152,23 @@
                                             </div>
                                         </div>
                                         <div class="flex items-center gap-2">
+                                            <button onclick="openDomainModal({{ $store->id }}, '{{ $store->domain }}', '{{ $store->subdomain }}')" class="px-4 py-2 bg-indigo-100 text-indigo-700 text-sm font-medium rounded hover:bg-indigo-200 transition flex items-center gap-2" title="Setup Custom Domain">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+                                                </svg>
+                                                @if($store->domain)
+                                                    Domain Setup
+                                                @else
+                                                    Add Domain
+                                                @endif
+                                            </button>
+                                            <a href="{{ route('store.home', $store->subdomain) }}" target="_blank" class="px-4 py-2 bg-emerald-100 text-emerald-700 text-sm font-medium rounded hover:bg-emerald-200 transition flex items-center gap-2" title="Visit Store Website">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                </svg>
+                                                Visit Store
+                                            </a>
                                             @if($currentStoreId != $store->id)
                                                 <form action="{{ route('stores.switch', $store) }}" method="POST">
                                                     @csrf
@@ -192,4 +217,159 @@
             </div>
         </div>
     </div>
+
+    <!-- Domain Onboarding Modal -->
+    <div id="domainModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-lg bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Custom Domain Setup</h3>
+                <button onclick="closeDomainModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="domainForm" method="POST" action="">
+                @csrf
+                @method('PUT')
+                
+                <div class="space-y-4">
+                    <!-- Current Status -->
+                    <div id="currentDomainStatus" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div>
+                                <p class="text-sm font-medium text-blue-900">Default URL</p>
+                                <p class="text-sm text-blue-700" id="defaultUrl"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Domain Input -->
+                    <div>
+                        <label for="domain" class="block text-sm font-medium text-gray-700 mb-2">Custom Domain</label>
+                        <input type="text" name="domain" id="domainInput" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="www.mystore.com or mystore.com">
+                        <p class="mt-2 text-sm text-gray-500">Enter your custom domain without http:// or https://</p>
+                    </div>
+
+                    <!-- DNS Instructions -->
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <h4 class="text-sm font-semibold text-yellow-900 mb-2">DNS Configuration Required</h4>
+                        <p class="text-sm text-yellow-800 mb-3">After adding your domain, configure these DNS records at your domain registrar:</p>
+                        
+                        <div class="space-y-2">
+                            <div class="bg-white rounded border border-yellow-300 p-3">
+                                <div class="grid grid-cols-3 gap-2 text-xs">
+                                    <div>
+                                        <span class="font-semibold text-gray-700">Type:</span>
+                                        <p class="text-gray-900 font-mono">CNAME</p>
+                                    </div>
+                                    <div>
+                                        <span class="font-semibold text-gray-700">Name:</span>
+                                        <p class="text-gray-900 font-mono">www</p>
+                                    </div>
+                                    <div>
+                                        <span class="font-semibold text-gray-700">Value:</span>
+                                        <p class="text-gray-900 font-mono" id="cnameValue"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded border border-yellow-300 p-3">
+                                <div class="grid grid-cols-3 gap-2 text-xs">
+                                    <div>
+                                        <span class="font-semibold text-gray-700">Type:</span>
+                                        <p class="text-gray-900 font-mono">A</p>
+                                    </div>
+                                    <div>
+                                        <span class="font-semibold text-gray-700">Name:</span>
+                                        <p class="text-gray-900 font-mono">@</p>
+                                    </div>
+                                    <div>
+                                        <span class="font-semibold text-gray-700">Value:</span>
+                                        <p class="text-gray-900 font-mono">Your server IP</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p class="mt-3 text-xs text-yellow-700">
+                            <strong>Note:</strong> DNS propagation can take 24-48 hours. Your store will remain accessible via the default subdomain during this time.
+                        </p>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                        <button type="button" onclick="removeDomain()" id="removeDomainBtn" class="text-sm text-red-600 hover:text-red-700 font-medium hidden">
+                            Remove Custom Domain
+                        </button>
+                        <div class="flex gap-3">
+                            <button type="button" onclick="closeDomainModal()" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded hover:bg-gray-200 transition">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition">
+                                Save Domain
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentStoreId = null;
+        
+        function openDomainModal(storeId, currentDomain, subdomain) {
+            currentStoreId = storeId;
+            const modal = document.getElementById('domainModal');
+            const form = document.getElementById('domainForm');
+            const input = document.getElementById('domainInput');
+            const removeBtn = document.getElementById('removeDomainBtn');
+            const defaultUrl = document.getElementById('defaultUrl');
+            const cnameValue = document.getElementById('cnameValue');
+            
+            // Set form action
+            form.action = '/stores/' + storeId + '/domain';
+            
+            // Set current values
+            input.value = currentDomain || '';
+            defaultUrl.textContent = subdomain + '.yourdomain.com';
+            cnameValue.textContent = subdomain + '.yourdomain.com';
+            
+            // Show/hide remove button
+            if (currentDomain) {
+                removeBtn.classList.remove('hidden');
+            } else {
+                removeBtn.classList.add('hidden');
+            }
+            
+            modal.classList.remove('hidden');
+        }
+        
+        function closeDomainModal() {
+            document.getElementById('domainModal').classList.add('hidden');
+        }
+        
+        function removeDomain() {
+            if (confirm('Are you sure you want to remove the custom domain? Your store will only be accessible via the default subdomain.')) {
+                const form = document.getElementById('domainForm');
+                const input = document.getElementById('domainInput');
+                input.value = '';
+                form.submit();
+            }
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('domainModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDomainModal();
+            }
+        });
+    </script>
 </x-stores-layout>

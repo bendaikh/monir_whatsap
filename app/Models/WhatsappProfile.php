@@ -8,6 +8,7 @@ class WhatsappProfile extends Model
 {
     protected $fillable = [
         'user_id',
+        'store_id',
         'name',
         'phone_number',
         'profile_picture',
@@ -28,6 +29,11 @@ class WhatsappProfile extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
     }
 
     public function conversations()

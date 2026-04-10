@@ -20,13 +20,21 @@ class WhatsAppController extends Controller
         ]);
         
         try {
+            $storeId = session('active_store_id');
+            
             // First, try to find by session_id or phone_number
             $profile = WhatsappProfile::where('session_id', $request->session_id)
-                ->orWhere(function($query) use ($request) {
+                ->orWhere(function($query) use ($request, $storeId) {
                     $query->where('phone_number', $request->phone)
-                          ->where('user_id', auth()->id());
+                          ->where('user_id', auth()->id())
+                          ->when($storeId, function($q) use ($storeId) {
+                              $q->where('store_id', $storeId);
+                          });
                 })
                 ->where('user_id', auth()->id())
+                ->when($storeId, function($q) use ($storeId) {
+                    $q->where('store_id', $storeId);
+                })
                 ->first();
             
             if ($profile) {
@@ -43,6 +51,7 @@ class WhatsAppController extends Controller
                 // Create new profile
                 $profile = WhatsappProfile::create([
                     'user_id' => auth()->id(),
+                    'store_id' => $storeId,
                     'session_id' => $request->session_id,
                     'name' => $request->name,
                     'phone_number' => $request->phone,

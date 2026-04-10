@@ -112,4 +112,28 @@ class StoreManagementController extends Controller
         
         return redirect()->route('app.dashboard')->with('success', 'Now managing: ' . $store->name);
     }
+    
+    public function updateDomain(Request $request, Store $store)
+    {
+        $this->authorize('update', $store);
+        
+        $validated = $request->validate([
+            'domain' => 'nullable|string|max:255|unique:stores,domain,' . $store->id,
+        ]);
+        
+        // Clean up the domain (remove http://, https://, www. if user included them)
+        $domain = $validated['domain'] ?? null;
+        if ($domain) {
+            $domain = preg_replace('#^https?://#', '', $domain);
+            $domain = trim($domain);
+        }
+        
+        $store->update(['domain' => $domain]);
+        
+        if ($domain) {
+            return redirect()->route('stores.dashboard')->with('success', 'Custom domain added successfully! Please configure your DNS records.');
+        } else {
+            return redirect()->route('stores.dashboard')->with('success', 'Custom domain removed. Store is accessible via subdomain.');
+        }
+    }
 }

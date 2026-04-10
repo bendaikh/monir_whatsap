@@ -54,8 +54,9 @@ class ProductController extends Controller
         $store = Store::where('subdomain', $subdomain)
             ->where('is_active', true)
             ->firstOrFail();
-        
-        $product = Product::where('slug', $slug)
+
+        $product = Product::with(['activeVariations', 'activePromotions'])
+            ->where('slug', $slug)
             ->where('is_active', true)
             ->where('store_id', $store->id)
             ->firstOrFail();

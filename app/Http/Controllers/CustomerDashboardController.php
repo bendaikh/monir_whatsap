@@ -25,29 +25,60 @@ class CustomerDashboardController extends Controller
         $storeId = $this->getActiveStoreId();
         
         $stats = [
-            'conversations' => Conversation::whereHas('whatsappProfile', function($q) use ($user) {
-                $q->where('user_id', $user->id);
+            'conversations' => Conversation::whereHas('whatsappProfile', function($q) use ($user, $storeId) {
+                $q->where('user_id', $user->id)
+                  ->when($storeId, function($q) use ($storeId) {
+                      $q->where('store_id', $storeId);
+                  });
             })->count(),
-            'messages' => Message::whereHas('whatsappProfile', function($q) use ($user) {
-                $q->where('user_id', $user->id);
+            'messages' => Message::whereHas('whatsappProfile', function($q) use ($user, $storeId) {
+                $q->where('user_id', $user->id)
+                  ->when($storeId, function($q) use ($storeId) {
+                      $q->where('store_id', $storeId);
+                  });
             })->count(),
-            'orders' => \App\Models\ProductLead::where('user_id', $user->id)->count(),
+            'orders' => \App\Models\ProductLead::where('user_id', $user->id)
+                ->when($storeId, function($q) use ($storeId) {
+                    $q->whereHas('product', function($q) use ($storeId) {
+                        $q->where('store_id', $storeId);
+                    });
+                })
+                ->count(),
+            'products' => \App\Models\Product::where('user_id', $user->id)
+                ->when($storeId, function($q) use ($storeId) {
+                    $q->where('store_id', $storeId);
+                })
+                ->count(),
+            'categories' => \App\Models\Category::when($storeId, function($q) use ($storeId) {
+                    $q->where('store_id', $storeId);
+                })
+                ->count(),
             'active_profiles' => WhatsappProfile::where('user_id', $user->id)
+                ->when($storeId, function($q) use ($storeId) {
+                    $q->where('store_id', $storeId);
+                })
                 ->where('status', 'connected')
                 ->count(),
             'ai_tokens' => 0,
             'sales_percentage' => 0,
         ];
         
-        $recent_conversations = Conversation::whereHas('whatsappProfile', function($q) use ($user) {
-            $q->where('user_id', $user->id);
+        $recent_conversations = Conversation::whereHas('whatsappProfile', function($q) use ($user, $storeId) {
+            $q->where('user_id', $user->id)
+              ->when($storeId, function($q) use ($storeId) {
+                  $q->where('store_id', $storeId);
+              });
         })
         ->with(['whatsappProfile'])
         ->latest('last_message_at')
         ->take(10)
         ->get();
         
-        $whatsapp_profiles = WhatsappProfile::where('user_id', $user->id)->get();
+        $whatsapp_profiles = WhatsappProfile::where('user_id', $user->id)
+            ->when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->get();
         
         return view('customer.dashboard', compact('stats', 'recent_conversations', 'whatsapp_profiles'));
     }
@@ -55,7 +86,13 @@ class CustomerDashboardController extends Controller
     public function whatsapp()
     {
         $user = auth()->user();
-        $profiles = WhatsappProfile::where('user_id', $user->id)->get();
+        $storeId = $this->getActiveStoreId();
+        
+        $profiles = WhatsappProfile::where('user_id', $user->id)
+            ->when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->get();
         
         return view('customer.whatsapp', compact('profiles'));
     }
@@ -63,9 +100,13 @@ class CustomerDashboardController extends Controller
     public function conversations()
     {
         $user = auth()->user();
+        $storeId = $this->getActiveStoreId();
         
-        $conversations = Conversation::whereHas('whatsappProfile', function($q) use ($user) {
-            $q->where('user_id', $user->id);
+        $conversations = Conversation::whereHas('whatsappProfile', function($q) use ($user, $storeId) {
+            $q->where('user_id', $user->id)
+              ->when($storeId, function($q) use ($storeId) {
+                  $q->where('store_id', $storeId);
+              });
         })
         ->with(['whatsappProfile'])
         ->latest('last_message_at')
@@ -77,9 +118,13 @@ class CustomerDashboardController extends Controller
     public function conversationDetail($id)
     {
         $user = auth()->user();
+        $storeId = $this->getActiveStoreId();
         
-        $conversation = Conversation::whereHas('whatsappProfile', function($q) use ($user) {
-            $q->where('user_id', $user->id);
+        $conversation = Conversation::whereHas('whatsappProfile', function($q) use ($user, $storeId) {
+            $q->where('user_id', $user->id)
+              ->when($storeId, function($q) use ($storeId) {
+                  $q->where('store_id', $storeId);
+              });
         })
         ->with(['messages', 'whatsappProfile'])
         ->findOrFail($id);
@@ -90,7 +135,14 @@ class CustomerDashboardController extends Controller
     public function aiSettings()
     {
         $user = auth()->user();
-        $profiles = WhatsappProfile::where('user_id', $user->id)->get();
+        $storeId = $this->getActiveStoreId();
+        
+        $profiles = WhatsappProfile::where('user_id', $user->id)
+            ->when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->get();
+            
         $aiSetting = AiApiSetting::where('user_id', $user->id)->first();
 
         return view('customer.ai-settings', compact('profiles', 'aiSetting'));
@@ -251,13 +303,15 @@ class CustomerDashboardController extends Controller
         
         $query = \App\Models\Product::where('user_id', $user->id);
         
+        $store = null;
         if ($storeId) {
             $query->where('store_id', $storeId);
+            $store = \App\Models\Store::find($storeId);
         }
         
         $products = $query->latest()->paginate(10);
         
-        return view('customer.products', compact('products'));
+        return view('customer.products', compact('products', 'store'));
     }
     
     public function productsCreate()
@@ -277,16 +331,43 @@ class CustomerDashboardController extends Controller
     
     public function productsStore(Request $request)
     {
+        // Check if has_variations is enabled
+        $hasVariations = $request->boolean('has_variations');
+        $hasPromotions = $request->boolean('has_promotions');
+        
+        // Debug logging
+        \Log::info('Product creation - has_promotions: ' . ($hasPromotions ? 'true' : 'false'));
+        \Log::info('Product creation - promotions data: ' . json_encode($request->input('promotions')));
+        
+        // Only require promotions array if has_promotions is true AND promotions were submitted
+        $promotionsSubmitted = $hasPromotions && $request->has('promotions') && !empty($request->input('promotions'));
+        
+        \Log::info('Product creation - promotionsSubmitted: ' . ($promotionsSubmitted ? 'true' : 'false'));
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
+            'price' => $hasVariations ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
             'compare_at_price' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:categories,id',
             'images' => 'nullable|array',
             'images.*' => 'image|max:2048',
             'stock' => 'nullable|integer|min:0',
             'sku' => 'nullable|string|max:255',
+            'has_variations' => 'nullable|boolean',
+            'has_promotions' => 'nullable|boolean',
+            'variations' => $hasVariations ? 'required|array|min:1' : 'nullable|array',
+            'variations.*.price' => 'required_with:variations|numeric|min:0',
+            'variations.*.compare_at_price' => 'nullable|numeric|min:0',
+            'variations.*.stock' => 'required_with:variations|integer|min:0',
+            'variations.*.sku' => 'nullable|string|max:255',
+            'variations.*.attributes' => 'nullable|array',
+            'variations.*.is_default' => 'nullable|boolean',
+            'variations.*.is_active' => 'nullable|boolean',
+            'promotions' => 'nullable|array',
+            'promotions.*.min_quantity' => 'required_with:promotions|integer|min:1',
+            'promotions.*.max_quantity' => 'nullable|integer|min:1',
+            'promotions.*.price' => 'required_with:promotions|numeric|min:0',
             'landing_sections' => 'nullable|array',
             'landing_sections.*.image' => 'nullable|image|max:2048',
             'landing_sections.*.title_fr' => 'nullable|string|max:255',
@@ -296,13 +377,23 @@ class CustomerDashboardController extends Controller
             'landing_sections.*.title_ar' => 'nullable|string|max:255',
             'landing_sections.*.description_ar' => 'nullable|string',
         ]);
-        
+
         $validated['user_id'] = auth()->id();
         $validated['store_id'] = $this->getActiveStoreId();
         $validated['slug'] = \Str::slug($validated['name']) . '-' . time();
         $validated['is_active'] = $request->has('is_active');
         $validated['is_featured'] = $request->has('is_featured');
-        $validated['stock'] = $validated['stock'] ?? 0;
+        $validated['has_variations'] = $hasVariations;
+        $validated['has_promotions'] = $hasPromotions && $promotionsSubmitted;
+
+        // If has variations, stock/sku/price will be managed by variations
+        if ($hasVariations) {
+            $validated['stock'] = 0;
+            $validated['sku'] = null;
+            $validated['price'] = 0; // Set to 0 as it won't be used
+        } else {
+            $validated['stock'] = $validated['stock'] ?? 0;
+        }
         
         if ($request->hasFile('images')) {
             $imagePaths = [];
@@ -315,17 +406,14 @@ class CustomerDashboardController extends Controller
         if ($request->has('landing_sections')) {
             $landingSections = [];
             foreach ($request->input('landing_sections', []) as $index => $section) {
-                // Check if this is an auto-generated section (no descriptions yet, AI will fill them)
                 if (!empty($section['auto_generated'])) {
                     $imageIndex = $section['image_index'] ?? 0;
-                    // Store placeholder - AI will fill this when landing page is generated
                     $sectionData = [
                         'image_index' => $imageIndex,
-                        'pending_ai' => true, // Mark for AI generation
+                        'pending_ai' => true,
                     ];
                     $landingSections[] = $sectionData;
                 } else {
-                    // Manual section with custom data
                     $sectionData = [
                         'title_fr' => $section['title_fr'] ?? '',
                         'description_fr' => $section['description_fr'] ?? '',
@@ -364,6 +452,63 @@ class CustomerDashboardController extends Controller
         
         $product = \App\Models\Product::create($validated);
         
+        // Handle product variations
+        if ($hasVariations && $request->has('variations')) {
+            $hasDefault = false;
+            
+            foreach ($request->input('variations', []) as $variationData) {
+                $attributes = [];
+                if (!empty($variationData['attributes'])) {
+                    foreach ($variationData['attributes'] as $attr) {
+                        if (!empty($attr['name']) && !empty($attr['value'])) {
+                            $attributes[$attr['name']] = $attr['value'];
+                        }
+                    }
+                }
+                
+                $isDefault = isset($variationData['is_default']) && $variationData['is_default'];
+                
+                // Only one variation can be default
+                if ($isDefault && $hasDefault) {
+                    $isDefault = false;
+                } elseif ($isDefault) {
+                    $hasDefault = true;
+                }
+                
+                \App\Models\ProductVariation::create([
+                    'product_id' => $product->id,
+                    'sku' => $variationData['sku'] ?? null,
+                    'price' => $variationData['price'],
+                    'compare_at_price' => $variationData['compare_at_price'] ?? null,
+                    'stock' => $variationData['stock'] ?? 0,
+                    'attributes' => $attributes,
+                    'is_active' => isset($variationData['is_active']) && $variationData['is_active'],
+                    'is_default' => $isDefault,
+                ]);
+            }
+            
+            // If no default was set, make the first variation default
+            if (!$hasDefault) {
+                $firstVariation = $product->variations()->first();
+                if ($firstVariation) {
+                    $firstVariation->update(['is_default' => true]);
+                }
+            }
+        }
+
+        // Handle product promotions
+        if ($promotionsSubmitted) {
+            foreach ($request->input('promotions', []) as $promotionData) {
+                \App\Models\ProductPromotion::create([
+                    'product_id' => $product->id,
+                    'min_quantity' => $promotionData['min_quantity'],
+                    'max_quantity' => $promotionData['max_quantity'] ?? null,
+                    'price' => $promotionData['price'],
+                    'is_active' => true,
+                ]);
+            }
+        }
+
         $jobsDispatched = [];
         
         if ($request->boolean('generate_landing_page')) {
@@ -386,26 +531,69 @@ class CustomerDashboardController extends Controller
     
     public function productsEdit($id)
     {
-        $product = \App\Models\Product::where('user_id', auth()->id())->findOrFail($id);
-        $categories = \App\Models\Category::where('is_active', true)->orderBy('order')->orderBy('name')->get();
-        
+        $storeId = $this->getActiveStoreId();
+
+        $product = \App\Models\Product::with(['variations', 'promotions'])
+            ->where('user_id', auth()->id())
+            ->when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->findOrFail($id);
+
+        $categories = \App\Models\Category::where('is_active', true)
+            ->when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->orderBy('order')
+            ->orderBy('name')
+            ->get();
+
         return view('customer.products-edit', compact('product', 'categories'));
     }
     
     public function productsUpdate(Request $request, $id)
     {
-        $product = \App\Models\Product::where('user_id', auth()->id())->findOrFail($id);
+        $storeId = $this->getActiveStoreId();
+
+        $product = \App\Models\Product::where('user_id', auth()->id())
+            ->when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->findOrFail($id);
+
+        // Check if has_variations is enabled
+        $hasVariations = $request->boolean('has_variations');
+        $hasPromotions = $request->boolean('has_promotions');
         
+        // Only require promotions array if has_promotions is true AND promotions were submitted
+        $promotionsSubmitted = $hasPromotions && $request->has('promotions') && !empty($request->input('promotions'));
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
+            'price' => $hasVariations ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
             'compare_at_price' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:categories,id',
             'images' => 'nullable|array',
             'images.*' => 'image|max:2048',
             'stock' => 'nullable|integer|min:0',
             'sku' => 'nullable|string|max:255',
+            'has_variations' => 'nullable|boolean',
+            'has_promotions' => 'nullable|boolean',
+            'variations' => $hasVariations ? 'required|array|min:1' : 'nullable|array',
+            'variations.*.id' => 'nullable|exists:product_variations,id',
+            'variations.*.price' => 'required_with:variations|numeric|min:0',
+            'variations.*.compare_at_price' => 'nullable|numeric|min:0',
+            'variations.*.stock' => 'required_with:variations|integer|min:0',
+            'variations.*.sku' => 'nullable|string|max:255',
+            'variations.*.attributes' => 'nullable|array',
+            'variations.*.is_default' => 'nullable|boolean',
+            'variations.*.is_active' => 'nullable|boolean',
+            'promotions' => 'nullable|array',
+            'promotions.*.id' => 'nullable|exists:product_promotions,id',
+            'promotions.*.min_quantity' => 'required_with:promotions|integer|min:1',
+            'promotions.*.max_quantity' => 'nullable|integer|min:1',
+            'promotions.*.price' => 'required_with:promotions|numeric|min:0',
             'landing_sections' => 'nullable|array',
             'landing_sections.*.image' => 'nullable|image|max:2048',
             'landing_sections.*.existing_image' => 'nullable|string',
@@ -416,10 +604,20 @@ class CustomerDashboardController extends Controller
             'landing_sections.*.title_ar' => 'nullable|string|max:255',
             'landing_sections.*.description_ar' => 'nullable|string',
         ]);
-        
+
         $validated['is_active'] = $request->has('is_active');
         $validated['is_featured'] = $request->has('is_featured');
-        $validated['stock'] = $validated['stock'] ?? 0;
+        $validated['has_variations'] = $hasVariations;
+        $validated['has_promotions'] = $hasPromotions && $promotionsSubmitted;
+
+        // If has variations, stock/sku/price will be managed by variations
+        if ($hasVariations) {
+            $validated['stock'] = 0;
+            $validated['sku'] = null;
+            $validated['price'] = 0; // Set to 0 as it won't be used
+        } else {
+            $validated['stock'] = $validated['stock'] ?? 0;
+        }
         
         if ($request->hasFile('images')) {
             $imagePaths = $product->images ?? [];
@@ -455,13 +653,11 @@ class CustomerDashboardController extends Controller
             $validated['landing_page_sections'] = $landingSections;
         }
         
-        // Handle image deletion
         if ($request->has('delete_images')) {
             $currentImages = $product->images ?? [];
             $deleteImages = $request->input('delete_images', []);
             $validated['images'] = array_values(array_diff($currentImages, $deleteImages));
             
-            // Delete files from storage
             foreach ($deleteImages as $image) {
                 \Storage::disk('public')->delete($image);
             }
@@ -469,12 +665,117 @@ class CustomerDashboardController extends Controller
         
         $product->update($validated);
         
+        // Handle product variations
+        if ($hasVariations && $request->has('variations')) {
+            $submittedIds = [];
+            $hasDefault = false;
+            
+            foreach ($request->input('variations', []) as $variationData) {
+                $attributes = [];
+                if (!empty($variationData['attributes'])) {
+                    foreach ($variationData['attributes'] as $attr) {
+                        if (!empty($attr['name']) && !empty($attr['value'])) {
+                            $attributes[$attr['name']] = $attr['value'];
+                        }
+                    }
+                }
+                
+                $isDefault = isset($variationData['is_default']) && $variationData['is_default'];
+                
+                if ($isDefault && $hasDefault) {
+                    $isDefault = false;
+                } elseif ($isDefault) {
+                    $hasDefault = true;
+                }
+                
+                $variationParams = [
+                    'product_id' => $product->id,
+                    'sku' => $variationData['sku'] ?? null,
+                    'price' => $variationData['price'],
+                    'compare_at_price' => $variationData['compare_at_price'] ?? null,
+                    'stock' => $variationData['stock'] ?? 0,
+                    'attributes' => $attributes,
+                    'is_active' => isset($variationData['is_active']) && $variationData['is_active'],
+                    'is_default' => $isDefault,
+                ];
+                
+                if (!empty($variationData['id'])) {
+                    $variation = \App\Models\ProductVariation::where('id', $variationData['id'])
+                        ->where('product_id', $product->id)
+                        ->first();
+                    
+                    if ($variation) {
+                        $variation->update($variationParams);
+                        $submittedIds[] = $variation->id;
+                    }
+                } else {
+                    $variation = \App\Models\ProductVariation::create($variationParams);
+                    $submittedIds[] = $variation->id;
+                }
+            }
+            
+            // Delete variations that were not submitted
+            $product->variations()->whereNotIn('id', $submittedIds)->delete();
+            
+            // If no default was set, make the first variation default
+            if (!$hasDefault) {
+                $firstVariation = $product->variations()->first();
+                if ($firstVariation) {
+                    $firstVariation->update(['is_default' => true]);
+                }
+            }
+        } else {
+            // If variations are disabled, delete all existing variations
+            $product->variations()->delete();
+        }
+
+        // Handle product promotions
+        if ($promotionsSubmitted) {
+            $submittedPromotionIds = [];
+
+            foreach ($request->input('promotions', []) as $promotionData) {
+                $promotionParams = [
+                    'product_id' => $product->id,
+                    'min_quantity' => $promotionData['min_quantity'],
+                    'max_quantity' => $promotionData['max_quantity'] ?? null,
+                    'price' => $promotionData['price'],
+                    'is_active' => true,
+                ];
+
+                if (!empty($promotionData['id'])) {
+                    $promotion = \App\Models\ProductPromotion::where('id', $promotionData['id'])
+                        ->where('product_id', $product->id)
+                        ->first();
+
+                    if ($promotion) {
+                        $promotion->update($promotionParams);
+                        $submittedPromotionIds[] = $promotion->id;
+                    }
+                } else {
+                    $promotion = \App\Models\ProductPromotion::create($promotionParams);
+                    $submittedPromotionIds[] = $promotion->id;
+                }
+            }
+
+            // Delete promotions that were not submitted
+            $product->promotions()->whereNotIn('id', $submittedPromotionIds)->delete();
+        } else {
+            // If promotions are disabled or none submitted, delete all existing promotions
+            $product->promotions()->delete();
+        }
+
         return redirect()->route('app.products')->with('success', 'Product updated successfully!');
     }
     
     public function productsDestroy($id)
     {
-        $product = \App\Models\Product::where('user_id', auth()->id())->findOrFail($id);
+        $storeId = $this->getActiveStoreId();
+        
+        $product = \App\Models\Product::where('user_id', auth()->id())
+            ->when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->findOrFail($id);
         
         // Delete product images from storage
         if ($product->images) {
@@ -498,7 +799,13 @@ class CustomerDashboardController extends Controller
 
     public function generateLandingPage($productId)
     {
-        $product = \App\Models\Product::where('user_id', auth()->id())->findOrFail($productId);
+        $storeId = $this->getActiveStoreId();
+        
+        $product = \App\Models\Product::where('user_id', auth()->id())
+            ->when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->findOrFail($productId);
         
         $product->update(['landing_page_status' => 'pending']);
         
@@ -512,7 +819,13 @@ class CustomerDashboardController extends Controller
 
     public function generateProductImages($productId)
     {
-        $product = \App\Models\Product::where('user_id', auth()->id())->findOrFail($productId);
+        $storeId = $this->getActiveStoreId();
+        
+        $product = \App\Models\Product::where('user_id', auth()->id())
+            ->when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->findOrFail($productId);
         
         $product->update([
             'ai_images_status' => 'pending',
@@ -530,7 +843,13 @@ class CustomerDashboardController extends Controller
 
     public function checkImageGenerationProgress($productId)
     {
-        $product = \App\Models\Product::where('user_id', auth()->id())->findOrFail($productId);
+        $storeId = $this->getActiveStoreId();
+        
+        $product = \App\Models\Product::where('user_id', auth()->id())
+            ->when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->findOrFail($productId);
         
         return response()->json([
             'status' => $product->ai_images_status,
@@ -543,14 +862,31 @@ class CustomerDashboardController extends Controller
 
     public function landingPageBuilder($id)
     {
-        $product = \App\Models\Product::where('user_id', auth()->id())->findOrFail($id);
+        $storeId = $this->getActiveStoreId();
         
-        return view('customer.products-landing-builder', compact('product'));
+        $product = \App\Models\Product::where('user_id', auth()->id())
+            ->when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->findOrFail($id);
+        
+        $store = null;
+        if ($storeId) {
+            $store = \App\Models\Store::find($storeId);
+        }
+        
+        return view('customer.products-landing-builder', compact('product', 'store'));
     }
 
     public function saveLandingPageBuilder(Request $request, $id)
     {
-        $product = \App\Models\Product::where('user_id', auth()->id())->findOrFail($id);
+        $storeId = $this->getActiveStoreId();
+        
+        $product = \App\Models\Product::where('user_id', auth()->id())
+            ->when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->findOrFail($id);
         
         $validated = $request->validate([
             'sections' => 'nullable|array',
@@ -582,7 +918,13 @@ class CustomerDashboardController extends Controller
 
     public function uploadProductImage(Request $request, $id)
     {
-        $product = \App\Models\Product::where('user_id', auth()->id())->findOrFail($id);
+        $storeId = $this->getActiveStoreId();
+        
+        $product = \App\Models\Product::where('user_id', auth()->id())
+            ->when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->findOrFail($id);
         
         $request->validate([
             'image' => 'required|image|max:2048'
@@ -600,7 +942,13 @@ class CustomerDashboardController extends Controller
 
     public function setMainImage(Request $request, $id)
     {
-        $product = \App\Models\Product::where('user_id', auth()->id())->findOrFail($id);
+        $storeId = $this->getActiveStoreId();
+        
+        $product = \App\Models\Product::where('user_id', auth()->id())
+            ->when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->findOrFail($id);
         
         $validated = $request->validate([
             'image_path' => 'required|string'
@@ -623,7 +971,13 @@ class CustomerDashboardController extends Controller
 
     public function updateImageDescription(Request $request, $id)
     {
-        $product = \App\Models\Product::where('user_id', auth()->id())->findOrFail($id);
+        $storeId = $this->getActiveStoreId();
+        
+        $product = \App\Models\Product::where('user_id', auth()->id())
+            ->when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->findOrFail($id);
         
         $validated = $request->validate([
             'image_path' => 'required|string',
@@ -655,8 +1009,15 @@ class CustomerDashboardController extends Controller
     public function leads()
     {
         $user = auth()->user();
+        $storeId = $this->getActiveStoreId();
+        
         $leads = \App\Models\ProductLead::with('product')
             ->where('user_id', $user->id)
+            ->when($storeId, function($q) use ($storeId) {
+                $q->whereHas('product', function($q) use ($storeId) {
+                    $q->where('store_id', $storeId);
+                });
+            })
             ->latest()
             ->paginate(20);
         
@@ -698,7 +1059,12 @@ class CustomerDashboardController extends Controller
     
     public function categoriesUpdate(Request $request, $id)
     {
-        $category = \App\Models\Category::findOrFail($id);
+        $storeId = $this->getActiveStoreId();
+        
+        $category = \App\Models\Category::when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->findOrFail($id);
         
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -718,7 +1084,12 @@ class CustomerDashboardController extends Controller
     
     public function categoriesDestroy($id)
     {
-        $category = \App\Models\Category::findOrFail($id);
+        $storeId = $this->getActiveStoreId();
+        
+        $category = \App\Models\Category::when($storeId, function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->findOrFail($id);
         
         // Check if category has products
         if ($category->products()->count() > 0) {
