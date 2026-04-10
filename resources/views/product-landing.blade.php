@@ -189,118 +189,6 @@
                         @endif
                     </div>
 
-                    <!-- Quantity-Based Promotions -->
-                    @if($product->has_promotions && $product->activePromotions->isNotEmpty())
-                    <div class="mt-6 bg-gradient-to-br from-yellow-400/20 to-orange-500/20 backdrop-blur-sm rounded-2xl p-6 border border-yellow-400/30">
-                        <h3 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                            <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <span x-text="currentLang === 'ar' ? 'عروض الكمية' : (currentLang === 'en' ? 'Quantity Deals' : 'Offres de Quantité')">Offres de Quantité</span>
-                        </h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            @foreach($product->activePromotions as $promotion)
-                            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:border-yellow-400/50 transition">
-                                <div class="flex items-center justify-between mb-2">
-                                    <div class="text-sm font-semibold text-yellow-300">
-                                        <span x-text="currentLang === 'ar' ? 'اشتري' : (currentLang === 'en' ? 'Buy' : 'Achetez')">Achetez</span>
-                                        {{ $promotion->quantity_range }}
-                                    </div>
-                                    @if($promotion->discount_percentage > 0)
-                                    <div class="bg-yellow-400 text-blue-900 px-2 py-1 rounded-lg text-xs font-black">
-                                        -{{ $promotion->discount_percentage }}%
-                                    </div>
-                                    @endif
-                                </div>
-                                <div class="text-2xl font-black text-white">{{ number_format($promotion->price, 2) }} <span class="text-sm">MAD</span></div>
-                                <div class="text-xs text-white/60 mt-1">
-                                    <span x-text="currentLang === 'ar' ? 'لكل قطعة' : (currentLang === 'en' ? 'per item' : 'par article')">par article</span>
-                                </div>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
-                    @elseif($product->has_promotions)
-                    <!-- Debug: Promotions enabled but none are active -->
-                    <div class="mt-6 bg-red-500/20 backdrop-blur-sm rounded-2xl p-4 border border-red-400/30 text-white text-sm">
-                        ⚠️ Promotions are enabled but no active promotions found. Please add promotion tiers in the admin panel.
-                    </div>
-                    @endif
-
-                    @if($product->has_variations && $product->activeVariations->isNotEmpty())
-                    <!-- Variations Selector -->
-                    <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-6 border border-white/30">
-                        <h3 class="text-xl font-bold text-white mb-4" 
-                            x-text="currentLang === 'ar' ? 'الخيارات المتاحة:' : (currentLang === 'en' ? 'Available Options:' : 'Options disponibles:')">
-                            Options disponibles:
-                        </h3>
-                        
-                        <div class="space-y-3" id="variationsContainer">
-                            @foreach($product->activeVariations as $index => $variation)
-                            @php
-                                // Build display name from attributes
-                                $displayName = '';
-                                if (!empty($variation->attributes) && is_array($variation->attributes)) {
-                                    $attrParts = [];
-                                    foreach ($variation->attributes as $key => $value) {
-                                        $attrParts[] = ucfirst($key) . ': ' . $value;
-                                    }
-                                    $displayName = implode(' / ', $attrParts);
-                                }
-                                if (empty($displayName)) {
-                                    $displayName = 'Option ' . ($index + 1);
-                                }
-                            @endphp
-                            <label class="block p-5 bg-white/10 rounded-xl border-2 cursor-pointer hover:border-yellow-400 hover:bg-white/20 transition variation-option {{ $variation->is_default ? 'border-yellow-400 bg-white/20' : 'border-white/20' }}"
-                                   data-variation-id="{{ $variation->id }}"
-                                   data-price="{{ $variation->price }}"
-                                   data-compare-price="{{ $variation->compare_at_price ?? 0 }}"
-                                   data-discount="{{ $variation->discount_percentage }}">
-                                <div class="flex items-start gap-4">
-                                    <input type="radio" 
-                                           name="selected_variation" 
-                                           value="{{ $variation->id }}" 
-                                           class="mt-1 w-5 h-5 text-yellow-400 focus:ring-yellow-400 bg-white/20 border-white/30"
-                                           {{ $variation->is_default ? 'checked' : '' }}
-                                           onchange="updateVariationDisplay(this)">
-                                    <div class="flex-1">
-                                        <div class="flex items-start justify-between flex-wrap gap-3">
-                                            <div>
-                                                <div class="font-bold text-white text-lg mb-1">{{ $displayName }}</div>
-                                                @if($variation->sku)
-                                                <div class="text-xs text-white/60 font-mono">{{ Str::limit($variation->sku, 30) }}</div>
-                                                @endif
-                                            </div>
-                                            <div class="text-right">
-                                                <div class="text-2xl font-black text-white">{{ number_format($variation->price, 2) }} <span class="text-base font-bold">MAD</span></div>
-                                                @if($variation->compare_at_price && $variation->compare_at_price > $variation->price)
-                                                <div class="text-sm line-through text-white/60">{{ number_format($variation->compare_at_price, 2) }} MAD</div>
-                                                @endif
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-white/20">
-                                            <div class="text-sm text-white/70 flex items-center gap-2">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                                                </svg>
-                                                <span x-text="currentLang === 'ar' ? 'المخزون: {{ $variation->stock }}' : (currentLang === 'en' ? 'Stock: {{ $variation->stock }}' : 'Stock: {{ $variation->stock }}')">
-                                                    Stock: {{ $variation->stock }}
-                                                </span>
-                                            </div>
-                                            @if($variation->discount_percentage)
-                                            <div class="inline-block text-xs bg-yellow-400 text-blue-900 px-3 py-1 rounded-full font-black">
-                                                -{{ $variation->discount_percentage }}%
-                                            </div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            </label>
-                            @endforeach
-                        </div>
-                    </div>
-                    @endif
                 </div>
 
                 <!-- Right Side: Contact Form -->
@@ -408,6 +296,148 @@
 
     <!-- Section Divider -->
     <div class="section-divider"></div>
+
+    <!-- Promotions and Variations Section - AFTER Hero, BEFORE Landing Sections -->
+    @if(($product->has_promotions && $product->activePromotions->isNotEmpty()) || ($product->has_variations && $product->activeVariations->isNotEmpty()))
+    <section class="py-12 lg:py-16 bg-gradient-to-br from-gray-50 to-blue-50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-5xl mx-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Quantity-Based Promotions -->
+                    @if($product->has_promotions && $product->activePromotions->isNotEmpty())
+                    <div class="bg-white rounded-2xl p-8 shadow-xl border-2 border-yellow-300">
+                        <h3 class="text-3xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                            <svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span x-text="currentLang === 'ar' ? 'عروض الكمية' : (currentLang === 'en' ? 'Quantity Deals' : 'Offres de Quantité')">Offres de Quantité</span>
+                        </h3>
+                        <div class="space-y-4" id="promotionsContainer">
+                            @foreach($product->activePromotions as $index => $promotion)
+                            <label class="block p-6 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl border-2 cursor-pointer hover:border-yellow-500 hover:shadow-lg transition promotion-option {{ $index === 0 ? 'border-yellow-500 shadow-md' : 'border-yellow-200' }}"
+                                   data-promotion-id="{{ $promotion->id }}"
+                                   data-min-quantity="{{ $promotion->min_quantity }}"
+                                   data-max-quantity="{{ $promotion->max_quantity ?? '' }}"
+                                   data-price="{{ $promotion->price }}"
+                                   data-discount="{{ $promotion->discount_percentage }}">
+                                <div class="flex items-start gap-4">
+                                    <input type="radio" 
+                                           name="selected_promotion" 
+                                           value="{{ $promotion->id }}" 
+                                           class="mt-1 w-6 h-6 text-yellow-500 focus:ring-yellow-500"
+                                           {{ $index === 0 ? 'checked' : '' }}
+                                           onchange="updatePromotionDisplay(this)">
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between flex-wrap gap-3">
+                                            <div class="text-xl font-bold text-gray-900">
+                                                <span x-text="currentLang === 'ar' ? 'اشتري' : (currentLang === 'en' ? 'Buy' : 'Achetez')">Achetez</span>
+                                                {{ $promotion->quantity_range }}
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="text-3xl font-black text-gray-900">{{ number_format($promotion->price, 2) }} <span class="text-lg font-bold">MAD</span></div>
+                                                @if($promotion->discount_percentage > 0)
+                                                <div class="inline-block text-sm bg-yellow-500 text-white px-4 py-1.5 rounded-full font-black mt-2">
+                                                    -{{ $promotion->discount_percentage }}%
+                                                </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                            @endforeach
+                        </div>
+                    </div>
+                    @elseif($product->has_promotions)
+                    <!-- Debug: Promotions enabled but none are active -->
+                    <div class="bg-red-50 rounded-2xl p-6 border-2 border-red-300 text-red-700">
+                        <p class="font-semibold">⚠️ Promotions are enabled but no active promotions found.</p>
+                        <p class="text-sm mt-2">Please add promotion tiers in the admin panel.</p>
+                    </div>
+                    @endif
+
+                    <!-- Variations Selector -->
+                    @if($product->has_variations && $product->activeVariations->isNotEmpty())
+                    <div class="bg-white rounded-2xl p-8 shadow-xl border-2 border-blue-300">
+                        <h3 class="text-3xl font-bold text-gray-900 mb-6" 
+                            x-text="currentLang === 'ar' ? 'الخيارات المتاحة' : (currentLang === 'en' ? 'Available Options' : 'Options disponibles')">
+                            Options disponibles
+                        </h3>
+                        
+                        <div class="space-y-4" id="variationsContainer">
+                            @foreach($product->activeVariations as $index => $variation)
+                            @php
+                                // Build display name from attributes
+                                $displayName = '';
+                                if (!empty($variation->attributes) && is_array($variation->attributes)) {
+                                    $attrParts = [];
+                                    foreach ($variation->attributes as $key => $value) {
+                                        $attrParts[] = ucfirst($key) . ': ' . $value;
+                                    }
+                                    $displayName = implode(' / ', $attrParts);
+                                }
+                                if (empty($displayName)) {
+                                    $displayName = 'Option ' . ($index + 1);
+                                }
+                            @endphp
+                            <label class="block p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border-2 cursor-pointer hover:border-blue-500 hover:shadow-lg transition variation-option {{ $variation->is_default ? 'border-blue-500 shadow-md' : 'border-blue-200' }}"
+                                   data-variation-id="{{ $variation->id }}"
+                                   data-price="{{ $variation->price }}"
+                                   data-compare-price="{{ $variation->compare_at_price ?? 0 }}"
+                                   data-discount="{{ $variation->discount_percentage }}">
+                                <div class="flex items-start gap-4">
+                                    <input type="radio" 
+                                           name="selected_variation" 
+                                           value="{{ $variation->id }}" 
+                                           class="mt-1 w-6 h-6 text-blue-600 focus:ring-blue-500"
+                                           {{ $variation->is_default ? 'checked' : '' }}
+                                           onchange="updateVariationDisplay(this)">
+                                    <div class="flex-1">
+                                        <div class="flex items-start justify-between flex-wrap gap-3">
+                                            <div>
+                                                <div class="font-bold text-gray-900 text-xl mb-1">{{ $displayName }}</div>
+                                                @if($variation->sku)
+                                                <div class="text-sm text-gray-600 font-mono">{{ Str::limit($variation->sku, 30) }}</div>
+                                                @endif
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="text-3xl font-black text-gray-900">{{ number_format($variation->price, 2) }} <span class="text-lg font-bold">MAD</span></div>
+                                                @if($variation->compare_at_price && $variation->compare_at_price > $variation->price)
+                                                <div class="text-sm line-through text-gray-500">{{ number_format($variation->compare_at_price, 2) }} MAD</div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+                                            <div class="text-sm text-gray-600 flex items-center gap-2">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                                </svg>
+                                                <span x-text="currentLang === 'ar' ? 'المخزون: {{ $variation->stock }}' : (currentLang === 'en' ? 'Stock: {{ $variation->stock }}' : 'Stock: {{ $variation->stock }}')">
+                                                    Stock: {{ $variation->stock }}
+                                                </span>
+                                            </div>
+                                            @if($variation->discount_percentage)
+                                            <div class="inline-block text-sm bg-red-500 text-white px-4 py-1.5 rounded-full font-black">
+                                                -{{ $variation->discount_percentage }}%
+                                            </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Section Divider -->
+    <div class="section-divider"></div>
+    @endif
 
     <!-- Landing Page Sections (Image with Description) - BEFORE Features -->
     @if($product->landing_page_sections && count($product->landing_page_sections) > 0)
@@ -657,6 +687,49 @@
             const defaultRadio = document.querySelector('input[name="selected_variation"]:checked');
             if (defaultRadio) {
                 updateVariationDisplay(defaultRadio);
+            }
+        });
+    </script>
+    @endif
+
+    @if($product->has_promotions && $product->activePromotions->isNotEmpty())
+    <script>
+        // Promotion selection handler
+        function updatePromotionDisplay(radio) {
+            const option = radio.closest('.promotion-option');
+            const minQuantity = parseInt(option.dataset.minQuantity);
+            const maxQuantity = option.dataset.maxQuantity ? parseInt(option.dataset.maxQuantity) : null;
+            const price = parseFloat(option.dataset.price);
+            const discount = option.dataset.discount;
+            
+            // Remove active state from all options
+            document.querySelectorAll('.promotion-option').forEach(opt => {
+                opt.classList.remove('border-yellow-400', 'bg-white/30');
+                opt.classList.add('border-white/20');
+            });
+            
+            // Add active state to selected option
+            option.classList.remove('border-white/20');
+            option.classList.add('border-yellow-400', 'bg-white/30');
+            
+            // Update quantity input to match the promotion minimum
+            const quantityInput = document.querySelector('input[name="quantity"]');
+            if (quantityInput) {
+                quantityInput.value = minQuantity;
+                quantityInput.min = minQuantity;
+                if (maxQuantity) {
+                    quantityInput.max = maxQuantity;
+                } else {
+                    quantityInput.removeAttribute('max');
+                }
+            }
+        }
+        
+        // Set default promotion on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const defaultRadio = document.querySelector('input[name="selected_promotion"]:checked');
+            if (defaultRadio) {
+                updatePromotionDisplay(defaultRadio);
             }
         });
     </script>

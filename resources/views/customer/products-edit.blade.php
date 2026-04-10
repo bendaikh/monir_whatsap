@@ -513,12 +513,17 @@
                         @endforeach
                     </div>
 
-                    <div id="noPromotionsMessage" class="text-center py-8 text-gray-500 text-sm" style="display: {{ $product->promotions->isEmpty() ? 'block' : 'none' }};">
-                        <svg class="w-12 h-12 text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    <div id="noPromotionsMessage" class="text-center py-8 border-2 border-dashed border-yellow-500/30 rounded-lg bg-yellow-500/5" style="display: {{ $product->promotions->isEmpty() ? 'block' : 'none' }};">
+                        <svg class="w-12 h-12 text-yellow-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                         </svg>
-                        Click "Add Tier" to create quantity-based pricing
+                        <p class="text-yellow-300 font-semibold mb-1">⚠️ No pricing tiers added yet!</p>
+                        <p class="text-gray-400 text-sm">Click <strong class="text-yellow-400">"Add Tier"</strong> above to create quantity-based pricing</p>
+                        <p class="text-xs mt-2 text-gray-500">Example: Buy 2+ items → Pay 90 MAD each instead of 100 MAD</p>
                     </div>
+                    
+                    <!-- Hidden field to ensure promotions data is always captured -->
+                    <input type="hidden" id="promotions_json" name="promotions_json" value="[]">
                 </div>
             </div>
 
@@ -1045,6 +1050,69 @@
             if (hasVariations) {
                 toggleVariations(true);
             }
+
+            // Add form validation for promotions
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(e) {
+                const hasPromotionsCheckbox = document.getElementById('has_promotions');
+                const promotionsContainer = document.getElementById('promotionsContainer');
+                
+                // Collect promotions data and store in hidden JSON field as backup
+                const promotions = [];
+                const promotionDivs = promotionsContainer.querySelectorAll('[id^="promotion-"]');
+                
+                console.log('Found promotion divs:', promotionDivs.length);
+                
+                promotionDivs.forEach((div, index) => {
+                    const minQty = div.querySelector('input[name*="[min_quantity]"]');
+                    const maxQty = div.querySelector('input[name*="[max_quantity]"]');
+                    const price = div.querySelector('input[name*="[price]"]');
+                    const idField = div.querySelector('input[name*="[id]"]');
+                    
+                    if (minQty && price && minQty.value && price.value) {
+                        const promo = {
+                            min_quantity: minQty.value,
+                            max_quantity: maxQty ? maxQty.value : null,
+                            price: price.value
+                        };
+                        if (idField && idField.value) {
+                            promo.id = idField.value;
+                        }
+                        promotions.push(promo);
+                    }
+                });
+                
+                console.log('Collected promotions:', promotions);
+                document.getElementById('promotions_json').value = JSON.stringify(promotions);
+                
+                if (hasPromotionsCheckbox.checked && promotions.length === 0) {
+                    e.preventDefault();
+                    
+                    // Show error notification
+                    const notification = document.createElement('div');
+                    notification.className = 'fixed top-4 right-4 bg-red-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3';
+                    notification.innerHTML = `
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <div>
+                            <p class="font-semibold">Promotions enabled but no tiers added!</p>
+                            <p class="text-sm">Please click "Add Tier" to add at least one pricing tier, or uncheck "Enable Quantity-Based Pricing".</p>
+                        </div>
+                    `;
+                    document.body.appendChild(notification);
+                    
+                    // Scroll to promotions section
+                    document.getElementById('promotionsCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Remove notification after 5 seconds
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 5000);
+                    
+                    return false;
+                }
+            });
         });
 
         function previewImages(event) {

@@ -172,22 +172,38 @@
                             Special Quantity Pricing
                         </h3>
                         <p class="text-sm text-gray-600 mb-4">Save more when you buy more items</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            @foreach($product->activePromotions as $promotion)
-                            <div class="bg-white rounded-xl p-4 border-2 border-yellow-300 hover:border-yellow-500 transition shadow-md">
-                                <div class="flex items-center justify-between mb-2">
-                                    <div class="text-sm font-semibold text-yellow-700">
-                                        Buy {{ $promotion->quantity_range }}
+                        <div class="space-y-3" id="promotionsContainer">
+                            @foreach($product->activePromotions as $index => $promotion)
+                            <label class="block p-5 bg-white rounded-xl border-2 cursor-pointer hover:border-yellow-500 transition shadow-md promotion-option {{ $index === 0 ? 'border-yellow-500' : 'border-yellow-300' }}"
+                                   data-promotion-id="{{ $promotion->id }}"
+                                   data-min-quantity="{{ $promotion->min_quantity }}"
+                                   data-max-quantity="{{ $promotion->max_quantity ?? '' }}"
+                                   data-price="{{ $promotion->price }}"
+                                   data-discount="{{ $promotion->discount_percentage }}">
+                                <div class="flex items-start gap-4">
+                                    <input type="radio" 
+                                           name="selected_promotion" 
+                                           value="{{ $promotion->id }}" 
+                                           class="mt-1 w-5 h-5 text-yellow-500 focus:ring-yellow-500"
+                                           {{ $index === 0 ? 'checked' : '' }}
+                                           onchange="updatePromotionDisplay(this)">
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between flex-wrap gap-3">
+                                            <div class="text-lg font-semibold text-yellow-700">
+                                                Buy {{ $promotion->quantity_range }}
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="text-3xl font-bold text-gray-800">{{ number_format($promotion->price, 2) }} <span class="text-base text-gray-600">MAD</span></div>
+                                                @if($promotion->discount_percentage > 0)
+                                                <div class="inline-block text-xs bg-yellow-500 text-white px-3 py-1 rounded-full font-bold mt-1">
+                                                    -{{ $promotion->discount_percentage }}%
+                                                </div>
+                                                @endif
+                                            </div>
+                                        </div>
                                     </div>
-                                    @if($promotion->discount_percentage > 0)
-                                    <div class="bg-yellow-500 text-white px-2 py-1 rounded-lg text-xs font-bold">
-                                        -{{ $promotion->discount_percentage }}%
-                                    </div>
-                                    @endif
                                 </div>
-                                <div class="text-3xl font-bold text-gray-800">{{ number_format($promotion->price, 2) }} <span class="text-base text-gray-600">MAD</span></div>
-                                <div class="text-xs text-gray-500 mt-1">per item</div>
-                            </div>
+                            </label>
                             @endforeach
                         </div>
                     </div>
@@ -390,6 +406,49 @@
             const defaultRadio = document.querySelector('input[name="selected_variation"]:checked');
             if (defaultRadio) {
                 updateVariationDisplay(defaultRadio);
+            }
+        });
+    </script>
+    @endif
+
+    @if($product->has_promotions && $product->activePromotions->isNotEmpty())
+    <script>
+        // Promotion selection handler
+        function updatePromotionDisplay(radio) {
+            const option = radio.closest('.promotion-option');
+            const minQuantity = parseInt(option.dataset.minQuantity);
+            const maxQuantity = option.dataset.maxQuantity ? parseInt(option.dataset.maxQuantity) : null;
+            const price = parseFloat(option.dataset.price);
+            const discount = option.dataset.discount;
+            
+            // Remove active state from all options
+            document.querySelectorAll('.promotion-option').forEach(opt => {
+                opt.classList.remove('border-yellow-500');
+                opt.classList.add('border-yellow-300');
+            });
+            
+            // Add active state to selected option
+            option.classList.remove('border-yellow-300');
+            option.classList.add('border-yellow-500');
+            
+            // Update quantity input to match the promotion minimum
+            const quantityInput = document.querySelector('input[name="quantity"]');
+            if (quantityInput) {
+                quantityInput.value = minQuantity;
+                quantityInput.min = minQuantity;
+                if (maxQuantity) {
+                    quantityInput.max = maxQuantity;
+                } else {
+                    quantityInput.removeAttribute('max');
+                }
+            }
+        }
+        
+        // Set default promotion on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const defaultRadio = document.querySelector('input[name="selected_promotion"]:checked');
+            if (defaultRadio) {
+                updatePromotionDisplay(defaultRadio);
             }
         });
     </script>

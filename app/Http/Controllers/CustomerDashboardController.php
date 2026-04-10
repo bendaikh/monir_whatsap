@@ -338,11 +338,31 @@ class CustomerDashboardController extends Controller
         // Debug logging
         \Log::info('Product creation - has_promotions: ' . ($hasPromotions ? 'true' : 'false'));
         \Log::info('Product creation - promotions data: ' . json_encode($request->input('promotions')));
+        \Log::info('Product creation - promotions_json: ' . $request->input('promotions_json'));
+        \Log::info('Product creation - all request keys: ' . json_encode(array_keys($request->all())));
+        
+        // Check for promotions - first try the regular array, then fallback to JSON field
+        $promotionsData = $request->input('promotions');
+        
+        // If regular promotions array is empty but we have JSON data, use that instead
+        if (empty($promotionsData) && $request->has('promotions_json')) {
+            $jsonData = json_decode($request->input('promotions_json'), true);
+            if (!empty($jsonData) && is_array($jsonData)) {
+                $promotionsData = [];
+                foreach ($jsonData as $index => $promo) {
+                    $promotionsData[$index] = $promo;
+                }
+                // Merge back into request so validation works
+                $request->merge(['promotions' => $promotionsData]);
+                \Log::info('Product creation - using promotions from JSON fallback: ' . json_encode($promotionsData));
+            }
+        }
         
         // Only require promotions array if has_promotions is true AND promotions were submitted
-        $promotionsSubmitted = $hasPromotions && $request->has('promotions') && !empty($request->input('promotions'));
+        $promotionsSubmitted = $hasPromotions && !empty($promotionsData);
         
         \Log::info('Product creation - promotionsSubmitted: ' . ($promotionsSubmitted ? 'true' : 'false'));
+        \Log::info('Product creation - promotions count: ' . ($promotionsSubmitted ? count($promotionsData) : 0));
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -384,7 +404,7 @@ class CustomerDashboardController extends Controller
         $validated['is_active'] = $request->has('is_active');
         $validated['is_featured'] = $request->has('is_featured');
         $validated['has_variations'] = $hasVariations;
-        $validated['has_promotions'] = $hasPromotions && $promotionsSubmitted;
+        $validated['has_promotions'] = $hasPromotions;
 
         // If has variations, stock/sku/price will be managed by variations
         if ($hasVariations) {
@@ -565,8 +585,33 @@ class CustomerDashboardController extends Controller
         $hasVariations = $request->boolean('has_variations');
         $hasPromotions = $request->boolean('has_promotions');
         
+        // Debug logging
+        \Log::info('Product update - ID: ' . $id . ' - has_promotions: ' . ($hasPromotions ? 'true' : 'false'));
+        \Log::info('Product update - ID: ' . $id . ' - promotions data: ' . json_encode($request->input('promotions')));
+        \Log::info('Product update - ID: ' . $id . ' - promotions_json: ' . $request->input('promotions_json'));
+        
+        // Check for promotions - first try the regular array, then fallback to JSON field
+        $promotionsData = $request->input('promotions');
+        
+        // If regular promotions array is empty but we have JSON data, use that instead
+        if (empty($promotionsData) && $request->has('promotions_json')) {
+            $jsonData = json_decode($request->input('promotions_json'), true);
+            if (!empty($jsonData) && is_array($jsonData)) {
+                $promotionsData = [];
+                foreach ($jsonData as $index => $promo) {
+                    $promotionsData[$index] = $promo;
+                }
+                // Merge back into request so validation works
+                $request->merge(['promotions' => $promotionsData]);
+                \Log::info('Product update - ID: ' . $id . ' - using promotions from JSON fallback: ' . json_encode($promotionsData));
+            }
+        }
+        
         // Only require promotions array if has_promotions is true AND promotions were submitted
-        $promotionsSubmitted = $hasPromotions && $request->has('promotions') && !empty($request->input('promotions'));
+        $promotionsSubmitted = $hasPromotions && !empty($promotionsData);
+        
+        \Log::info('Product update - ID: ' . $id . ' - promotionsSubmitted: ' . ($promotionsSubmitted ? 'true' : 'false'));
+        \Log::info('Product update - ID: ' . $id . ' - promotions count: ' . ($promotionsSubmitted ? count($promotionsData) : 0));
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -608,7 +653,7 @@ class CustomerDashboardController extends Controller
         $validated['is_active'] = $request->has('is_active');
         $validated['is_featured'] = $request->has('is_featured');
         $validated['has_variations'] = $hasVariations;
-        $validated['has_promotions'] = $hasPromotions && $promotionsSubmitted;
+        $validated['has_promotions'] = $hasPromotions;
 
         // If has variations, stock/sku/price will be managed by variations
         if ($hasVariations) {
@@ -730,37 +775,40 @@ class CustomerDashboardController extends Controller
         }
 
         // Handle product promotions
-        if ($promotionsSubmitted) {
-            $submittedPromotionIds = [];
+        if ($hasPromotions) {
+            if ($promotionsSubmitted) {
+                $submittedPromotionIds = [];
 
-            foreach ($request->input('promotions', []) as $promotionData) {
-                $promotionParams = [
-                    'product_id' => $product->id,
-                    'min_quantity' => $promotionData['min_quantity'],
-                    'max_quantity' => $promotionData['max_quantity'] ?? null,
-                    'price' => $promotionData['price'],
-                    'is_active' => true,
-                ];
+                foreach ($request->input('promotions', []) as $promotionData) {
+                    $promotionParams = [
+                        'product_id' => $product->id,
+                        'min_quantity' => $promotionData['min_quantity'],
+                        'max_quantity' => $promotionData['max_quantity'] ?? null,
+                        'price' => $promotionData['price'],
+                        'is_active' => true,
+                    ];
 
-                if (!empty($promotionData['id'])) {
-                    $promotion = \App\Models\ProductPromotion::where('id', $promotionData['id'])
-                        ->where('product_id', $product->id)
-                        ->first();
+                    if (!empty($promotionData['id'])) {
+                        $promotion = \App\Models\ProductPromotion::where('id', $promotionData['id'])
+                            ->where('product_id', $product->id)
+                            ->first();
 
-                    if ($promotion) {
-                        $promotion->update($promotionParams);
+                        if ($promotion) {
+                            $promotion->update($promotionParams);
+                            $submittedPromotionIds[] = $promotion->id;
+                        }
+                    } else {
+                        $promotion = \App\Models\ProductPromotion::create($promotionParams);
                         $submittedPromotionIds[] = $promotion->id;
                     }
-                } else {
-                    $promotion = \App\Models\ProductPromotion::create($promotionParams);
-                    $submittedPromotionIds[] = $promotion->id;
                 }
-            }
 
-            // Delete promotions that were not submitted
-            $product->promotions()->whereNotIn('id', $submittedPromotionIds)->delete();
+                // Delete promotions that were not submitted
+                $product->promotions()->whereNotIn('id', $submittedPromotionIds)->delete();
+            }
+            // If has_promotions is true but no promotions submitted, keep existing promotions
         } else {
-            // If promotions are disabled or none submitted, delete all existing promotions
+            // Only delete promotions if has_promotions checkbox is explicitly unchecked
             $product->promotions()->delete();
         }
 

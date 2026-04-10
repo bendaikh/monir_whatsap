@@ -37,7 +37,7 @@ class ProductPromotion extends Model
         if ($this->max_quantity) {
             return $this->min_quantity . ' - ' . $this->max_quantity;
         }
-        return $this->min_quantity . '+';
+        return $this->min_quantity;
     }
 
     public function getDiscountPercentageAttribute()
