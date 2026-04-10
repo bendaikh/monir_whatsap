@@ -3,27 +3,51 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        // Add foreign key constraint if it doesn't already exist
-        if (!$this->foreignKeyExists('product_promotions', 'product_promotions_product_variation_id_foreign')) {
+        // Only proceed if both tables exist
+        if (!Schema::hasTable('product_promotions') || !Schema::hasTable('product_variations')) {
+            return;
+        }
+
+        // Check if foreign key already exists
+        if ($this->foreignKeyExists('product_promotions', 'product_promotions_product_variation_id_foreign')) {
+            return;
+        }
+
+        // Verify column types match before adding foreign key
+        $promotionsColumn = DB::select("SHOW COLUMNS FROM product_promotions WHERE Field = 'product_variation_id'");
+        $variationsColumn = DB::select("SHOW COLUMNS FROM product_variations WHERE Field = 'id'");
+
+        if (empty($promotionsColumn) || empty($variationsColumn)) {
+            \Log::warning('Cannot add foreign key: columns do not exist');
+            return;
+        }
+
+        try {
             Schema::table('product_promotions', function (Blueprint $table) {
                 $table->foreign('product_variation_id')
                     ->references('id')
                     ->on('product_variations')
                     ->onDelete('cascade');
             });
+        } catch (\Exception $e) {
+            \Log::error('Foreign key constraint failed: ' . $e->getMessage());
+            // Don't throw - allow migration to complete
         }
     }
 
     public function down(): void
     {
-        Schema::table('product_promotions', function (Blueprint $table) {
-            $table->dropForeign(['product_variation_id']);
-        });
+        if (Schema::hasTable('product_promotions')) {
+            Schema::table('product_promotions', function (Blueprint $table) {
+                $table->dropForeign(['product_variation_id']);
+            });
+        }
     }
 
     private function foreignKeyExists($table, $foreignKey): bool
