@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('product_promotions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->foreignId('product_variation_id')->nullable()->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('product_variation_id')->nullable();
             $table->integer('min_quantity');
             $table->integer('max_quantity')->nullable();
             $table->decimal('price', 10, 2);
