@@ -113,6 +113,15 @@ Route::middleware(['auth', 'require.store'])->prefix('app')->name('app.')->group
     Route::post('/tiktok-ads/test', [SocialMediaAdsController::class, 'testTikTokConnection'])->name('tiktok-ads.test');
     Route::post('/tiktok-ads/disconnect', [SocialMediaAdsController::class, 'disconnectTikTok'])->name('tiktok-ads.disconnect');
     
+    // Ad Campaigns Dashboard
+    Route::get('/ad-campaigns', [\App\Http\Controllers\AdCampaignsController::class, 'index'])->name('ad-campaigns');
+    Route::post('/ad-campaigns/refresh', [\App\Http\Controllers\AdCampaignsController::class, 'refresh'])->name('ad-campaigns.refresh');
+    
+    // AI Campaign Creator
+    Route::get('/campaign-creator', [\App\Http\Controllers\CampaignCreatorController::class, 'index'])->name('campaign-creator');
+    Route::post('/campaign-creator/generate', [\App\Http\Controllers\CampaignCreatorController::class, 'generateCopy'])->name('campaign-creator.generate');
+    Route::post('/campaign-creator/create', [\App\Http\Controllers\CampaignCreatorController::class, 'createCampaign'])->name('campaign-creator.create');
+    
     // External API Integration
     Route::get('/external-api-settings', [CustomerDashboardController::class, 'externalApiSettings'])->name('external-api-settings');
     Route::post('/external-api-settings', [CustomerDashboardController::class, 'saveExternalApiSettings'])->name('external-api-settings.save');

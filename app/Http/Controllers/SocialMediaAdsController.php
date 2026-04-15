@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\SocialMediaAdsSetting;
+use App\Models\FacebookAdAccount;
+use App\Models\TikTokAdAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
@@ -14,68 +16,111 @@ class SocialMediaAdsController extends Controller
     {
         $user = auth()->user();
         $settings = SocialMediaAdsSetting::firstOrCreate(['user_id' => $user->id]);
+        $adAccounts = FacebookAdAccount::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
         
-        return view('customer.facebook-ads', compact('settings'));
+        return view('customer.facebook-ads', compact('settings', 'adAccounts'));
     }
 
     public function tiktokAds()
     {
         $user = auth()->user();
         $settings = SocialMediaAdsSetting::firstOrCreate(['user_id' => $user->id]);
+        $adAccounts = TikTokAdAccount::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
         
-        return view('customer.tiktok-ads', compact('settings'));
+        return view('customer.tiktok-ads', compact('settings', 'adAccounts'));
     }
 
     public function saveFacebookSettings(Request $request)
     {
         $validated = $request->validate([
-            'facebook_access_token' => 'nullable|string|max:2048',
-            'facebook_ad_account_id' => 'nullable|string|max:255',
+            'facebook_access_token' => 'required|string|max:2048',
+            'facebook_ad_account_id' => 'required|string|max:255',
             'facebook_page_id' => 'nullable|string|max:255',
             'facebook_business_id' => 'nullable|string|max:255',
-            'clear_facebook_token' => 'nullable|boolean',
         ]);
 
         $user = $request->user();
-        $settings = SocialMediaAdsSetting::firstOrNew(['user_id' => $user->id]);
         
-        $settings->facebook_ad_account_id = $validated['facebook_ad_account_id'] ?? $settings->facebook_ad_account_id;
-        $settings->facebook_page_id = $validated['facebook_page_id'] ?? $settings->facebook_page_id;
-        $settings->facebook_business_id = $validated['facebook_business_id'] ?? $settings->facebook_business_id;
-
-        if ($request->boolean('clear_facebook_token')) {
-            $settings->facebook_access_token_encrypted = null;
-            $settings->facebook_connected = false;
-            $settings->facebook_token_expires_at = null;
-        } elseif (!empty($validated['facebook_access_token'])) {
-            $settings->facebook_access_token_encrypted = Crypt::encryptString(trim($validated['facebook_access_token']));
-            $settings->facebook_connected = true;
-            $settings->facebook_token_expires_at = Carbon::now()->addDays(60);
+        // Check if this ad account is already connected
+        $existingAccount = FacebookAdAccount::where('user_id', $user->id)
+            ->where('ad_account_id', $validated['facebook_ad_account_id'])
+            ->first();
+            
+        if ($existingAccount) {
+            return redirect()
+                ->route('app.facebook-ads')
+                ->with('error', 'This ad account is already connected.');
         }
-
-        $settings->save();
+        
+        // Encrypt and store the access token
+        $encryptedToken = Crypt::encryptString(trim($validated['facebook_access_token']));
+        
+        // Normalize the ad account ID format (ensure it starts with act_)
+        $adAccountId = $validated['facebook_ad_account_id'];
+        $adAccountId = str_replace('act=', 'act_', $adAccountId);
+        if (!str_starts_with($adAccountId, 'act_')) {
+            $adAccountId = 'act_' . $adAccountId;
+        }
+        
+        // Try to fetch account name from Facebook API
+        $adAccountName = null;
+        try {
+            $response = Http::get("https://graph.facebook.com/v18.0/{$adAccountId}", [
+                'access_token' => trim($validated['facebook_access_token']),
+                'fields' => 'name,account_id'
+            ]);
+            
+            if ($response->successful()) {
+                $data = $response->json();
+                $adAccountName = $data['name'] ?? null;
+            }
+        } catch (\Exception $e) {
+            // Continue without the name if API call fails
+        }
+        
+        // Create new ad account
+        FacebookAdAccount::create([
+            'user_id' => $user->id,
+            'access_token_encrypted' => $encryptedToken,
+            'ad_account_id' => $adAccountId,
+            'ad_account_name' => $adAccountName,
+            'page_id' => $validated['facebook_page_id'],
+            'business_id' => $validated['facebook_business_id'],
+            'token_expires_at' => Carbon::now()->addDays(60),
+            'is_active' => true,
+        ]);
 
         return redirect()
             ->route('app.facebook-ads')
-            ->with('success', 'Facebook Ads settings saved successfully.');
+            ->with('success', 'Facebook Ad Account connected successfully!');
     }
 
     public function testFacebookConnection(Request $request)
     {
-        $settings = SocialMediaAdsSetting::where('user_id', $request->user()->id)->first();
+        $validated = $request->validate([
+            'account_id' => 'required|exists:facebook_ad_accounts,id'
+        ]);
+        
+        $account = FacebookAdAccount::where('id', $validated['account_id'])
+            ->where('user_id', $request->user()->id)
+            ->first();
 
-        if (!$settings || empty($settings->facebook_access_token_encrypted)) {
+        if (!$account) {
             return redirect()
                 ->route('app.facebook-ads')
-                ->with('error', 'Please save your Facebook Access Token first.');
+                ->with('error', 'Ad account not found.');
         }
 
         try {
-            $accessToken = Crypt::decryptString($settings->facebook_access_token_encrypted);
+            $accessToken = Crypt::decryptString($account->access_token_encrypted);
         } catch (\Throwable) {
             return redirect()
                 ->route('app.facebook-ads')
-                ->with('error', 'Unable to decrypt the saved token. Please re-enter and save it.');
+                ->with('error', 'Unable to decrypt the saved token.');
         }
 
         $response = Http::get('https://graph.facebook.com/v18.0/me', [
@@ -95,88 +140,115 @@ class SocialMediaAdsController extends Controller
 
         return redirect()
             ->route('app.facebook-ads')
-            ->with('success', 'Facebook connection successful! Connected as: ' . ($userData['name'] ?? 'Unknown'));
+            ->with('success', 'Connection successful! Connected as: ' . ($userData['name'] ?? 'Unknown'));
     }
 
     public function disconnectFacebook(Request $request)
     {
-        $settings = SocialMediaAdsSetting::where('user_id', $request->user()->id)->first();
+        $validated = $request->validate([
+            'account_id' => 'required|exists:facebook_ad_accounts,id'
+        ]);
+        
+        $account = FacebookAdAccount::where('id', $validated['account_id'])
+            ->where('user_id', $request->user()->id)
+            ->first();
 
-        if ($settings) {
-            $settings->facebook_access_token_encrypted = null;
-            $settings->facebook_connected = false;
-            $settings->facebook_token_expires_at = null;
-            $settings->facebook_ad_account_id = null;
-            $settings->facebook_page_id = null;
-            $settings->facebook_business_id = null;
-            $settings->save();
+        if ($account) {
+            $account->delete();
         }
 
         return redirect()
             ->route('app.facebook-ads')
-            ->with('success', 'Facebook Ads disconnected successfully.');
+            ->with('success', 'Facebook Ad Account disconnected successfully.');
     }
 
     public function saveTikTokSettings(Request $request)
     {
         $validated = $request->validate([
-            'tiktok_access_token' => 'nullable|string|max:2048',
-            'tiktok_advertiser_id' => 'nullable|string|max:255',
+            'tiktok_access_token' => 'required|string|max:2048',
+            'tiktok_advertiser_id' => 'required|string|max:255',
             'tiktok_app_id' => 'nullable|string|max:255',
-            'clear_tiktok_token' => 'nullable|boolean',
         ]);
 
         $user = $request->user();
-        $settings = SocialMediaAdsSetting::firstOrNew(['user_id' => $user->id]);
         
-        $settings->tiktok_advertiser_id = $validated['tiktok_advertiser_id'] ?? $settings->tiktok_advertiser_id;
-        $settings->tiktok_app_id = $validated['tiktok_app_id'] ?? $settings->tiktok_app_id;
-
-        if ($request->boolean('clear_tiktok_token')) {
-            $settings->tiktok_access_token_encrypted = null;
-            $settings->tiktok_connected = false;
-            $settings->tiktok_token_expires_at = null;
-        } elseif (!empty($validated['tiktok_access_token'])) {
-            $settings->tiktok_access_token_encrypted = Crypt::encryptString(trim($validated['tiktok_access_token']));
-            $settings->tiktok_connected = true;
-            $settings->tiktok_token_expires_at = Carbon::now()->addDays(60);
+        // Check if this advertiser is already connected
+        $existingAccount = TikTokAdAccount::where('user_id', $user->id)
+            ->where('advertiser_id', $validated['tiktok_advertiser_id'])
+            ->first();
+            
+        if ($existingAccount) {
+            return redirect()
+                ->route('app.tiktok-ads')
+                ->with('error', 'This advertiser account is already connected.');
         }
-
-        $settings->save();
+        
+        // Encrypt and store the access token
+        $encryptedToken = Crypt::encryptString(trim($validated['tiktok_access_token']));
+        
+        // Try to fetch advertiser name from TikTok API
+        $advertiserName = null;
+        try {
+            $response = Http::withHeaders([
+                'Access-Token' => trim($validated['tiktok_access_token']),
+            ])->get('https://business-api.tiktok.com/open_api/v1.3/advertiser/info/', [
+                'advertiser_ids' => json_encode([$validated['tiktok_advertiser_id']])
+            ]);
+            
+            if ($response->successful()) {
+                $data = $response->json();
+                if (data_get($data, 'code') === 0) {
+                    $advertiserName = data_get($data, 'data.list.0.name');
+                }
+            }
+        } catch (\Exception $e) {
+            // Continue without the name if API call fails
+        }
+        
+        // Create new ad account
+        TikTokAdAccount::create([
+            'user_id' => $user->id,
+            'access_token_encrypted' => $encryptedToken,
+            'advertiser_id' => $validated['tiktok_advertiser_id'],
+            'advertiser_name' => $advertiserName,
+            'app_id' => $validated['tiktok_app_id'],
+            'token_expires_at' => Carbon::now()->addDays(60),
+            'is_active' => true,
+        ]);
 
         return redirect()
             ->route('app.tiktok-ads')
-            ->with('success', 'TikTok Ads settings saved successfully.');
+            ->with('success', 'TikTok Ad Account connected successfully!');
     }
 
     public function testTikTokConnection(Request $request)
     {
-        $settings = SocialMediaAdsSetting::where('user_id', $request->user()->id)->first();
+        $validated = $request->validate([
+            'account_id' => 'required|exists:tiktok_ad_accounts,id'
+        ]);
+        
+        $account = TikTokAdAccount::where('id', $validated['account_id'])
+            ->where('user_id', $request->user()->id)
+            ->first();
 
-        if (!$settings || empty($settings->tiktok_access_token_encrypted)) {
+        if (!$account) {
             return redirect()
                 ->route('app.tiktok-ads')
-                ->with('error', 'Please save your TikTok Access Token first.');
+                ->with('error', 'Ad account not found.');
         }
 
         try {
-            $accessToken = Crypt::decryptString($settings->tiktok_access_token_encrypted);
+            $accessToken = Crypt::decryptString($account->access_token_encrypted);
         } catch (\Throwable) {
             return redirect()
                 ->route('app.tiktok-ads')
-                ->with('error', 'Unable to decrypt the saved token. Please re-enter and save it.');
-        }
-
-        if (empty($settings->tiktok_advertiser_id)) {
-            return redirect()
-                ->route('app.tiktok-ads')
-                ->with('error', 'Please provide your TikTok Advertiser ID.');
+                ->with('error', 'Unable to decrypt the saved token.');
         }
 
         $response = Http::withHeaders([
             'Access-Token' => $accessToken,
         ])->get('https://business-api.tiktok.com/open_api/v1.3/advertiser/info/', [
-            'advertiser_ids' => json_encode([$settings->tiktok_advertiser_id])
+            'advertiser_ids' => json_encode([$account->advertiser_id])
         ]);
 
         if (!$response->successful()) {
@@ -194,7 +266,7 @@ class SocialMediaAdsController extends Controller
             
             return redirect()
                 ->route('app.tiktok-ads')
-                ->with('success', 'TikTok connection successful! Connected advertiser: ' . $advertiserName);
+                ->with('success', 'Connection successful! Connected advertiser: ' . $advertiserName);
         }
 
         return redirect()
@@ -204,19 +276,20 @@ class SocialMediaAdsController extends Controller
 
     public function disconnectTikTok(Request $request)
     {
-        $settings = SocialMediaAdsSetting::where('user_id', $request->user()->id)->first();
+        $validated = $request->validate([
+            'account_id' => 'required|exists:tiktok_ad_accounts,id'
+        ]);
+        
+        $account = TikTokAdAccount::where('id', $validated['account_id'])
+            ->where('user_id', $request->user()->id)
+            ->first();
 
-        if ($settings) {
-            $settings->tiktok_access_token_encrypted = null;
-            $settings->tiktok_connected = false;
-            $settings->tiktok_token_expires_at = null;
-            $settings->tiktok_advertiser_id = null;
-            $settings->tiktok_app_id = null;
-            $settings->save();
+        if ($account) {
+            $account->delete();
         }
 
         return redirect()
             ->route('app.tiktok-ads')
-            ->with('success', 'TikTok Ads disconnected successfully.');
+            ->with('success', 'TikTok Ad Account disconnected successfully.');
     }
 }

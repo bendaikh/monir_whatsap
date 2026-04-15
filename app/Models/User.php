@@ -73,4 +73,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Store::class);
     }
+
+    public function facebookAdAccounts()
+    {
+        return $this->hasMany(FacebookAdAccount::class);
+    }
+
+    public function tiktokAdAccounts()
+    {
+        return $this->hasMany(TikTokAdAccount::class);
+    }
 }

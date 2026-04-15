@@ -45,7 +45,7 @@
                 @endif
 
                 <!-- Navigation -->
-                <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto" x-data="{ socialMediaOpen: {{ request()->routeIs('app.facebook-ads') || request()->routeIs('app.tiktok-ads') ? 'true' : 'false' }}, aiApiOpen: {{ request()->routeIs('app.ai-settings') ? 'true' : 'false' }}, productsOpen: {{ request()->routeIs('app.products*') || request()->routeIs('app.categories*') ? 'true' : 'false' }} }">
+                <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto" x-data="{ socialMediaOpen: {{ request()->routeIs('app.facebook-ads') || request()->routeIs('app.tiktok-ads') || request()->routeIs('app.ad-campaigns*') || request()->routeIs('app.campaign-creator*') ? 'true' : 'false' }}, aiApiOpen: {{ request()->routeIs('app.ai-settings') ? 'true' : 'false' }}, productsOpen: {{ request()->routeIs('app.products*') || request()->routeIs('app.categories*') ? 'true' : 'false' }} }">
                     <a href="{{ route('app.dashboard') }}" class="{{ request()->routeIs('app.dashboard') ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-400 hover:bg-white/5' }} flex items-center gap-3 px-3 py-2.5 rounded-lg transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
@@ -111,7 +111,7 @@
                     
                     <!-- Social Media API Integration Section -->
                     <div>
-                        <button @click="socialMediaOpen = !socialMediaOpen" class="w-full {{ request()->routeIs('app.facebook-ads') || request()->routeIs('app.tiktok-ads') ? 'text-emerald-400' : 'text-gray-400' }} hover:bg-white/5 flex items-center justify-between px-3 py-2.5 rounded-lg transition">
+                        <button @click="socialMediaOpen = !socialMediaOpen" class="w-full {{ request()->routeIs('app.facebook-ads') || request()->routeIs('app.tiktok-ads') || request()->routeIs('app.ad-campaigns*') || request()->routeIs('app.campaign-creator*') ? 'text-emerald-400' : 'text-gray-400' }} hover:bg-white/5 flex items-center justify-between px-3 py-2.5 rounded-lg transition">
                             <div class="flex items-center gap-3">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
@@ -123,6 +123,14 @@
                             </svg>
                         </button>
                         <div x-show="socialMediaOpen" x-collapse class="ml-8 mt-1 space-y-1">
+                            <a href="{{ route('app.ad-campaigns') }}" class="{{ request()->routeIs('app.ad-campaigns') ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-400' }} hover:bg-white/5 flex items-center gap-3 px-3 py-2 rounded-lg transition text-sm">
+                                <span class="material-icons text-sm">campaign</span>
+                                <span>Campaigns Dashboard</span>
+                            </a>
+                            <a href="{{ route('app.campaign-creator') }}" class="{{ request()->routeIs('app.campaign-creator*') ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-400' }} hover:bg-white/5 flex items-center gap-3 px-3 py-2 rounded-lg transition text-sm">
+                                <span class="material-icons text-sm">auto_awesome</span>
+                                <span>Create Campaign (AI)</span>
+                            </a>
                             <a href="{{ route('app.facebook-ads') }}" class="{{ request()->routeIs('app.facebook-ads') ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-400' }} hover:bg-white/5 flex items-center gap-3 px-3 py-2 rounded-lg transition text-sm">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
