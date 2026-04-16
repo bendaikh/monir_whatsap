@@ -31,6 +31,45 @@ class CampaignCreatorController extends Controller
         return view('customer.campaign-creator', compact('facebookAccounts', 'tiktokAccounts', 'hasOpenAI'));
     }
     
+    public function getFacebookPages(Request $request)
+    {
+        $validated = $request->validate([
+            'account_id' => 'required|exists:facebook_ad_accounts,id'
+        ]);
+        
+        $account = FacebookAdAccount::where('id', $validated['account_id'])
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+        
+        try {
+            $accessToken = Crypt::decryptString($account->access_token_encrypted);
+            
+            // Fetch pages from Facebook API
+            $response = Http::get('https://graph.facebook.com/v18.0/me/accounts', [
+                'access_token' => $accessToken,
+                'fields' => 'id,name,access_token'
+            ]);
+            
+            if (!$response->successful()) {
+                return response()->json([
+                    'error' => 'Failed to fetch pages from Facebook'
+                ], 500);
+            }
+            
+            $pages = $response->json()['data'] ?? [];
+            
+            return response()->json([
+                'pages' => $pages
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error fetching Facebook pages: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'An error occurred while fetching pages'
+            ], 500);
+        }
+    }
+    
     public function generateCopy(Request $request)
     {
         $validated = $request->validate([
@@ -113,6 +152,7 @@ class CampaignCreatorController extends Controller
             'platforms' => 'required|array|min:1',
             'platforms.*' => 'required|string|in:facebook,tiktok',
             'facebook_account_id' => 'required_if:platforms.*,facebook|nullable|exists:facebook_ad_accounts,id',
+            'facebook_page_id' => 'nullable|string|max:255',
             'tiktok_account_id' => 'required_if:platforms.*,tiktok|nullable|exists:tiktok_ad_accounts,id',
             'primary_text' => 'required|string|max:2000',
             'headline' => 'nullable|string|max:255',
@@ -121,6 +161,8 @@ class CampaignCreatorController extends Controller
             'website_url' => 'nullable|url|max:500',
             'media_files' => 'required|array|min:1|max:10',
             'media_files.*' => 'required|file|mimes:jpg,jpeg,png,mp4,mov|max:102400', // 100MB max
+            'target_countries' => 'nullable|array',
+            'target_countries.*' => 'string|size:2',
         ]);
         
         $user = auth()->user();
@@ -219,13 +261,16 @@ class CampaignCreatorController extends Controller
         Log::info("Created Facebook campaign: {$campaignId}");
         
         // Step 2: Upload media files
-        $uploadedMediaHashes = [];
+        $uploadedMedia = [];
         foreach ($mediaFiles as $media) {
             try {
                 Log::info("Uploading media: {$media['path']} (type: {$media['type']})");
                 $hash = $this->uploadFacebookMedia($account, $media, $accessToken);
                 if ($hash) {
-                    $uploadedMediaHashes[] = $hash;
+                    $uploadedMedia[] = [
+                        'hash' => $hash,
+                        'type' => $media['type']
+                    ];
                     Log::info("Media uploaded successfully: {$hash}");
                 }
             } catch (\Exception $e) {
@@ -233,9 +278,12 @@ class CampaignCreatorController extends Controller
             }
         }
         
-        if (empty($uploadedMediaHashes)) {
+        if (empty($uploadedMedia)) {
             throw new \Exception("Failed to upload any media files to Facebook");
         }
+        
+        // Prepare targeting - use countries from form or default to US
+        $targetCountries = !empty($data['target_countries']) ? $data['target_countries'] : ['US'];
         
         // Step 3: Create ad set
         Log::info("Creating ad set for campaign: {$campaignId}");
@@ -247,7 +295,7 @@ class CampaignCreatorController extends Controller
             'optimization_goal' => 'REACH',
             'bid_strategy' => 'LOWEST_COST_WITHOUT_CAP', // Required: automatic bidding
             'daily_budget' => (int)($data['daily_budget'] * 100), // Convert to cents
-            'targeting' => json_encode(['geo_locations' => ['countries' => ['US']]]),
+            'targeting' => json_encode(['geo_locations' => ['countries' => $targetCountries]]),
             'status' => 'PAUSED',
         ];
         
@@ -256,70 +304,87 @@ class CampaignCreatorController extends Controller
         if (!$adSetResponse->successful()) {
             $errorDetails = json_encode($adSetResponse->json());
             Log::error("Facebook Ad Set Creation Failed: {$errorDetails}");
-            Log::warning("Failed to create ad set: " . $adSetResponse->body());
-        } else {
-            $adSetId = $adSetResponse->json()['id'];
-            Log::info("Created ad set: {$adSetId}");
-            
-            // Check if page_id is available
-            if (!$account->page_id) {
-                Log::warning("No page_id configured for account, skipping creative/ad creation");
-            } else {
-                // Step 4: Create ad creative
-                Log::info("Creating ad creative");
-                $creativeData = [
-                    'access_token' => $accessToken,
-                    'name' => $data['campaign_name'] . ' - Creative',
-                    'object_story_spec' => json_encode([
-                        'page_id' => $account->page_id,
-                        'link_data' => [
-                            'message' => $data['primary_text'],
-                            'link' => $data['website_url'] ?? 'https://example.com',
-                            'name' => $data['headline'] ?? $data['campaign_name'],
-                            'description' => $data['description'] ?? '',
-                            'call_to_action' => [
-                                'type' => $this->mapCallToAction($data['call_to_action'] ?? 'LEARN_MORE')
-                            ],
-                            'image_hash' => $uploadedMediaHashes[0], // Use first media
-                        ]
-                    ])
-                ];
-                
-                $creativeResponse = Http::post("https://graph.facebook.com/v18.0/{$account->ad_account_id}/adcreatives", $creativeData);
-                
-                if (!$creativeResponse->successful()) {
-                    $errorDetails = json_encode($creativeResponse->json());
-                    Log::error("Facebook Creative Creation Failed: {$errorDetails}");
-                } else {
-                    $creativeId = $creativeResponse->json()['id'];
-                    Log::info("Created creative: {$creativeId}");
-                    
-                    // Step 5: Create ad
-                    Log::info("Creating ad");
-                    $adResponse = Http::post("https://graph.facebook.com/v18.0/{$account->ad_account_id}/ads", [
-                        'access_token' => $accessToken,
-                        'name' => $data['campaign_name'] . ' - Ad',
-                        'adset_id' => $adSetId,
-                        'creative' => json_encode(['creative_id' => $creativeId]),
-                        'status' => 'PAUSED',
-                    ]);
-                    
-                    if (!$adResponse->successful()) {
-                        $errorDetails = json_encode($adResponse->json());
-                        Log::error("Facebook Ad Creation Failed: {$errorDetails}");
-                    } else {
-                        Log::info("Created ad: " . $adResponse->json()['id']);
-                    }
-                }
-            }
+            throw new \Exception("Failed to create ad set: " . ($adSetResponse->json()['error']['message'] ?? 'Unknown error'));
         }
+        
+        $adSetId = $adSetResponse->json()['id'];
+        Log::info("Created ad set: {$adSetId}");
+        
+        // Determine page_id - use from form or fall back to account page_id
+        $pageId = $data['facebook_page_id'] ?? $account->page_id;
+        
+        if (!$pageId) {
+            throw new \Exception("No Facebook page selected. Please select a page to create ads.");
+        }
+        
+        // Step 4: Create ad creative
+        Log::info("Creating ad creative with page_id: {$pageId}");
+        
+        // Determine whether to use image or video
+        $firstMedia = $uploadedMedia[0];
+        $linkData = [
+            'message' => $data['primary_text'],
+            'link' => $data['website_url'] ?? 'https://example.com',
+            'name' => $data['headline'] ?? $data['campaign_name'],
+            'description' => $data['description'] ?? '',
+            'call_to_action' => [
+                'type' => $this->mapCallToAction($data['call_to_action'] ?? 'LEARN_MORE')
+            ],
+        ];
+        
+        // Add media based on type
+        if ($firstMedia['type'] === 'image') {
+            $linkData['image_hash'] = $firstMedia['hash'];
+        } else {
+            $linkData['video_id'] = $firstMedia['hash'];
+        }
+        
+        $creativeData = [
+            'access_token' => $accessToken,
+            'name' => $data['campaign_name'] . ' - Creative',
+            'object_story_spec' => json_encode([
+                'page_id' => $pageId,
+                'link_data' => $linkData
+            ])
+        ];
+        
+        $creativeResponse = Http::post("https://graph.facebook.com/v18.0/{$account->ad_account_id}/adcreatives", $creativeData);
+        
+        if (!$creativeResponse->successful()) {
+            $errorDetails = json_encode($creativeResponse->json());
+            Log::error("Facebook Creative Creation Failed: {$errorDetails}");
+            throw new \Exception("Failed to create ad creative: " . ($creativeResponse->json()['error']['message'] ?? 'Unknown error'));
+        }
+        
+        $creativeId = $creativeResponse->json()['id'];
+        Log::info("Created creative: {$creativeId}");
+        
+        // Step 5: Create ad
+        Log::info("Creating ad");
+        $adResponse = Http::post("https://graph.facebook.com/v18.0/{$account->ad_account_id}/ads", [
+            'access_token' => $accessToken,
+            'name' => $data['campaign_name'] . ' - Ad',
+            'adset_id' => $adSetId,
+            'creative' => json_encode(['creative_id' => $creativeId]),
+            'status' => 'PAUSED',
+        ]);
+        
+        if (!$adResponse->successful()) {
+            $errorDetails = json_encode($adResponse->json());
+            Log::error("Facebook Ad Creation Failed: {$errorDetails}");
+            throw new \Exception("Failed to create ad: " . ($adResponse->json()['error']['message'] ?? 'Unknown error'));
+        }
+        
+        $adId = $adResponse->json()['id'];
+        Log::info("Created ad: {$adId}");
         
         return [
             'campaign_id' => $campaignId,
             'platform' => 'Facebook',
             'name' => $data['campaign_name'],
             'status' => 'PAUSED',
-            'media_count' => count($uploadedMediaHashes),
+            'media_count' => count($uploadedMedia),
+            'ad_id' => $adId,
         ];
     }
     

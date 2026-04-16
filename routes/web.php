@@ -39,9 +39,9 @@ Route::post('/webhook/whatsapp', [WhatsAppController::class, 'webhook'])->name('
 // API route for Node.js to process messages (no auth)
 Route::post('/api/whatsapp/process-message', [WhatsAppController::class, 'processMessageWithAi']);
 
-// Dashboard - redirects to stores management
+// Dashboard - redirects to workspaces management
 Route::get('/dashboard', function () {
-    return redirect()->route('stores.dashboard');
+    return redirect()->route('workspaces.dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -50,8 +50,19 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Store Management Routes (must come before app routes)
-Route::middleware(['auth'])->prefix('stores')->name('stores.')->group(function () {
+// Workspace Management Routes
+Route::middleware(['auth'])->prefix('workspaces')->name('workspaces.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\WorkspaceController::class, 'dashboard'])->name('dashboard');
+    Route::get('/create', [\App\Http\Controllers\WorkspaceController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\WorkspaceController::class, 'store'])->name('store');
+    Route::get('/{workspace}/edit', [\App\Http\Controllers\WorkspaceController::class, 'edit'])->name('edit');
+    Route::put('/{workspace}', [\App\Http\Controllers\WorkspaceController::class, 'update'])->name('update');
+    Route::delete('/{workspace}', [\App\Http\Controllers\WorkspaceController::class, 'destroy'])->name('destroy');
+    Route::post('/{workspace}/switch', [\App\Http\Controllers\WorkspaceController::class, 'switch'])->name('switch');
+});
+
+// Store Management Routes (must come before app routes) - requires active workspace
+Route::middleware(['auth', 'require.workspace'])->prefix('stores')->name('stores.')->group(function () {
     Route::get('/', [\App\Http\Controllers\StoreManagementController::class, 'dashboard'])->name('dashboard');
     Route::get('/create', [\App\Http\Controllers\StoreManagementController::class, 'create'])->name('create');
     Route::post('/', [\App\Http\Controllers\StoreManagementController::class, 'store'])->name('store');
@@ -62,8 +73,8 @@ Route::middleware(['auth'])->prefix('stores')->name('stores.')->group(function (
     Route::put('/{store}/domain', [\App\Http\Controllers\StoreManagementController::class, 'updateDomain'])->name('update-domain');
 });
 
-// Main App Routes (for all authenticated users) - requires active store selection
-Route::middleware(['auth', 'require.store'])->prefix('app')->name('app.')->group(function () {
+// Main App Routes (for all authenticated users) - requires active workspace and store selection
+Route::middleware(['auth', 'require.workspace', 'require.store'])->prefix('app')->name('app.')->group(function () {
     Route::get('/dashboard', [CustomerDashboardController::class, 'dashboard'])->name('dashboard');
     Route::get('/whatsapp', [CustomerDashboardController::class, 'whatsapp'])->name('whatsapp');
     Route::get('/ai-settings', [CustomerDashboardController::class, 'aiSettings'])->name('ai-settings');
@@ -121,6 +132,7 @@ Route::middleware(['auth', 'require.store'])->prefix('app')->name('app.')->group
     Route::get('/campaign-creator', [\App\Http\Controllers\CampaignCreatorController::class, 'index'])->name('campaign-creator');
     Route::post('/campaign-creator/generate', [\App\Http\Controllers\CampaignCreatorController::class, 'generateCopy'])->name('campaign-creator.generate');
     Route::post('/campaign-creator/create', [\App\Http\Controllers\CampaignCreatorController::class, 'createCampaign'])->name('campaign-creator.create');
+    Route::post('/campaign-creator/facebook/pages', [\App\Http\Controllers\CampaignCreatorController::class, 'getFacebookPages'])->name('campaign-creator.facebook.pages');
     
     // External API Integration
     Route::get('/external-api-settings', [CustomerDashboardController::class, 'externalApiSettings'])->name('external-api-settings');
@@ -142,6 +154,15 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/customers', [SuperAdminController::class, 'customers'])->name('customers');
     Route::get('/analytics', [SuperAdminController::class, 'analytics'])->name('analytics');
+    
+    // Workspace Management
+    Route::get('/workspaces', [SuperAdminController::class, 'workspaces'])->name('workspaces');
+    Route::post('/workspaces', [SuperAdminController::class, 'workspaceStore'])->name('workspaces.store');
+    Route::get('/workspaces/create', [SuperAdminController::class, 'workspaceCreate'])->name('workspaces.create');
+    Route::get('/workspaces/{workspace}/edit', [SuperAdminController::class, 'workspaceEdit'])->name('workspaces.edit');
+    Route::put('/workspaces/{workspace}', [SuperAdminController::class, 'workspaceUpdate'])->name('workspaces.update');
+    Route::delete('/workspaces/{workspace}', [SuperAdminController::class, 'workspaceDestroy'])->name('workspaces.destroy');
+    Route::post('/workspaces/{workspace}/switch', [SuperAdminController::class, 'switchWorkspace'])->name('workspaces.switch');
     
     // Store Management
     Route::get('/stores', [SuperAdminController::class, 'stores'])->name('stores');

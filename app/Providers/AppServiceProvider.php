@@ -23,5 +23,6 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Blade::component('layouts.stores', 'stores-layout');
         
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Store::class, \App\Policies\StorePolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Workspace::class, \App\Policies\WorkspacePolicy::class);
     }
 }

@@ -7,6 +7,7 @@ use App\Models\WhatsappProfile;
 use App\Models\Message;
 use App\Models\Subscription;
 use App\Models\Store;
+use App\Models\Workspace;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -120,5 +121,83 @@ class SuperAdminController extends Controller
         session(['active_store_id' => $store->id]);
         
         return redirect()->route('app.dashboard')->with('success', 'Switched to store: ' . $store->name);
+    }
+    
+    public function workspaces()
+    {
+        $workspaces = Workspace::with('user')
+            ->withCount('stores')
+            ->latest()
+            ->paginate(20);
+        
+        $currentWorkspaceId = session('active_workspace_id');
+            
+        return view('superadmin.workspaces', compact('workspaces', 'currentWorkspaceId'));
+    }
+    
+    public function workspaceCreate()
+    {
+        $users = User::where('role', 'customer')->orderBy('name')->get();
+        return view('superadmin.workspaces-create', compact('users'));
+    }
+    
+    public function workspaceStore(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
+        
+        if (!isset($validated['is_active'])) {
+            $validated['is_active'] = true;
+        }
+        
+        $workspace = Workspace::create($validated);
+        
+        return redirect()->route('superadmin.workspaces')->with('success', 'Workspace created successfully!');
+    }
+    
+    public function workspaceEdit(Workspace $workspace)
+    {
+        $users = User::where('role', 'customer')->orderBy('name')->get();
+        return view('superadmin.workspaces-edit', compact('workspace', 'users'));
+    }
+    
+    public function workspaceUpdate(Request $request, Workspace $workspace)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
+        
+        $workspace->update($validated);
+        
+        return redirect()->route('superadmin.workspaces')->with('success', 'Workspace updated successfully!');
+    }
+    
+    public function workspaceDestroy(Workspace $workspace)
+    {
+        $storesCount = $workspace->stores()->count();
+        
+        if ($storesCount > 0) {
+            return redirect()->route('superadmin.workspaces')
+                ->with('error', 'Cannot delete workspace with existing stores. Please delete or reassign the stores first.');
+        }
+        
+        $workspace->delete();
+        
+        return redirect()->route('superadmin.workspaces')->with('success', 'Workspace deleted successfully!');
+    }
+    
+    public function switchWorkspace(Workspace $workspace)
+    {
+        session(['active_workspace_id' => $workspace->id]);
+        session()->forget('active_store_id');
+        
+        return redirect()->route('stores.dashboard')->with('success', 'Switched to workspace: ' . $workspace->name);
     }
 }

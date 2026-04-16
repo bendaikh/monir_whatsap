@@ -26,6 +26,13 @@ class RequireActiveStore
                     ->with('error', 'Invalid store selection. Please select a valid store.');
             }
             
+            $activeWorkspaceId = session('active_workspace_id');
+            if ($activeWorkspaceId && $store->workspace_id && $store->workspace_id != $activeWorkspaceId) {
+                session()->forget('active_store_id');
+                return redirect()->route('stores.dashboard')
+                    ->with('error', 'The selected store does not belong to the active workspace.');
+            }
+            
             view()->share('activeStore', $store);
         }
         

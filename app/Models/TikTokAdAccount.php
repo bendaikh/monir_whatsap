@@ -13,6 +13,7 @@ class TikTokAdAccount extends Model
     protected $table = 'tiktok_ad_accounts';
 
     protected $fillable = [
+        'workspace_id',
         'user_id',
         'access_token_encrypted',
         'advertiser_id',
@@ -26,6 +27,11 @@ class TikTokAdAccount extends Model
         'token_expires_at' => 'datetime',
         'is_active' => 'boolean',
     ];
+
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
 
     public function user(): BelongsTo
     {

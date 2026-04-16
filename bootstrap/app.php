@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
+            'require.workspace' => \App\Http\Middleware\RequireActiveWorkspace::class,
             'require.store' => \App\Http\Middleware\RequireActiveStore::class,
         ]);
         

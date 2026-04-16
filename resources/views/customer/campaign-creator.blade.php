@@ -137,6 +137,45 @@
                     </select>
                 </div>
             </div>
+
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Target Countries *</label>
+                
+                <!-- Selected Countries Tags -->
+                <div id="selectedCountriesTags" class="flex flex-wrap gap-2 mb-3 min-h-[42px] p-2 border border-gray-300 rounded-lg bg-gray-50">
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded-full text-sm">
+                        United States
+                        <button type="button" onclick="removeCountry('US')" class="hover:bg-blue-700 rounded-full p-0.5">
+                            <span class="material-icons text-sm">close</span>
+                        </button>
+                    </span>
+                </div>
+                
+                <!-- Search/Dropdown -->
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        id="countrySearch" 
+                        placeholder="Search and select countries..." 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
+                        autocomplete="off"
+                        onfocus="showCountryDropdown()"
+                        oninput="filterCountries()"
+                    >
+                    
+                    <!-- Dropdown List -->
+                    <div id="countryDropdown" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        <div id="countryList"></div>
+                    </div>
+                </div>
+                
+                <!-- Hidden inputs for form submission -->
+                <div id="countryHiddenInputs">
+                    <input type="hidden" name="target_countries[]" value="US">
+                </div>
+                
+                <p class="text-xs text-gray-500 mt-2">Search and click to add countries. Click the X on tags to remove them.</p>
+            </div>
         </div>
 
         <!-- Step 3: AI-Powered Ad Copy -->
@@ -270,12 +309,18 @@
                             </svg>
                             <span class="font-semibold text-gray-900">Facebook Ads</span>
                         </div>
-                        <select name="facebook_account_id" id="facebook_account_select" disabled class="w-full mt-2 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900">
+                        <select name="facebook_account_id" id="facebook_account_select" disabled onchange="loadFacebookPages()" class="w-full mt-2 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900">
                             <option value="">Select account...</option>
                             @foreach($facebookAccounts as $account)
                             <option value="{{ $account->id }}">{{ $account->ad_account_name ?? $account->ad_account_id }}</option>
                             @endforeach
                         </select>
+                        <div id="facebook_pages_container" class="hidden mt-2">
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Select Facebook Page *</label>
+                            <select name="facebook_page_id" id="facebook_page_select" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900">
+                                <option value="">Loading pages...</option>
+                            </select>
+                        </div>
                     </div>
                 </label>
                 @else
@@ -421,10 +466,72 @@ function toggleAccountSelect(platform) {
     if (checkbox.checked) {
         select.disabled = false;
         select.required = true;
+        if (platform === 'facebook') {
+            loadFacebookPages();
+        }
     } else {
         select.disabled = true;
         select.required = false;
         select.value = '';
+        if (platform === 'facebook') {
+            document.getElementById('facebook_pages_container').classList.add('hidden');
+        }
+    }
+}
+
+async function loadFacebookPages() {
+    const accountId = document.getElementById('facebook_account_select').value;
+    const pagesContainer = document.getElementById('facebook_pages_container');
+    const pageSelect = document.getElementById('facebook_page_select');
+    
+    if (!accountId) {
+        pagesContainer.classList.add('hidden');
+        return;
+    }
+    
+    pagesContainer.classList.remove('hidden');
+    pageSelect.innerHTML = '<option value="">Loading pages...</option>';
+    pageSelect.disabled = true;
+    
+    try {
+        const response = await fetch('{{ route("app.campaign-creator.facebook.pages") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ account_id: accountId })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            pageSelect.innerHTML = '<option value="">Failed to load pages</option>';
+            alert('Failed to load Facebook pages: ' + data.error);
+            return;
+        }
+        
+        if (!data.pages || data.pages.length === 0) {
+            pageSelect.innerHTML = '<option value="">No pages found</option>';
+            alert('No Facebook pages found for this account. Please make sure you have pages associated with your Facebook account.');
+            return;
+        }
+        
+        pageSelect.innerHTML = '<option value="">Select a page...</option>';
+        data.pages.forEach(page => {
+            const option = document.createElement('option');
+            option.value = page.id;
+            option.textContent = page.name;
+            pageSelect.appendChild(option);
+        });
+        
+        pageSelect.disabled = false;
+        pageSelect.required = true;
+        
+    } catch (error) {
+        console.error('Error loading pages:', error);
+        pageSelect.innerHTML = '<option value="">Error loading pages</option>';
+        alert('An error occurred while loading Facebook pages. Please try again.');
     }
 }
 
@@ -482,5 +589,219 @@ async function generateContent(contentType) {
         button.innerHTML = originalHtml;
     }
 }
+
+// Country selector functionality
+const countries = [
+    { code: 'AF', name: 'Afghanistan' },
+    { code: 'AL', name: 'Albania' },
+    { code: 'DZ', name: 'Algeria' },
+    { code: 'AD', name: 'Andorra' },
+    { code: 'AO', name: 'Angola' },
+    { code: 'AR', name: 'Argentina' },
+    { code: 'AM', name: 'Armenia' },
+    { code: 'AU', name: 'Australia' },
+    { code: 'AT', name: 'Austria' },
+    { code: 'AZ', name: 'Azerbaijan' },
+    { code: 'BS', name: 'Bahamas' },
+    { code: 'BH', name: 'Bahrain' },
+    { code: 'BD', name: 'Bangladesh' },
+    { code: 'BB', name: 'Barbados' },
+    { code: 'BY', name: 'Belarus' },
+    { code: 'BE', name: 'Belgium' },
+    { code: 'BZ', name: 'Belize' },
+    { code: 'BO', name: 'Bolivia' },
+    { code: 'BA', name: 'Bosnia and Herzegovina' },
+    { code: 'BR', name: 'Brazil' },
+    { code: 'BN', name: 'Brunei' },
+    { code: 'BG', name: 'Bulgaria' },
+    { code: 'KH', name: 'Cambodia' },
+    { code: 'CM', name: 'Cameroon' },
+    { code: 'CA', name: 'Canada' },
+    { code: 'CL', name: 'Chile' },
+    { code: 'CN', name: 'China' },
+    { code: 'CO', name: 'Colombia' },
+    { code: 'CR', name: 'Costa Rica' },
+    { code: 'HR', name: 'Croatia' },
+    { code: 'CY', name: 'Cyprus' },
+    { code: 'CZ', name: 'Czech Republic' },
+    { code: 'DK', name: 'Denmark' },
+    { code: 'DO', name: 'Dominican Republic' },
+    { code: 'EC', name: 'Ecuador' },
+    { code: 'EG', name: 'Egypt' },
+    { code: 'SV', name: 'El Salvador' },
+    { code: 'EE', name: 'Estonia' },
+    { code: 'ET', name: 'Ethiopia' },
+    { code: 'FI', name: 'Finland' },
+    { code: 'FR', name: 'France' },
+    { code: 'GE', name: 'Georgia' },
+    { code: 'DE', name: 'Germany' },
+    { code: 'GH', name: 'Ghana' },
+    { code: 'GR', name: 'Greece' },
+    { code: 'GT', name: 'Guatemala' },
+    { code: 'HN', name: 'Honduras' },
+    { code: 'HK', name: 'Hong Kong' },
+    { code: 'HU', name: 'Hungary' },
+    { code: 'IS', name: 'Iceland' },
+    { code: 'IN', name: 'India' },
+    { code: 'ID', name: 'Indonesia' },
+    { code: 'IQ', name: 'Iraq' },
+    { code: 'IE', name: 'Ireland' },
+    { code: 'IL', name: 'Israel' },
+    { code: 'IT', name: 'Italy' },
+    { code: 'JM', name: 'Jamaica' },
+    { code: 'JP', name: 'Japan' },
+    { code: 'JO', name: 'Jordan' },
+    { code: 'KZ', name: 'Kazakhstan' },
+    { code: 'KE', name: 'Kenya' },
+    { code: 'KW', name: 'Kuwait' },
+    { code: 'LV', name: 'Latvia' },
+    { code: 'LB', name: 'Lebanon' },
+    { code: 'LY', name: 'Libya' },
+    { code: 'LT', name: 'Lithuania' },
+    { code: 'LU', name: 'Luxembourg' },
+    { code: 'MO', name: 'Macao' },
+    { code: 'MY', name: 'Malaysia' },
+    { code: 'MT', name: 'Malta' },
+    { code: 'MX', name: 'Mexico' },
+    { code: 'MD', name: 'Moldova' },
+    { code: 'MC', name: 'Monaco' },
+    { code: 'MA', name: 'Morocco' },
+    { code: 'NP', name: 'Nepal' },
+    { code: 'NL', name: 'Netherlands' },
+    { code: 'NZ', name: 'New Zealand' },
+    { code: 'NI', name: 'Nicaragua' },
+    { code: 'NG', name: 'Nigeria' },
+    { code: 'NO', name: 'Norway' },
+    { code: 'OM', name: 'Oman' },
+    { code: 'PK', name: 'Pakistan' },
+    { code: 'PA', name: 'Panama' },
+    { code: 'PY', name: 'Paraguay' },
+    { code: 'PE', name: 'Peru' },
+    { code: 'PH', name: 'Philippines' },
+    { code: 'PL', name: 'Poland' },
+    { code: 'PT', name: 'Portugal' },
+    { code: 'PR', name: 'Puerto Rico' },
+    { code: 'QA', name: 'Qatar' },
+    { code: 'RO', name: 'Romania' },
+    { code: 'RU', name: 'Russia' },
+    { code: 'SA', name: 'Saudi Arabia' },
+    { code: 'RS', name: 'Serbia' },
+    { code: 'SG', name: 'Singapore' },
+    { code: 'SK', name: 'Slovakia' },
+    { code: 'SI', name: 'Slovenia' },
+    { code: 'ZA', name: 'South Africa' },
+    { code: 'KR', name: 'South Korea' },
+    { code: 'ES', name: 'Spain' },
+    { code: 'LK', name: 'Sri Lanka' },
+    { code: 'SE', name: 'Sweden' },
+    { code: 'CH', name: 'Switzerland' },
+    { code: 'TW', name: 'Taiwan' },
+    { code: 'TZ', name: 'Tanzania' },
+    { code: 'TH', name: 'Thailand' },
+    { code: 'TN', name: 'Tunisia' },
+    { code: 'TR', name: 'Turkey' },
+    { code: 'UA', name: 'Ukraine' },
+    { code: 'AE', name: 'United Arab Emirates' },
+    { code: 'GB', name: 'United Kingdom' },
+    { code: 'US', name: 'United States' },
+    { code: 'UY', name: 'Uruguay' },
+    { code: 'VE', name: 'Venezuela' },
+    { code: 'VN', name: 'Vietnam' },
+    { code: 'YE', name: 'Yemen' }
+];
+
+let selectedCountries = [{ code: 'US', name: 'United States' }];
+
+function showCountryDropdown() {
+    const dropdown = document.getElementById('countryDropdown');
+    dropdown.classList.remove('hidden');
+    renderCountryList();
+}
+
+function hideCountryDropdown() {
+    const dropdown = document.getElementById('countryDropdown');
+    dropdown.classList.add('hidden');
+}
+
+function filterCountries() {
+    const searchTerm = document.getElementById('countrySearch').value.toLowerCase();
+    renderCountryList(searchTerm);
+}
+
+function renderCountryList(searchTerm = '') {
+    const countryList = document.getElementById('countryList');
+    const selectedCodes = selectedCountries.map(c => c.code);
+    
+    const filtered = countries.filter(country => 
+        country.name.toLowerCase().includes(searchTerm) && 
+        !selectedCodes.includes(country.code)
+    );
+    
+    if (filtered.length === 0) {
+        countryList.innerHTML = '<div class="px-4 py-3 text-gray-500 text-sm">No countries found</div>';
+        return;
+    }
+    
+    countryList.innerHTML = filtered.map(country => `
+        <div 
+            class="px-4 py-2 hover:bg-blue-50 cursor-pointer text-gray-900"
+            onclick="addCountry('${country.code}', '${country.name.replace(/'/g, "\\'")}')"
+        >
+            ${country.name}
+        </div>
+    `).join('');
+}
+
+function addCountry(code, name) {
+    if (selectedCountries.find(c => c.code === code)) {
+        return;
+    }
+    
+    selectedCountries.push({ code, name });
+    renderSelectedCountries();
+    document.getElementById('countrySearch').value = '';
+    renderCountryList();
+}
+
+function removeCountry(code) {
+    selectedCountries = selectedCountries.filter(c => c.code !== code);
+    renderSelectedCountries();
+    renderCountryList(document.getElementById('countrySearch').value.toLowerCase());
+}
+
+function renderSelectedCountries() {
+    const tagsContainer = document.getElementById('selectedCountriesTags');
+    const hiddenInputsContainer = document.getElementById('countryHiddenInputs');
+    
+    if (selectedCountries.length === 0) {
+        tagsContainer.innerHTML = '<span class="text-gray-400 text-sm">No countries selected</span>';
+        hiddenInputsContainer.innerHTML = '';
+        return;
+    }
+    
+    tagsContainer.innerHTML = selectedCountries.map(country => `
+        <span class="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded-full text-sm">
+            ${country.name}
+            <button type="button" onclick="removeCountry('${country.code}')" class="hover:bg-blue-700 rounded-full p-0.5">
+                <span class="material-icons text-sm">close</span>
+            </button>
+        </span>
+    `).join('');
+    
+    hiddenInputsContainer.innerHTML = selectedCountries.map(country => 
+        `<input type="hidden" name="target_countries[]" value="${country.code}">`
+    ).join('');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('countryDropdown');
+    const searchInput = document.getElementById('countrySearch');
+    
+    if (dropdown && searchInput && !dropdown.contains(event.target) && !searchInput.contains(event.target)) {
+        hideCountryDropdown();
+    }
+});
+
 </script>
 @endsection

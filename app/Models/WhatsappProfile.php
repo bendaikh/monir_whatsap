@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class WhatsappProfile extends Model
 {
     protected $fillable = [
+        'workspace_id',
         'user_id',
         'store_id',
         'name',
@@ -25,6 +26,11 @@ class WhatsappProfile extends Model
         'is_active' => 'boolean',
         'last_connected_at' => 'datetime',
     ];
+
+    public function workspace()
+    {
+        return $this->belongsTo(Workspace::class);
+    }
 
     public function user()
     {

@@ -11,6 +11,7 @@ class FacebookAdAccount extends Model
     use HasFactory;
 
     protected $fillable = [
+        'workspace_id',
         'user_id',
         'access_token_encrypted',
         'ad_account_id',
@@ -25,6 +26,11 @@ class FacebookAdAccount extends Model
         'token_expires_at' => 'datetime',
         'is_active' => 'boolean',
     ];
+
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
 
     public function user(): BelongsTo
     {

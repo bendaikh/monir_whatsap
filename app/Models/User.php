@@ -54,6 +54,11 @@ class User extends Authenticatable
         ];
     }
     
+    public function workspaces()
+    {
+        return $this->hasMany(Workspace::class);
+    }
+
     public function whatsappProfiles()
     {
         return $this->hasMany(WhatsappProfile::class);

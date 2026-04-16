@@ -11,7 +11,12 @@ class StoreManagementController extends Controller
     use AuthorizesRequests;
     public function dashboard()
     {
+        $activeWorkspaceId = session('active_workspace_id');
+        
         $stores = auth()->user()->stores()
+            ->when($activeWorkspaceId, function ($query, $workspaceId) {
+                return $query->where('workspace_id', $workspaceId);
+            })
             ->withCount('products', 'categories')
             ->latest()
             ->get();
@@ -29,7 +34,12 @@ class StoreManagementController extends Controller
     
     public function index()
     {
+        $activeWorkspaceId = session('active_workspace_id');
+        
         $stores = auth()->user()->stores()
+            ->when($activeWorkspaceId, function ($query, $workspaceId) {
+                return $query->where('workspace_id', $workspaceId);
+            })
             ->withCount('products', 'categories')
             ->latest()
             ->paginate(20);
@@ -55,6 +65,7 @@ class StoreManagementController extends Controller
         ]);
         
         $validated['user_id'] = auth()->id();
+        $validated['workspace_id'] = session('active_workspace_id');
         
         if (!isset($validated['is_active'])) {
             $validated['is_active'] = true;

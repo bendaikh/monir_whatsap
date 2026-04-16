@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 class Store extends Model
 {
     protected $fillable = [
+        'workspace_id',
         'user_id',
         'name',
         'subdomain',
@@ -30,6 +31,11 @@ class Store extends Model
                 $store->subdomain = Str::slug($store->name);
             }
         });
+    }
+
+    public function workspace()
+    {
+        return $this->belongsTo(Workspace::class);
     }
 
     public function user()
