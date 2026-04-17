@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\FacebookAdAccount;
 use App\Models\TikTokAdAccount;
+use App\Models\Campaign;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
@@ -25,6 +26,41 @@ class AdCampaignsController extends Controller
         
         $campaigns = collect();
         $errors = [];
+        
+        // First, get locally created campaigns from database
+        $localCampaigns = Campaign::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($campaign) {
+                $platformsDisplay = collect($campaign->platforms)->map(function ($p) {
+                    return ucfirst($p);
+                })->join(', ');
+                
+                return [
+                    'id' => 'local_' . $campaign->id,
+                    'name' => $campaign->name,
+                    'platform' => $platformsDisplay,
+                    'account_name' => 'Your Account',
+                    'account_id' => 'local',
+                    'status' => ucfirst($campaign->status),
+                    'objective' => $campaign->objective,
+                    'daily_budget' => $campaign->daily_budget,
+                    'lifetime_budget' => 0,
+                    'spend' => 0,
+                    'impressions' => 0,
+                    'clicks' => 0,
+                    'conversions' => 0,
+                    'ctr' => 0,
+                    'cpc' => 0,
+                    'cpm' => 0,
+                    'is_local' => true,
+                    'facebook_campaign_id' => $campaign->facebook_campaign_id,
+                    'tiktok_campaign_id' => $campaign->tiktok_campaign_id,
+                    'error_message' => $campaign->error_message,
+                ];
+            });
+        
+        $campaigns = $campaigns->merge($localCampaigns);
         
         // Fetch Facebook campaigns
         if (in_array($platform, ['all', 'facebook'])) {
@@ -67,18 +103,29 @@ class AdCampaignsController extends Controller
         // Apply status filter
         if ($status !== 'all') {
             $campaigns = $campaigns->filter(function ($campaign) use ($status) {
-                return strtolower($campaign['status']) === $status;
+                $campaignStatus = strtolower($campaign['status']);
+                
+                // Map our statuses to the filter values
+                if ($status === 'active') {
+                    return $campaignStatus === 'active' || $campaignStatus === 'processing' || $campaignStatus === 'completed';
+                } elseif ($status === 'paused') {
+                    return $campaignStatus === 'paused' || $campaignStatus === 'pending';
+                }
+                
+                return $campaignStatus === $status;
             });
         }
         
-        // Sort by spend descending
-        $campaigns = $campaigns->sortByDesc('spend');
+        // Sort by created order (local campaigns first, then by spend for API campaigns)
+        $campaigns = $campaigns->sortByDesc(function ($campaign) {
+            return $campaign['is_local'] ?? false ? 1 : 0;
+        })->sortByDesc('spend');
         
-        // Calculate totals
-        $totalSpend = $campaigns->sum('spend');
-        $totalImpressions = $campaigns->sum('impressions');
-        $totalClicks = $campaigns->sum('clicks');
-        $totalConversions = $campaigns->sum('conversions');
+        // Calculate totals (excluding local pending campaigns)
+        $totalSpend = $campaigns->filter(fn($c) => !($c['is_local'] ?? false))->sum('spend');
+        $totalImpressions = $campaigns->filter(fn($c) => !($c['is_local'] ?? false))->sum('impressions');
+        $totalClicks = $campaigns->filter(fn($c) => !($c['is_local'] ?? false))->sum('clicks');
+        $totalConversions = $campaigns->filter(fn($c) => !($c['is_local'] ?? false))->sum('conversions');
         
         return view('customer.ad-campaigns', compact(
             'campaigns',
