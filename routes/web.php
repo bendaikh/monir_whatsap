@@ -94,6 +94,7 @@ Route::middleware(['auth', 'require.workspace', 'require.store'])->prefix('app')
     Route::get('/products/{id}/landing-builder', [CustomerDashboardController::class, 'landingPageBuilder'])->name('products.landing-builder');
     Route::post('/products/{id}/landing-builder', [CustomerDashboardController::class, 'saveLandingPageBuilder'])->name('products.save-landing-builder');
     Route::post('/products/{id}/upload-image', [CustomerDashboardController::class, 'uploadProductImage'])->name('products.upload-image');
+    Route::post('/quill-upload-image', [CustomerDashboardController::class, 'uploadQuillImage'])->name('quill.upload-image');
     Route::post('/products/{id}/set-main-image', [CustomerDashboardController::class, 'setMainImage'])->name('products.set-main-image');
     Route::post('/products/{id}/update-image-description', [CustomerDashboardController::class, 'updateImageDescription'])->name('products.update-image-description');
     Route::post('/products/{id}/generate-landing-page', [CustomerDashboardController::class, 'generateLandingPage'])->name('products.generate-landing-page');

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $product->name }}</title>
-    <meta name="description" content="{{ Str::limit($product->description, 160) }}">
+    <meta name="description" content="{{ Str::limit(strip_tags($product->description), 160) }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -106,7 +106,7 @@
         
         // Sanitize product name and description for JavaScript
         $safeName = sanitizeForJs($product->name);
-        $safeDescription = sanitizeForJs($product->description ?? '');
+        $safeDescription = sanitizeForJs(strip_tags($product->description ?? ''));
     @endphp
     <script>
         const productName = {!! json_encode($safeName, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) !!};
@@ -387,10 +387,116 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Product Description Content (After Form, Same Column) -->
+                    @php
+                        $hasRealContentRight = function($html) {
+                            if (empty($html)) return false;
+                            $text = trim(strip_tags($html));
+                            $hasImage = stripos($html, '<img') !== false;
+                            $hasVideo = stripos($html, '<video') !== false || stripos($html, '<iframe') !== false;
+                            return !empty($text) || $hasImage || $hasVideo;
+                        };
+                        
+                        // Check product description field
+                        $productDesc = $product->description ?? '';
+                        $hasProductDesc = $hasRealContentRight($productDesc);
+                        
+                        // Check landing page builder descriptions
+                        $descFrRight = $product->landing_page_fr['description'] ?? '';
+                        $descEnRight = $product->landing_page_en['description'] ?? '';
+                        $descArRight = $product->landing_page_ar['description'] ?? '';
+                        
+                        $showFrRight = $hasRealContentRight($descFrRight);
+                        $showEnRight = $hasRealContentRight($descEnRight);
+                        $showArRight = $hasRealContentRight($descArRight);
+                        
+                        $hasLandingDesc = $showFrRight || $showEnRight || $showArRight;
+                        $hasAnyDescription = $hasProductDesc || $hasLandingDesc;
+                    @endphp
+                    @if($hasAnyDescription)
+                    <div class="mt-6 prose prose-lg max-w-none text-white leading-relaxed description-content-right" x-cloak>
+                        {{-- Show product description (from Edit Product page) --}}
+                        @if($hasProductDesc)
+                        <div class="mb-6">
+                            {!! $productDesc !!}
+                        </div>
+                        @endif
+                        
+                        {{-- Show landing page builder descriptions if available --}}
+                        @if($showFrRight)
+                        <div x-show="currentLang === 'fr'" class="{{ $hasProductDesc ? 'mt-6 pt-6' : '' }}">
+                            {!! $descFrRight !!}
+                        </div>
+                        @endif
+                        @if($showEnRight)
+                        <div x-show="currentLang === 'en'" class="{{ $hasProductDesc ? 'mt-6 pt-6' : '' }}">
+                            {!! $descEnRight !!}
+                        </div>
+                        @endif
+                        @if($showArRight)
+                        <div x-show="currentLang === 'ar'" dir="rtl" class="{{ $hasProductDesc ? 'mt-6 pt-6' : '' }}">
+                            {!! $descArRight !!}
+                        </div>
+                        @endif
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>
     </section>
+
+    <style>
+        .description-content img,
+        .description-content-right img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.75rem;
+            margin: 1.5rem auto;
+            display: block;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .description-content h1, .description-content h2, .description-content h3,
+        .description-content-right h1, .description-content-right h2, .description-content-right h3 {
+            color: #111827;
+            font-weight: 700;
+            margin-top: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        .description-content h1, .description-content-right h1 { font-size: 1.75rem; }
+        .description-content h2, .description-content-right h2 { font-size: 1.5rem; }
+        .description-content h3, .description-content-right h3 { font-size: 1.25rem; }
+        .description-content p, .description-content-right p { margin: 0.75rem 0; line-height: 1.75; }
+        .description-content ul, .description-content ol,
+        .description-content-right ul, .description-content-right ol {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+        }
+        .description-content ul, .description-content-right ul { list-style-type: disc; }
+        .description-content ol, .description-content-right ol { list-style-type: decimal; }
+        .description-content li, .description-content-right li { margin: 0.5rem 0; }
+        .description-content a, .description-content-right a {
+            color: #2563eb;
+            text-decoration: underline;
+        }
+        .description-content blockquote, .description-content-right blockquote {
+            border-left: 4px solid #3b82f6;
+            padding-left: 1rem;
+            margin: 1.25rem 0;
+            font-style: italic;
+            color: #4b5563;
+        }
+        .description-content strong, .description-content-right strong { font-weight: 700; color: #111827; }
+        .description-content em, .description-content-right em { font-style: italic; }
+        .description-content iframe, .description-content video,
+        .description-content-right iframe, .description-content-right video {
+            max-width: 100%;
+            border-radius: 0.75rem;
+            margin: 1.5rem 0;
+        }
+    </style>
+
+    {{-- Description Section removed from here - now displayed inside the contact form box above --}}
 
     <!-- Section Divider -->
     <div class="section-divider"></div>

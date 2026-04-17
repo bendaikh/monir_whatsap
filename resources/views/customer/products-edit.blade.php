@@ -76,12 +76,12 @@
                     <!-- Description -->
                     <div>
                         <label for="description" class="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                        <!-- Quill Rich Text Editor -->
+                        <div id="description-editor" class="bg-white rounded-lg" style="min-height: 200px;"></div>
                         <textarea 
                             id="description" 
                             name="description" 
-                            rows="4"
-                            class="w-full px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                            placeholder="Enter product description"
+                            class="hidden"
                         >{{ old('description', $product->description) }}</textarea>
                         @error('description')
                             <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
@@ -1243,5 +1243,126 @@
                 reader.readAsDataURL(file);
             }
         }
+    </script>
+
+    <!-- Quill Rich Text Editor -->
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <style>
+        #description-editor {
+            min-height: 200px;
+            background: white;
+            border-radius: 0 0 0.5rem 0.5rem;
+        }
+        .ql-toolbar.ql-snow {
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+            background: white;
+            border-color: rgba(255,255,255,0.1) !important;
+        }
+        .ql-container.ql-snow {
+            border-bottom-left-radius: 0.5rem;
+            border-bottom-right-radius: 0.5rem;
+            border-color: rgba(255,255,255,0.1) !important;
+            min-height: 180px;
+            font-size: 16px;
+        }
+        .ql-editor {
+            min-height: 180px;
+            color: #1f2937;
+        }
+        .ql-editor.ql-blank::before {
+            color: #9ca3af;
+            font-style: normal;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const descriptionTextarea = document.getElementById('description');
+            const editorElement = document.getElementById('description-editor');
+            
+            if (editorElement && descriptionTextarea) {
+                const uploadUrl = '{{ route("app.quill.upload-image") }}';
+                const csrfToken = '{{ csrf_token() }}';
+                
+                function imageHandler() {
+                    const input = document.createElement('input');
+                    input.setAttribute('type', 'file');
+                    input.setAttribute('accept', 'image/*');
+                    input.click();
+                    
+                    const quill = this.quill;
+                    
+                    input.onchange = function() {
+                        const file = input.files[0];
+                        if (!file) return;
+                        
+                        const formData = new FormData();
+                        formData.append('image', file);
+                        formData.append('_token', csrfToken);
+                        
+                        const range = quill.getSelection(true);
+                        quill.insertText(range.index, 'Uploading...', { italic: true });
+                        
+                        fetch(uploadUrl, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': csrfToken },
+                            body: formData
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            quill.deleteText(range.index, 'Uploading...'.length);
+                            if (data.success && data.url) {
+                                quill.insertEmbed(range.index, 'image', data.url);
+                                quill.setSelection(range.index + 1);
+                            } else {
+                                alert('Image upload failed');
+                            }
+                        })
+                        .catch(err => {
+                            quill.deleteText(range.index, 'Uploading...'.length);
+                            console.error(err);
+                            alert('Image upload failed');
+                        });
+                    };
+                }
+                
+                const quill = new Quill('#description-editor', {
+                    theme: 'snow',
+                    placeholder: 'Enter product description...',
+                    modules: {
+                        toolbar: {
+                            container: [
+                                [{ 'header': [1, 2, 3, false] }],
+                                ['bold', 'italic', 'underline', 'strike'],
+                                [{ 'color': [] }, { 'background': [] }],
+                                [{ 'align': [] }],
+                                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                ['link', 'image', 'video'],
+                                [{ 'indent': '-1'}, { 'indent': '+1' }],
+                                ['blockquote', 'code-block'],
+                                ['clean']
+                            ],
+                            handlers: { 'image': imageHandler }
+                        }
+                    }
+                });
+
+                if (descriptionTextarea.value) {
+                    quill.root.innerHTML = descriptionTextarea.value;
+                }
+
+                const form = descriptionTextarea.closest('form');
+                if (form) {
+                    form.addEventListener('submit', function() {
+                        descriptionTextarea.value = quill.root.innerHTML;
+                    });
+                }
+
+                quill.on('text-change', function() {
+                    descriptionTextarea.value = quill.root.innerHTML;
+                });
+            }
+        });
     </script>
 @endsection

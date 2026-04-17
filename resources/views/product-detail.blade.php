@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $product->name }} - {{ config('app.name') }}</title>
-    <meta name="description" content="{{ $product->landing_page_hero_description ?? $product->description }}">
+    <meta name="description" content="{{ Str::limit(strip_tags($product->landing_page_hero_description ?? $product->description), 160) }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
@@ -214,7 +214,7 @@
                     About {{ $product->name }}
                 </h2>
                 <div class="prose prose-lg max-w-none text-gray-700 leading-relaxed">
-                    {!! nl2br(e($product->landing_page_content ?? $product->description)) !!}
+                    {!! $product->landing_page_content ?? $product->description !!}
                 </div>
             </div>
         </section>
@@ -399,7 +399,7 @@
                     @endif
                     
                     <div class="prose prose-lg max-w-none mb-8 text-gray-700">
-                        {!! nl2br(e($product->description)) !!}
+                        {!! $product->description !!}
                     </div>
                     
                     @if(!$product->has_variations && $product->stock !== null)

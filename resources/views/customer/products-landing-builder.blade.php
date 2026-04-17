@@ -1,6 +1,28 @@
 @extends('layouts.customer')
 
 @section('content')
+<!-- Quill Rich Text Editor -->
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<style>
+    [id^="description-editor-"] {
+        min-height: 200px;
+        background: white;
+    }
+    .ql-toolbar.ql-snow {
+        border-top-left-radius: 0.5rem;
+        border-top-right-radius: 0.5rem;
+    }
+    .ql-container.ql-snow {
+        border-bottom-left-radius: 0.5rem;
+        border-bottom-right-radius: 0.5rem;
+        min-height: 180px;
+        font-size: 16px;
+    }
+    .ql-editor {
+        min-height: 180px;
+    }
+</style>
 @php
     $sectionsJson = json_encode($product->landing_page_sections ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
     $pageDataFrJson = json_encode($product->landing_page_fr ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
@@ -100,6 +122,34 @@
                                   rows="4"
                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                   placeholder="Enter hero description"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description Section -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Description Section
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <span x-text="'Description (' + currentLang.toUpperCase() + ')'"></span>
+                        </label>
+                        <!-- Quill editors per language (only visible one is active) -->
+                        <div x-show="currentLang === 'fr'">
+                            <div id="description-editor-fr" class="bg-white rounded-lg"></div>
+                        </div>
+                        <div x-show="currentLang === 'en'">
+                            <div id="description-editor-en" class="bg-white rounded-lg"></div>
+                        </div>
+                        <div x-show="currentLang === 'ar'">
+                            <div id="description-editor-ar" class="bg-white rounded-lg"></div>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">Use the toolbar to format your description with bold, italic, colors, lists, and more.</p>
                     </div>
                 </div>
             </div>
@@ -238,6 +288,98 @@ function landingPageBuilder() {
         
         init() {
             console.log('Landing page builder initialized');
+            this.initQuillEditors();
+        },
+        
+        initQuillEditors() {
+            var self = this;
+            var toolbar = [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'color': [] }, { 'background': [] }],
+                [{ 'align': [] }],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['link', 'image', 'video'],
+                [{ 'indent': '-1'}, { 'indent': '+1' }],
+                ['blockquote', 'code-block'],
+                ['clean']
+            ];
+            
+            var uploadUrl = '{{ route("app.quill.upload-image") }}';
+            var csrfToken = '{{ csrf_token() }}';
+            
+            function imageHandler() {
+                var input = document.createElement('input');
+                input.setAttribute('type', 'file');
+                input.setAttribute('accept', 'image/*');
+                input.click();
+                
+                var quill = this.quill;
+                
+                input.onchange = function() {
+                    var file = input.files[0];
+                    if (!file) return;
+                    
+                    var formData = new FormData();
+                    formData.append('image', file);
+                    formData.append('_token', csrfToken);
+                    
+                    var range = quill.getSelection(true);
+                    quill.insertText(range.index, 'Uploading image...', { italic: true });
+                    
+                    fetch(uploadUrl, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': csrfToken },
+                        body: formData
+                    })
+                    .then(function(response) { return response.json(); })
+                    .then(function(data) {
+                        quill.deleteText(range.index, 'Uploading image...'.length);
+                        if (data.success && data.url) {
+                            quill.insertEmbed(range.index, 'image', data.url);
+                            quill.setSelection(range.index + 1);
+                        } else {
+                            alert('Image upload failed');
+                        }
+                    })
+                    .catch(function(err) {
+                        quill.deleteText(range.index, 'Uploading image...'.length);
+                        console.error('Upload error:', err);
+                        alert('Image upload failed');
+                    });
+                };
+            }
+            
+            ['fr', 'en', 'ar'].forEach(function(lang) {
+                setTimeout(function() {
+                    var el = document.getElementById('description-editor-' + lang);
+                    if (el && !el.classList.contains('ql-container')) {
+                        var quill = new Quill('#description-editor-' + lang, {
+                            theme: 'snow',
+                            placeholder: 'Enter description...',
+                            modules: {
+                                toolbar: {
+                                    container: toolbar,
+                                    handlers: { 'image': imageHandler }
+                                }
+                            }
+                        });
+                        
+                        if (lang === 'ar') {
+                            quill.root.setAttribute('dir', 'rtl');
+                        }
+                        
+                        if (self.pageData[lang] && self.pageData[lang].description) {
+                            quill.root.innerHTML = self.pageData[lang].description;
+                        }
+                        
+                        quill.on('text-change', function() {
+                            if (!self.pageData[lang]) self.pageData[lang] = {};
+                            self.pageData[lang].description = quill.root.innerHTML;
+                        });
+                    }
+                }, 200);
+            });
         },
         
         addSection() {

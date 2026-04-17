@@ -975,6 +975,22 @@ class CustomerDashboardController extends Controller
         ]);
     }
 
+    public function uploadQuillImage(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|image|max:5120'
+        ]);
+        
+        $path = $request->file('image')->store('products/descriptions', 'public');
+        $url = \Storage::url($path);
+        
+        return response()->json([
+            'success' => true,
+            'url' => $url,
+            'path' => $path
+        ]);
+    }
+
     public function uploadProductImage(Request $request, $id)
     {
         $storeId = $this->getActiveStoreId();
