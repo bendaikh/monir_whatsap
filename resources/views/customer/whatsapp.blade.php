@@ -356,7 +356,8 @@
                     
                     this.socket.emit('init-whatsapp', {
                         sessionId: this.sessionId,
-                        userId: {{ auth()->id() }}
+                        userId: {{ auth()->id() }},
+                        storeId: {{ session('active_store_id') ?? 'null' }}
                     });
                 },
                 
@@ -408,7 +409,8 @@
                     // First try to reconnect to the session
                     this.socket.emit('init-whatsapp', {
                         sessionId: sessionId,
-                        userId: {{ auth()->id() }}
+                        userId: {{ auth()->id() }},
+                        storeId: {{ session('active_store_id') ?? 'null' }}
                     });
                     
                     // Also request chats

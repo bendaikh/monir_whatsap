@@ -949,13 +949,24 @@ class CustomerDashboardController extends Controller
             'page_data.fr' => 'nullable|array',
             'page_data.en' => 'nullable|array',
             'page_data.ar' => 'nullable|array',
+            'show_product_sections' => 'nullable|boolean',
         ]);
+        
+        // Add show_product_sections to each language's page data
+        $pageDataFr = $validated['page_data']['fr'] ?? [];
+        $pageDataEn = $validated['page_data']['en'] ?? [];
+        $pageDataAr = $validated['page_data']['ar'] ?? [];
+        
+        $showSections = $validated['show_product_sections'] ?? true;
+        $pageDataFr['show_product_sections'] = $showSections;
+        $pageDataEn['show_product_sections'] = $showSections;
+        $pageDataAr['show_product_sections'] = $showSections;
         
         $product->update([
             'landing_page_sections' => $validated['sections'] ?? [],
-            'landing_page_fr' => $validated['page_data']['fr'] ?? [],
-            'landing_page_en' => $validated['page_data']['en'] ?? [],
-            'landing_page_ar' => $validated['page_data']['ar'] ?? [],
+            'landing_page_fr' => $pageDataFr,
+            'landing_page_en' => $pageDataEn,
+            'landing_page_ar' => $pageDataAr,
         ]);
         
         return response()->json([

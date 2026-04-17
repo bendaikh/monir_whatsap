@@ -37,21 +37,141 @@
                 <div class="grid md:grid-cols-2 gap-12 items-center">
                     <div>
                         <h1 class="text-5xl font-bold mb-6 leading-tight">{{ $product->landing_page_hero_title }}</h1>
-                        <p class="text-xl mb-8 text-white/90">{{ $product->landing_page_hero_description }}</p>
                         
                         <div class="flex items-center gap-6 mb-8">
                             <div>
-                                <div class="text-5xl font-bold">{{ number_format($product->price, 2) }} MAD</div>
-                                @if($product->compare_at_price && $product->compare_at_price > $product->price)
-                                <div class="text-lg line-through text-white/70">{{ number_format($product->compare_at_price, 2) }} MAD</div>
+                                @if($product->has_variations && $product->activeVariations->isNotEmpty())
+                                    <div class="text-5xl font-bold" id="variationPriceHero">
+                                        {{ $product->price_range }}
+                                    </div>
+                                @else
+                                    <div class="text-5xl font-bold">{{ number_format($product->price, 2) }} MAD</div>
+                                    @if($product->compare_at_price && $product->compare_at_price > $product->price)
+                                    <div class="text-lg line-through text-white/70">{{ number_format($product->compare_at_price, 2) }} MAD</div>
+                                    @endif
                                 @endif
                             </div>
-                            @if($product->discount_percentage)
+                            @if(!$product->has_variations && $product->discount_percentage)
                             <div class="bg-yellow-400 text-purple-900 px-4 py-2 rounded-full font-bold text-xl">
                                 -{{ $product->discount_percentage }}%
                             </div>
                             @endif
                         </div>
+
+                        <!-- Quantity-Based Promotions -->
+                        @if($product->has_promotions && $product->activePromotions->isNotEmpty())
+                        <div class="mb-8 bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                            <h3 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                                <svg class="w-6 h-6 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Special Quantity Pricing
+                            </h3>
+                            <p class="text-sm text-white/80 mb-4">Save more when you buy more items</p>
+                            <div class="space-y-3" id="promotionsContainerHero">
+                                @foreach($product->activePromotions as $index => $promotion)
+                                <label class="block p-5 bg-white/20 backdrop-blur-sm rounded-xl border-2 cursor-pointer hover:border-yellow-300 transition promotion-option-hero {{ $index === 0 ? 'border-yellow-300' : 'border-white/30' }}"
+                                       data-promotion-id="{{ $promotion->id }}"
+                                       data-min-quantity="{{ $promotion->min_quantity }}"
+                                       data-max-quantity="{{ $promotion->max_quantity ?? '' }}"
+                                       data-price="{{ $promotion->price }}"
+                                       data-discount="{{ $promotion->discount_percentage }}">
+                                    <div class="flex items-start gap-4">
+                                        <input type="radio" 
+                                               name="selected_promotion_hero" 
+                                               value="{{ $promotion->id }}" 
+                                               class="mt-1 w-5 h-5 text-yellow-300"
+                                               {{ $index === 0 ? 'checked' : '' }}
+                                               onchange="updatePromotionDisplayHero(this)">
+                                        <div class="flex-1">
+                                            <div class="flex items-center justify-between flex-wrap gap-3">
+                                                <div class="text-lg font-semibold text-yellow-300">
+                                                    Buy {{ $promotion->quantity_range }}
+                                                </div>
+                                                <div class="text-right">
+                                                    <div class="text-3xl font-bold text-white">{{ number_format($promotion->price, 2) }} <span class="text-base text-white/80">MAD</span></div>
+                                                    @if($promotion->discount_percentage > 0)
+                                                    <div class="inline-block text-xs bg-yellow-400 text-purple-900 px-3 py-1 rounded-full font-bold mt-1">
+                                                        -{{ $promotion->discount_percentage }}%
+                                                    </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </label>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
+
+                        @if($product->has_variations && $product->activeVariations->isNotEmpty())
+                        <!-- Variations Selector -->
+                        <div class="mb-8 bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                            <h3 class="text-lg font-semibold mb-4 text-white">Select Options:</h3>
+                            
+                            <div class="space-y-4" id="variationsContainerHero">
+                                @foreach($product->activeVariations as $index => $variation)
+                                @php
+                                    $displayName = '';
+                                    if (!empty($variation->attributes) && is_array($variation->attributes)) {
+                                        $attrParts = [];
+                                        foreach ($variation->attributes as $key => $value) {
+                                            $attrParts[] = ucfirst($key) . ': ' . $value;
+                                        }
+                                        $displayName = implode(' / ', $attrParts);
+                                    }
+                                    if (empty($displayName)) {
+                                        $displayName = 'Option ' . ($index + 1);
+                                    }
+                                @endphp
+                                <label class="block p-4 bg-white/20 backdrop-blur-sm rounded-xl border-2 cursor-pointer hover:border-white/60 transition variation-option-hero {{ $variation->is_default ? 'border-white/60' : 'border-white/30' }}"
+                                       data-variation-id="{{ $variation->id }}"
+                                       data-price="{{ $variation->price }}"
+                                       data-compare-price="{{ $variation->compare_at_price ?? 0 }}"
+                                       data-stock="{{ $variation->stock }}"
+                                       data-discount="{{ $variation->discount_percentage }}">
+                                    <div class="flex items-start gap-4">
+                                        <input type="radio" 
+                                               name="selected_variation_hero" 
+                                               value="{{ $variation->id }}" 
+                                               class="mt-1 w-5 h-5 text-white"
+                                               {{ $variation->is_default ? 'checked' : '' }}
+                                               onchange="updateVariationDisplayHero(this)">
+                                        <div class="flex-1">
+                                            <div class="flex items-start justify-between flex-wrap gap-3">
+                                                <div>
+                                                    <div class="font-bold text-white text-lg mb-1">{{ $displayName }}</div>
+                                                    @if($variation->sku)
+                                                    <div class="text-xs text-white/70 font-mono">{{ Str::limit($variation->sku, 30) }}</div>
+                                                    @endif
+                                                </div>
+                                                <div class="text-right">
+                                                    <div class="text-xl font-bold text-white">{{ number_format($variation->price, 2) }} MAD</div>
+                                                    @if($variation->compare_at_price && $variation->compare_at_price > $variation->price)
+                                                    <div class="text-sm line-through text-white/70">{{ number_format($variation->compare_at_price, 2) }} MAD</div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex items-center justify-between mt-3 pt-3 border-t border-white/20">
+                                                <div class="text-sm text-white/80 flex items-center gap-2">
+                                                    <span class="material-icons text-sm">inventory_2</span>
+                                                    <span>Stock: {{ $variation->stock }}</span>
+                                                </div>
+                                                @if($variation->discount_percentage)
+                                                <div class="inline-block text-xs bg-yellow-400 text-purple-900 px-3 py-1 rounded-full font-bold">
+                                                    -{{ $variation->discount_percentage }}%
+                                                </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                </label>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
 
                         <a href="#order" class="inline-block px-8 py-4 bg-white text-purple-600 font-bold text-lg rounded-full hover:bg-yellow-400 hover:text-purple-900 transition shadow-lg hover:shadow-xl hover:scale-105 transform">
                             <span class="material-icons align-middle mr-2">shopping_cart</span>
@@ -400,12 +520,47 @@
                 priceContainer.innerHTML = priceHtml;
             }
         }
+
+        function updateVariationDisplayHero(radio) {
+            const option = radio.closest('.variation-option-hero');
+            const price = parseFloat(option.dataset.price);
+            const comparePrice = parseFloat(option.dataset.comparePrice) || 0;
+            const stock = option.dataset.stock;
+            const discount = option.dataset.discount;
+            
+            // Remove active state from all options
+            document.querySelectorAll('.variation-option-hero').forEach(opt => {
+                opt.classList.remove('border-white/60');
+                opt.classList.add('border-white/30');
+            });
+            
+            // Add active state to selected option
+            option.classList.remove('border-white/30');
+            option.classList.add('border-white/60');
+            
+            // Update price display in hero section
+            const priceContainer = document.getElementById('variationPriceHero');
+            if (priceContainer) {
+                let priceHtml = `<div class="text-5xl font-bold">${price.toFixed(2)} MAD</div>`;
+                
+                if (comparePrice > price) {
+                    priceHtml += `<div class="text-lg line-through text-white/70">${comparePrice.toFixed(2)} MAD</div>`;
+                }
+                
+                priceContainer.innerHTML = priceHtml;
+            }
+        }
         
         // Set default variation on page load
         document.addEventListener('DOMContentLoaded', function() {
             const defaultRadio = document.querySelector('input[name="selected_variation"]:checked');
             if (defaultRadio) {
                 updateVariationDisplay(defaultRadio);
+            }
+            
+            const defaultRadioHero = document.querySelector('input[name="selected_variation_hero"]:checked');
+            if (defaultRadioHero) {
+                updateVariationDisplayHero(defaultRadioHero);
             }
         });
     </script>
@@ -443,12 +598,36 @@
                 }
             }
         }
+
+        // Promotion selection handler for hero section
+        function updatePromotionDisplayHero(radio) {
+            const option = radio.closest('.promotion-option-hero');
+            const minQuantity = parseInt(option.dataset.minQuantity);
+            const maxQuantity = option.dataset.maxQuantity ? parseInt(option.dataset.maxQuantity) : null;
+            const price = parseFloat(option.dataset.price);
+            const discount = option.dataset.discount;
+            
+            // Remove active state from all options
+            document.querySelectorAll('.promotion-option-hero').forEach(opt => {
+                opt.classList.remove('border-yellow-300');
+                opt.classList.add('border-white/30');
+            });
+            
+            // Add active state to selected option
+            option.classList.remove('border-white/30');
+            option.classList.add('border-yellow-300');
+        }
         
         // Set default promotion on page load
         document.addEventListener('DOMContentLoaded', function() {
             const defaultRadio = document.querySelector('input[name="selected_promotion"]:checked');
             if (defaultRadio) {
                 updatePromotionDisplay(defaultRadio);
+            }
+            
+            const defaultRadioHero = document.querySelector('input[name="selected_promotion_hero"]:checked');
+            if (defaultRadioHero) {
+                updatePromotionDisplayHero(defaultRadioHero);
             }
         });
     </script>

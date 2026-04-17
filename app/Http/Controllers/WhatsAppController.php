@@ -222,6 +222,7 @@ class WhatsAppController extends Controller
     {
         $sessionId = $data['session_id'] ?? null;
         $userId = $data['user_id'] ?? null;
+        $storeId = $data['store_id'] ?? null;
         $phone = $data['phone'] ?? null;
         
         if (!$sessionId || !$userId || !$phone) {
@@ -232,6 +233,7 @@ class WhatsAppController extends Controller
         \Log::info('Saving WhatsApp connection', [
             'session_id' => $sessionId,
             'user_id' => $userId,
+            'store_id' => $storeId,
             'name' => $data['name'] ?? 'WhatsApp User',
             'phone' => $phone
         ]);
@@ -244,6 +246,7 @@ class WhatsAppController extends Controller
             $profile->update([
                 'session_id' => $sessionId,
                 'user_id' => $userId,
+                'store_id' => $storeId,
                 'name' => $data['name'] ?? 'WhatsApp User',
                 'profile_picture' => $data['profile_picture'] ?? null,
                 'status' => 'connected',
@@ -257,6 +260,7 @@ class WhatsAppController extends Controller
                 'phone_number' => $phone,
                 'session_id' => $sessionId,
                 'user_id' => $userId,
+                'store_id' => $storeId,
                 'name' => $data['name'] ?? 'WhatsApp User',
                 'profile_picture' => $data['profile_picture'] ?? null,
                 'status' => 'connected',
@@ -373,7 +377,7 @@ class WhatsAppController extends Controller
             $conversation->update(['last_message_at' => now()]);
             
             // Check if AI auto-reply is enabled
-            $aiService = new AiChatService($profile->user);
+            $aiService = new AiChatService($profile->user, $profile->store_id);
             $autoReplyEnabled = $aiService->isAutoReplyEnabled();
             
             \Log::info('AI auto-reply check', [

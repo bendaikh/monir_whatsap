@@ -77,9 +77,9 @@ io.on('connection', (socket) => {
     console.log('Client connected:', socket.id);
 
     socket.on('init-whatsapp', async (data) => {
-        const { sessionId, userId } = data;
+        const { sessionId, userId, storeId } = data;
         
-        console.log(`Initializing WhatsApp for session: ${sessionId}`);
+        console.log(`Initializing WhatsApp for session: ${sessionId}, store: ${storeId}`);
 
         // Check if client already exists
         if (clients.has(sessionId)) {
@@ -178,6 +178,7 @@ io.on('connection', (socket) => {
             const connectionData = {
                 sessionId,
                 userId,
+                storeId,
                 phone: info.wid.user,
                 name: info.pushname,
                 platform: info.platform
@@ -198,6 +199,7 @@ io.on('connection', (socket) => {
                         type: 'qr_scanned',
                         session_id: sessionId,
                         user_id: userId,
+                        store_id: storeId,
                         phone: info.wid.user,
                         name: info.pushname
                     })
