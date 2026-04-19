@@ -16,10 +16,16 @@ class Store extends Model
         'description',
         'logo',
         'is_active',
+        'facebook_pixel_id',
+        'facebook_pixel_enabled',
+        'tiktok_pixel_id',
+        'tiktok_pixel_enabled',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'facebook_pixel_enabled' => 'boolean',
+        'tiktok_pixel_enabled' => 'boolean',
     ];
 
     protected static function boot()

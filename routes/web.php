@@ -128,6 +128,7 @@ Route::middleware(['auth', 'require.workspace', 'require.store'])->prefix('app')
     // Ad Campaigns Dashboard
     Route::get('/ad-campaigns', [\App\Http\Controllers\AdCampaignsController::class, 'index'])->name('ad-campaigns');
     Route::post('/ad-campaigns/refresh', [\App\Http\Controllers\AdCampaignsController::class, 'refresh'])->name('ad-campaigns.refresh');
+    Route::post('/ad-campaigns/analyze', [\App\Http\Controllers\AdCampaignsController::class, 'analyzeCampaigns'])->name('ad-campaigns.analyze');
     
     // AI Campaign Creator
     Route::get('/campaign-creator', [\App\Http\Controllers\CampaignCreatorController::class, 'index'])->name('campaign-creator');
@@ -139,6 +140,13 @@ Route::middleware(['auth', 'require.workspace', 'require.store'])->prefix('app')
     Route::get('/external-api-settings', [CustomerDashboardController::class, 'externalApiSettings'])->name('external-api-settings');
     Route::post('/external-api-settings', [CustomerDashboardController::class, 'saveExternalApiSettings'])->name('external-api-settings.save');
     Route::post('/external-api-settings/test', [CustomerDashboardController::class, 'testExternalApiConnection'])->name('external-api-settings.test');
+    
+    // Pixel Connect
+    Route::get('/pixel-connect', [\App\Http\Controllers\PixelConnectController::class, 'index'])->name('pixel-connect');
+    Route::post('/pixel-connect/facebook', [\App\Http\Controllers\PixelConnectController::class, 'saveFacebookPixel'])->name('pixel-connect.facebook.save');
+    Route::post('/pixel-connect/facebook/disconnect', [\App\Http\Controllers\PixelConnectController::class, 'disconnectFacebookPixel'])->name('pixel-connect.facebook.disconnect');
+    Route::post('/pixel-connect/tiktok', [\App\Http\Controllers\PixelConnectController::class, 'saveTikTokPixel'])->name('pixel-connect.tiktok.save');
+    Route::post('/pixel-connect/tiktok/disconnect', [\App\Http\Controllers\PixelConnectController::class, 'disconnectTikTokPixel'])->name('pixel-connect.tiktok.disconnect');
     
     // WhatsApp Routes
     Route::post('/whatsapp/generate-qr', [WhatsAppController::class, 'generateQrCode'])->name('whatsapp.generate-qr');
