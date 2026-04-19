@@ -1,4 +1,4 @@
-const { Client, LocalAuth } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -67,7 +67,8 @@ const io = new Server(server, {
     }
 });
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Store active WhatsApp clients
 const clients = new Map();
@@ -212,7 +213,13 @@ io.on('connection', (socket) => {
 
         // Message event
         client.on('message', async (message) => {
-            console.log('Message received:', message.from, message.body);
+            console.log('========================================');
+            console.log('Message received:');
+            console.log('  From:', message.from);
+            console.log('  Type:', message.type);
+            console.log('  Has Media:', message.hasMedia);
+            console.log('  Body:', message.body || '(empty)');
+            console.log('========================================');
             
             // Skip if message is from us
             if (message.fromMe) {
@@ -222,18 +229,43 @@ io.on('connection', (socket) => {
             const chat = await message.getChat();
             const contact = await message.getContact();
             
+            // Handle media messages (including voice/audio)
+            let mediaUrl = null;
+            let messageBody = message.body;
+            
+            if (message.hasMedia && (message.type === 'audio' || message.type === 'ptt' || message.type === 'voice')) {
+                console.log('🎤 Voice/audio message detected, downloading media...');
+                try {
+                    const media = await message.downloadMedia();
+                    if (media) {
+                        console.log('  Media mimetype:', media.mimetype);
+                        console.log('  Media data length:', media.data ? media.data.length : 0);
+                        
+                        // Convert media to base64 data URL for transcription
+                        mediaUrl = `data:${media.mimetype};base64,${media.data}`;
+                        console.log('✓ Audio media downloaded successfully, sending to Laravel for transcription...');
+                    } else {
+                        console.error('✗ downloadMedia returned null');
+                    }
+                } catch (error) {
+                    console.error('✗ Error downloading audio media:', error.message);
+                    console.error('Full error:', error);
+                }
+            }
+            
             const messageData = {
                 sessionId,
                 userId,
                 messageId: message.id._serialized,
                 from: message.from,
                 to: message.to,
-                body: message.body,
+                body: messageBody,
                 type: message.type,
                 timestamp: message.timestamp,
                 isGroup: chat.isGroup,
                 contactName: contact.pushname || contact.name || message.from,
-                sender: message.fromMe ? 'outgoing' : 'incoming'
+                sender: message.fromMe ? 'outgoing' : 'incoming',
+                hasMedia: message.hasMedia
             };
             
             // Broadcast message to all connected clients
@@ -247,32 +279,80 @@ io.on('connection', (socket) => {
                     const laravelUrl = process.env.LARAVEL_URL || 'http://127.0.0.1:6500';
                     const processUrl = `${laravelUrl}/api/whatsapp/process-message`;
                     console.log('Sending request to:', processUrl);
+                    
+                    const requestBody = {
+                        session_id: sessionId,
+                        user_id: userId,
+                        from: message.from,
+                        message: messageBody,
+                        message_id: message.id._serialized,
+                        contact_name: contact.pushname || contact.name || message.from,
+                        type: message.type,
+                        media_url: mediaUrl
+                    };
+                    
+                    console.log('Request includes media_url:', mediaUrl ? 'YES (' + mediaUrl.length + ' chars)' : 'NO');
+                    
                     const response = await fetch(processUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({
-                            session_id: sessionId,
-                            user_id: userId,
-                            from: message.from,
-                            message: message.body,
-                            message_id: message.id._serialized,
-                            contact_name: contact.pushname || contact.name || message.from
-                        })
+                        body: JSON.stringify(requestBody)
                     });
                     
                     console.log('Laravel API response status:', response.status);
                     
                     if (response.ok) {
                         const result = await response.json();
-                        console.log('Laravel API response:', result);
+                        console.log('Laravel API response:', {
+                            success: result.success,
+                            ai_response: result.ai_response ? result.ai_response.substring(0, 100) + '...' : null,
+                            media_type: result.media_type,
+                            has_media_url: !!result.media_url
+                        });
                         
                         // If AI generated a response, send it
                         if (result.ai_response) {
-                            console.log('Sending AI response:', result.ai_response);
-                            await client.sendMessage(message.from, result.ai_response);
-                            console.log('AI response sent successfully');
+                            console.log('Sending AI response...');
+                            
+                            // Check if there's a media URL (image) to send
+                            if (result.media_url && result.media_type === 'image') {
+                                console.log('📷 Sending image with caption:', result.media_url);
+                                try {
+                                    // Fetch the image from the URL
+                                    const imageResponse = await fetch(result.media_url);
+                                    if (!imageResponse.ok) {
+                                        throw new Error('Failed to fetch image: ' + imageResponse.status);
+                                    }
+                                    const arrayBuffer = await imageResponse.arrayBuffer();
+                                    const buffer = Buffer.from(arrayBuffer);
+                                    const base64 = buffer.toString('base64');
+                                    
+                                    // Determine mimetype from URL or default to jpeg
+                                    let mimetype = 'image/jpeg';
+                                    const lowerUrl = result.media_url.toLowerCase();
+                                    if (lowerUrl.includes('.png')) {
+                                        mimetype = 'image/png';
+                                    } else if (lowerUrl.includes('.gif')) {
+                                        mimetype = 'image/gif';
+                                    } else if (lowerUrl.includes('.webp')) {
+                                        mimetype = 'image/webp';
+                                    }
+                                    
+                                    const media = new MessageMedia(mimetype, base64);
+                                    await client.sendMessage(message.from, media, { caption: result.ai_response });
+                                    console.log('✓ Image sent successfully with caption');
+                                } catch (imageError) {
+                                    console.error('✗ Error sending image, sending text only:', imageError.message);
+                                    // Fallback to text-only if image fails
+                                    await client.sendMessage(message.from, result.ai_response);
+                                }
+                            } else {
+                                // Send text-only response
+                                await client.sendMessage(message.from, result.ai_response);
+                                console.log('✓ Text response sent successfully');
+                            }
                         } else {
                             console.log('No AI response generated');
                         }

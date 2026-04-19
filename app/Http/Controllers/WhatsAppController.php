@@ -7,6 +7,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Services\AiChatService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class WhatsAppController extends Controller
@@ -319,15 +320,37 @@ class WhatsAppController extends Controller
             $messageContent = $request->input('message');
             $messageId = $request->input('message_id');
             $contactName = $request->input('contact_name');
+            $messageType = $request->input('type', 'text');
+            $mediaUrl = $request->input('media_url');
             
             \Log::info('Processing message with AI', [
                 'session_id' => $sessionId,
                 'user_id' => $userId,
                 'from' => $from,
-                'message' => $messageContent
+                'message' => $messageContent,
+                'type' => $messageType,
+                'media_url' => $mediaUrl
             ]);
             
-            // Skip if message is empty or null (media messages, etc.)
+            // Handle voice/audio messages - transcribe them first
+            if (in_array($messageType, ['audio', 'voice', 'ptt']) && !empty($mediaUrl)) {
+                \Log::info('Processing audio message', ['media_url' => $mediaUrl]);
+                $messageContent = $this->transcribeAudio($userId, $mediaUrl);
+                
+                if (empty($messageContent)) {
+                    \Log::warning('Failed to transcribe audio message');
+                    return response()->json([
+                        'success' => true, 
+                        'ai_response' => "Sorry, I couldn't understand the voice message. Could you please type your message?",
+                        'media_type' => null,
+                        'media_url' => null
+                    ]);
+                }
+                
+                \Log::info('Audio transcribed successfully', ['transcription' => $messageContent]);
+            }
+            
+            // Skip if message is empty or null (other media messages without transcription)
             if (empty($messageContent)) {
                 \Log::info('Skipping empty/null message');
                 return response()->json(['success' => true, 'ai_response' => null]);
@@ -362,16 +385,29 @@ class WhatsAppController extends Controller
             
             \Log::info('Conversation found/created', ['conversation_id' => $conversation->id]);
             
+            // Don't save base64 data URLs (too large for database)
+            // Only save URLs that are real HTTP/HTTPS URLs
+            $dbMediaUrl = (!empty($mediaUrl) && !str_starts_with($mediaUrl, 'data:')) ? $mediaUrl : null;
+            
+            // Map message type to valid database enum value
+            $validTypes = ['text', 'image', 'video', 'audio', 'document', 'location'];
+            $dbType = in_array($messageType, $validTypes) ? $messageType : 'text';
+            // Map ptt/voice to audio
+            if (in_array($messageType, ['ptt', 'voice'])) {
+                $dbType = 'audio';
+            }
+            
             // Save the incoming message
             Message::create([
                 'conversation_id' => $conversation->id,
                 'whatsapp_profile_id' => $profile->id,
-                'message_id' => $messageId,
-                'sender' => 'incoming',
+                'whatsapp_message_id' => $messageId,
+                'direction' => 'incoming',
                 'content' => $messageContent,
-                'type' => 'text',
-                'status' => 'received',
-                'timestamp' => now()
+                'type' => $dbType,
+                'media_url' => $dbMediaUrl,
+                'is_ai_response' => false,
+                'is_read' => false
             ]);
             
             $conversation->update(['last_message_at' => now()]);
@@ -406,34 +442,41 @@ class WhatsAppController extends Controller
             
             \Log::info('Generating AI response', ['history_count' => count($history)]);
             
-            // Generate AI response
-            $aiResponse = $aiService->generateResponse($messageContent, $history);
+            // Generate AI response with potential images
+            $aiResponseData = $aiService->generateResponseWithMedia($messageContent, $history);
             
-            \Log::info('AI response result', ['has_response' => !empty($aiResponse)]);
+            \Log::info('AI response result', [
+                'has_response' => !empty($aiResponseData['text']),
+                'has_media' => !empty($aiResponseData['media_url'])
+            ]);
             
-            if ($aiResponse) {
+            if ($aiResponseData && !empty($aiResponseData['text'])) {
                 // Save AI response to database
                 Message::create([
                     'conversation_id' => $conversation->id,
                     'whatsapp_profile_id' => $profile->id,
-                    'message_id' => 'ai_' . Str::uuid(),
-                    'sender' => 'outgoing',
-                    'content' => $aiResponse,
-                    'type' => 'text',
-                    'status' => 'sent',
-                    'timestamp' => now()
+                    'whatsapp_message_id' => 'ai_' . Str::uuid(),
+                    'direction' => 'outgoing',
+                    'content' => $aiResponseData['text'],
+                    'type' => $aiResponseData['media_url'] ? 'image' : 'text',
+                    'media_url' => $aiResponseData['media_url'] ?? null,
+                    'is_ai_response' => true,
+                    'is_read' => true
                 ]);
                 
                 $conversation->update(['last_message_at' => now()]);
                 
                 \Log::info('AI response generated', [
                     'conversation_id' => $conversation->id,
-                    'response_length' => strlen($aiResponse)
+                    'response_length' => strlen($aiResponseData['text']),
+                    'has_media' => !empty($aiResponseData['media_url'])
                 ]);
                 
                 return response()->json([
                     'success' => true,
-                    'ai_response' => $aiResponse
+                    'ai_response' => $aiResponseData['text'],
+                    'media_type' => $aiResponseData['media_url'] ? 'image' : null,
+                    'media_url' => $aiResponseData['media_url'] ?? null
                 ]);
             }
             
@@ -450,5 +493,242 @@ class WhatsAppController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+    
+    /**
+     * Transcribe audio message using OpenAI Whisper
+     */
+    private function transcribeAudio(int $userId, string $audioUrl): ?string
+    {
+        $tempFilePath = null;
+        
+        try {
+            // Get user's AI API settings
+            $user = \App\Models\User::find($userId);
+            if (!$user || !$user->aiApiSetting || !$user->aiApiSetting->openai_api_key) {
+                \Log::warning('No OpenAI API key found for voice transcription', ['user_id' => $userId]);
+                return null;
+            }
+            
+            \Log::info('Starting audio transcription', [
+                'user_id' => $userId,
+                'url_type' => str_starts_with($audioUrl, 'data:') ? 'data_url' : 'http_url',
+                'url_length' => strlen($audioUrl)
+            ]);
+            
+            // Handle different URL types
+            $audioContent = null;
+            $extension = 'ogg';
+            $mimeType = 'audio/ogg';
+            
+            if (str_starts_with($audioUrl, 'data:')) {
+                // Parse data URL: data:audio/ogg;base64,XXXX or data:audio/ogg; codecs=opus;base64,XXXX
+                // The mime type can contain parameters like "; codecs=opus"
+                $base64Pos = strpos($audioUrl, ';base64,');
+                
+                if ($base64Pos === false) {
+                    \Log::error('Invalid data URL format - no base64 marker found', [
+                        'url_preview' => substr($audioUrl, 0, 100)
+                    ]);
+                    return null;
+                }
+                
+                // Extract mime type (between "data:" and ";base64,")
+                $mimeType = substr($audioUrl, 5, $base64Pos - 5);
+                $base64Data = substr($audioUrl, $base64Pos + 8);
+                $audioContent = base64_decode($base64Data);
+                
+                if ($audioContent === false || empty($audioContent)) {
+                    \Log::error('Failed to decode base64 audio data');
+                    return null;
+                }
+                
+                // Determine extension from mime type
+                $mimeTypeLower = strtolower(trim($mimeType));
+                if (str_contains($mimeTypeLower, 'ogg') || str_contains($mimeTypeLower, 'opus')) {
+                    $extension = 'ogg';
+                } elseif (str_contains($mimeTypeLower, 'mpeg') || str_contains($mimeTypeLower, 'mp3')) {
+                    $extension = 'mp3';
+                } elseif (str_contains($mimeTypeLower, 'mp4') || str_contains($mimeTypeLower, 'm4a')) {
+                    $extension = 'm4a';
+                } elseif (str_contains($mimeTypeLower, 'wav')) {
+                    $extension = 'wav';
+                } elseif (str_contains($mimeTypeLower, 'webm')) {
+                    $extension = 'webm';
+                } else {
+                    $extension = 'ogg';
+                }
+                
+                \Log::info('Parsed data URL successfully', [
+                    'mime_type' => $mimeType,
+                    'extension' => $extension,
+                    'audio_size' => strlen($audioContent)
+                ]);
+            } else {
+                // Regular HTTP URL
+                $audioContent = @file_get_contents($audioUrl);
+                $extension = $this->getAudioExtension($audioUrl);
+            }
+            
+            if (empty($audioContent)) {
+                \Log::error('Failed to get audio content');
+                return null;
+            }
+            
+            // Create temp file with proper extension
+            $tempFilePath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'whatsapp_audio_' . uniqid() . '.' . $extension;
+            file_put_contents($tempFilePath, $audioContent);
+            
+            \Log::info('Audio file saved to temp', [
+                'path' => $tempFilePath,
+                'size' => filesize($tempFilePath),
+                'extension' => $extension
+            ]);
+            
+            $apiKey = $user->aiApiSetting->openai_api_key;
+            $audioBytes = file_get_contents($tempFilePath);
+
+            // STEP 1: First attempt — auto-detect language using verbose_json so we get the
+            // detected language back. We also provide a multilingual prompt that includes
+            // common phrases in Arabic/Darija/French/English so Whisper biases its detection
+            // toward these languages instead of obscure ones (e.g., Welsh).
+            $multilingualPrompt = "Conversation client / محادثة زبون / Customer chat. "
+                . "Darija: شنو كاين؟ بشحال؟ واخا. "
+                . "Arabic: مرحبا، شكرا، من فضلك. "
+                . "French: bonjour, merci, s'il vous plaît. "
+                . "English: hello, thanks, please.";
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+            ])
+            ->timeout(120)
+            ->attach('file', $audioBytes, 'audio.' . $extension)
+            ->post('https://api.openai.com/v1/audio/transcriptions', [
+                'model' => 'whisper-1',
+                'prompt' => $multilingualPrompt,
+                'response_format' => 'verbose_json',
+                'temperature' => 0.0,
+            ]);
+
+            if (!$response->successful()) {
+                \Log::error('OpenAI Whisper API error (auto-detect)', [
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
+                if ($tempFilePath && file_exists($tempFilePath)) {
+                    unlink($tempFilePath);
+                }
+                return null;
+            }
+
+            $result = $response->json();
+            $transcription = $result['text'] ?? null;
+            $detectedLang = $result['language'] ?? null;
+
+            \Log::info('Whisper auto-detect result', [
+                'detected_language' => $detectedLang,
+                'transcription' => $transcription,
+            ]);
+
+            // STEP 2: If Whisper detected an unlikely language for our context
+            // (e.g., Welsh, Irish, Maori, Hawaiian, etc.), this almost always means
+            // it confused Darija/Arabic. Retry with Arabic forced.
+            $unlikelyLanguages = [
+                'welsh', 'cy',
+                'irish', 'ga',
+                'maori', 'mi',
+                'hawaiian', 'haw',
+                'icelandic', 'is',
+                'malagasy', 'mg',
+                'somali', 'so',
+                'sundanese', 'su',
+                'javanese', 'jv',
+                'lao', 'lo',
+                'khmer', 'km',
+                'myanmar', 'my',
+                'mongolian', 'mn',
+                'tibetan', 'bo',
+                'nynorsk', 'nn',
+            ];
+
+            $detectedLower = strtolower((string) $detectedLang);
+            if (in_array($detectedLower, $unlikelyLanguages, true)) {
+                \Log::warning('Whisper detected unlikely language, retrying as Arabic', [
+                    'detected' => $detectedLang,
+                    'original_text' => $transcription,
+                ]);
+
+                $arabicPrompt = 'هذه محادثة بالدارجة المغربية أو العربية الفصحى بين زبون والبائع.';
+
+                $retryResponse = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                ])
+                ->timeout(120)
+                ->attach('file', $audioBytes, 'audio.' . $extension)
+                ->post('https://api.openai.com/v1/audio/transcriptions', [
+                    'model' => 'whisper-1',
+                    'language' => 'ar',
+                    'prompt' => $arabicPrompt,
+                    'response_format' => 'json',
+                    'temperature' => 0.0,
+                ]);
+
+                if ($retryResponse->successful()) {
+                    $arabicText = $retryResponse->json()['text'] ?? null;
+                    if (!empty($arabicText)) {
+                        $transcription = $arabicText;
+                        $detectedLang = 'arabic';
+                        \Log::info('Arabic retry succeeded', [
+                            'transcription' => $transcription,
+                        ]);
+                    }
+                } else {
+                    \Log::error('OpenAI Whisper API error (Arabic retry)', [
+                        'status' => $retryResponse->status(),
+                        'body' => $retryResponse->body(),
+                    ]);
+                }
+            }
+
+            // Clean up temp file
+            if ($tempFilePath && file_exists($tempFilePath)) {
+                unlink($tempFilePath);
+            }
+
+            \Log::info('Audio transcribed successfully', [
+                'language' => $detectedLang,
+                'transcription' => $transcription,
+            ]);
+
+            return $transcription;
+            
+        } catch (\Exception $e) {
+            // Clean up temp file on error
+            if ($tempFilePath && file_exists($tempFilePath)) {
+                @unlink($tempFilePath);
+            }
+            
+            \Log::error('Error transcribing audio', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return null;
+        }
+    }
+    
+    /**
+     * Get audio file extension from URL
+     */
+    private function getAudioExtension(string $url): string
+    {
+        $path = parse_url($url, PHP_URL_PATH);
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+        
+        // Default to ogg for WhatsApp voice messages
+        if (empty($extension) || !in_array($extension, ['mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'wav', 'webm', 'ogg'])) {
+            return 'ogg';
+        }
+        
+        return $extension;
     }
 }
