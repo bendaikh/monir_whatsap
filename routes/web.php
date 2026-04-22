@@ -86,6 +86,7 @@ Route::middleware(['auth', 'require.workspace', 'require.store'])->prefix('app')
     Route::get('/conversations/{id}', [CustomerDashboardController::class, 'conversationDetail'])->name('conversation.detail');
     Route::get('/orders', [CustomerDashboardController::class, 'orders'])->name('orders');
     Route::get('/products', [CustomerDashboardController::class, 'products'])->name('products');
+    Route::get('/products/select-theme', [CustomerDashboardController::class, 'productsSelectTheme'])->name('products.select-theme');
     Route::get('/products/create', [CustomerDashboardController::class, 'productsCreate'])->name('products.create');
     Route::post('/products', [CustomerDashboardController::class, 'productsStore'])->name('products.store');
     Route::get('/products/{id}/edit', [CustomerDashboardController::class, 'productsEdit'])->name('products.edit');

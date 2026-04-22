@@ -314,8 +314,19 @@ class CustomerDashboardController extends Controller
         return view('customer.products', compact('products', 'store'));
     }
     
-    public function productsCreate()
+    public function productsSelectTheme()
     {
+        return view('customer.products-select-theme');
+    }
+
+    public function productsCreate(Request $request)
+    {
+        $theme = $request->query('theme', 'theme1');
+        
+        if (!in_array($theme, ['theme1', 'theme2'])) {
+            return redirect()->route('app.products.select-theme');
+        }
+        
         $storeId = $this->getActiveStoreId();
         
         $query = \App\Models\Category::where('is_active', true);
@@ -326,7 +337,9 @@ class CustomerDashboardController extends Controller
         
         $categories = $query->orderBy('order')->orderBy('name')->get();
         
-        return view('customer.products-create', compact('categories'));
+        $viewName = $theme === 'theme2' ? 'customer.products-create-theme2' : 'customer.products-create';
+        
+        return view($viewName, compact('categories', 'theme'));
     }
     
     public function productsStore(Request $request)
@@ -367,6 +380,8 @@ class CustomerDashboardController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'theme' => 'nullable|string|in:theme1,theme2',
+            'theme_data' => 'nullable|array',
             'price' => $hasVariations ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
             'compare_at_price' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:categories,id',
@@ -400,6 +415,8 @@ class CustomerDashboardController extends Controller
 
         $validated['user_id'] = auth()->id();
         $validated['store_id'] = $this->getActiveStoreId();
+        $validated['theme'] = $validated['theme'] ?? 'theme1';
+        $validated['theme_data'] = $request->input('theme_data');
         $validated['slug'] = \Str::slug($validated['name']) . '-' . time();
         $validated['is_active'] = $request->has('is_active');
         $validated['is_featured'] = $request->has('is_featured');

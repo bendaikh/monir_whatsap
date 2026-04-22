@@ -68,6 +68,10 @@ class ProductController extends Controller
             ->limit(4)
             ->get();
 
+        if ($product->theme === 'theme2') {
+            return view('product-landing-theme2', compact('product', 'relatedProducts', 'store'));
+        }
+
         if ($product->landing_page_fr || $product->landing_page_en || $product->landing_page_ar) {
             return view('product-landing', compact('product', 'relatedProducts', 'store'));
         }

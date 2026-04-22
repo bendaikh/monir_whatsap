@@ -10,6 +10,8 @@ class Product extends Model
     protected $fillable = [
         'user_id',
         'store_id',
+        'theme',
+        'theme_data',
         'category_id',
         'name',
         'slug',
@@ -47,6 +49,7 @@ class Product extends Model
         'images' => 'array',
         'image_descriptions' => 'array',
         'ai_generated_images' => 'array',
+        'theme_data' => 'array',
         'price' => 'decimal:2',
         'compare_at_price' => 'decimal:2',
         'has_variations' => 'boolean',
