@@ -9,9 +9,11 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class StoreManagementController extends Controller
 {
     use AuthorizesRequests;
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         $activeWorkspaceId = session('active_workspace_id');
+        $activeWorkspace = $activeWorkspaceId ? \App\Models\Workspace::find($activeWorkspaceId) : null;
+        $view = $request->get('view', 'overview');
         
         $stores = auth()->user()->stores()
             ->when($activeWorkspaceId, function ($query, $workspaceId) {
@@ -20,16 +22,38 @@ class StoreManagementController extends Controller
             ->withCount('products', 'categories')
             ->latest()
             ->get();
+        
+        // Workspace-specific statistics
+        $storeIds = $stores->pluck('id');
+        $totalProducts = \App\Models\Product::whereIn('store_id', $storeIds)->count();
+        $totalOrders = \App\Models\Order::whereIn('store_id', $storeIds)->count();
+        $newOrders = \App\Models\Order::whereIn('store_id', $storeIds)
+            ->where('created_at', '>=', now()->subDays(7))
+            ->count();
+        $totalRevenue = \App\Models\Order::whereIn('store_id', $storeIds)
+            ->where('status', 'completed')
+            ->sum('total');
+        $pendingOrders = \App\Models\Order::whereIn('store_id', $storeIds)
+            ->where('status', 'pending')
+            ->count();
             
         $stats = [
             'total_stores' => $stores->count(),
             'active_stores' => $stores->where('is_active', true)->count(),
-            'total_products' => $stores->sum('products_count'),
+            'total_products' => $totalProducts,
+            'total_orders' => $totalOrders,
+            'new_orders' => $newOrders,
+            'total_revenue' => $totalRevenue,
+            'pending_orders' => $pendingOrders,
         ];
         
         $currentStoreId = session('active_store_id');
         
-        return view('stores.dashboard', compact('stores', 'stats', 'currentStoreId'));
+        if ($view === 'list') {
+            return view('stores.list', compact('stores', 'stats', 'currentStoreId', 'activeWorkspace'));
+        }
+        
+        return view('stores.overview', compact('stores', 'stats', 'currentStoreId', 'activeWorkspace'));
     }
     
     public function index()

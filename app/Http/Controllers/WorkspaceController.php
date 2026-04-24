@@ -10,24 +10,49 @@ class WorkspaceController extends Controller
 {
     use AuthorizesRequests;
 
-    public function dashboard()
+    public function dashboard(Request $request)
     {
+        $view = $request->get('view', 'overview');
+        
         $workspaces = auth()->user()->workspaces()
             ->withCount(['stores', 'stores as products_count' => function ($query) {
                 $query->join('products', 'stores.id', '=', 'products.store_id');
             }])
             ->latest()
             ->get();
+        
+        // Global statistics across ALL workspaces
+        $totalStores = auth()->user()->stores()->count();
+        $totalProducts = \App\Models\Product::whereIn('store_id', auth()->user()->stores()->pluck('id'))->count();
+        $totalOrders = \App\Models\Order::whereIn('store_id', auth()->user()->stores()->pluck('id'))->count();
+        $newOrders = \App\Models\Order::whereIn('store_id', auth()->user()->stores()->pluck('id'))
+            ->where('created_at', '>=', now()->subDays(7))
+            ->count();
+        $totalRevenue = \App\Models\Order::whereIn('store_id', auth()->user()->stores()->pluck('id'))
+            ->where('status', 'completed')
+            ->sum('total');
+        $pendingOrders = \App\Models\Order::whereIn('store_id', auth()->user()->stores()->pluck('id'))
+            ->where('status', 'pending')
+            ->count();
             
         $stats = [
             'total_workspaces' => $workspaces->count(),
             'active_workspaces' => $workspaces->where('is_active', true)->count(),
-            'total_stores' => $workspaces->sum('stores_count'),
+            'total_stores' => $totalStores,
+            'total_products' => $totalProducts,
+            'total_orders' => $totalOrders,
+            'new_orders' => $newOrders,
+            'total_revenue' => $totalRevenue,
+            'pending_orders' => $pendingOrders,
         ];
         
         $currentWorkspaceId = session('active_workspace_id');
         
-        return view('workspaces.dashboard', compact('workspaces', 'stats', 'currentWorkspaceId'));
+        if ($view === 'list') {
+            return view('workspaces.list', compact('workspaces', 'stats', 'currentWorkspaceId'));
+        }
+        
+        return view('workspaces.overview', compact('workspaces', 'stats', 'currentWorkspaceId'));
     }
     
     public function create()

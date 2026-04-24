@@ -29,55 +29,93 @@
                         </div>
                     </div>
 
+                    <!-- Context Indicator -->
+                    @php
+                        $activeWorkspaceId = session('active_workspace_id');
+                        $activeWorkspace = $activeWorkspaceId ? \App\Models\Workspace::find($activeWorkspaceId) : null;
+                    @endphp
+
+                    @if($activeWorkspace && request()->routeIs('stores.*'))
+                        <div class="px-3 py-3 border-b border-gray-200">
+                            <div class="flex items-center gap-2 p-2.5 rounded-lg bg-blue-50">
+                                <svg class="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs text-blue-600 font-medium">Active Workspace</p>
+                                    <p class="text-sm font-semibold text-blue-900 truncate">{{ $activeWorkspace->name }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     <!-- Navigation -->
                     <nav class="flex-1 overflow-y-auto py-4 px-3">
                         <div class="space-y-1">
-                            @if(auth()->user()->role === 'superadmin')
-                                <!-- Super Admin Menu -->
-                                <div class="mb-4">
-                                    <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Super Admin</p>
-                                    
-                                    <a href="{{ route('superadmin.dashboard') }}" class="{{ request()->routeIs('superadmin.dashboard') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }} flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                                        </svg>
-                                        Dashboard
-                                    </a>
+                            @if(request()->routeIs('workspaces.*'))
+                                <!-- Workspace Management Navigation -->
+                                <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Workspace Management</p>
+                                
+                                <a href="{{ route('workspaces.dashboard') }}" class="{{ request()->routeIs('workspaces.dashboard') && !request()->has('view') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }} flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                                    </svg>
+                                    Dashboard
+                                </a>
 
-                                    {{-- <a href="{{ route('superadmin.customers') }}" class="{{ request()->routeIs('superadmin.customers') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }} flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                                        </svg>
-                                        Customers
-                                    </a>
+                                <a href="{{ route('workspaces.dashboard', ['view' => 'list']) }}" class="{{ request()->has('view') && request()->get('view') === 'list' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }} flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                    </svg>
+                                    My Workspaces
+                                </a>
 
-                                    <a href="{{ route('superadmin.analytics') }}" class="{{ request()->routeIs('superadmin.analytics') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }} flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                                        </svg>
-                                        Analytics
-                                    </a> --}}
+                                <a href="{{ route('workspaces.create') }}" class="{{ request()->routeIs('workspaces.create') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }} flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                    Create Workspace
+                                </a>
 
-                                    <a href="{{ route('superadmin.stores') }}" class="{{ request()->routeIs('superadmin.stores*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }} flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                                        </svg>
-                                        Stores
-                                    </a>
-                                </div>
+                            @elseif(request()->routeIs('stores.*'))
+                                <!-- Store Management Navigation -->
+                                <a href="{{ route('workspaces.dashboard') }}" class="text-gray-700 hover:bg-gray-50 flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                    </svg>
+                                    Back to Workspaces
+                                </a>
 
-                                <div class="border-t border-gray-200 pt-4 mb-4"></div>
+                                <div class="border-t border-gray-200 my-2"></div>
+
+                                <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Store Management</p>
+                                
+                                <a href="{{ route('stores.dashboard') }}" class="{{ request()->routeIs('stores.dashboard') && !request()->has('view') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }} flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                                    </svg>
+                                    Dashboard
+                                </a>
+
+                                <a href="{{ route('stores.dashboard', ['view' => 'list']) }}" class="{{ request()->has('view') && request()->get('view') === 'list' ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }} flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                    </svg>
+                                    My Stores
+                                </a>
+
+                                <a href="{{ route('stores.create') }}" class="{{ request()->routeIs('stores.create') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }} flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                    Create Store
+                                </a>
                             @endif
 
-                            <!-- User Menu -->
-                            <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">My Account</p>
-                            
-                            <a href="{{ route('stores.dashboard') }}" class="{{ request()->routeIs('stores.*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }} flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                                </svg>
-                                Stores Management
-                            </a>
+                            <div class="border-t border-gray-200 my-4"></div>
+
+                            <!-- Settings -->
+                            <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Settings</p>
 
                             <a href="{{ route('profile.edit') }}" class="{{ request()->routeIs('profile.edit') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }} flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,6 +143,24 @@
                             </button>
 
                             <div x-show="open" @click.away="open = false" x-cloak class="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-lg shadow-lg py-1 border border-gray-200">
+                                @if(auth()->user()->role === 'superadmin')
+                                    <a href="{{ route('superadmin.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                        Super Admin Panel
+                                    </a>
+                                    <div class="border-t border-gray-200 my-1"></div>
+                                @endif
+                                <a href="{{ route('workspaces.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                    My Workspaces
+                                </a>
+                                @if(session('active_workspace_id'))
+                                    <a href="{{ route('stores.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                        My Stores
+                                    </a>
+                                @endif
+                                <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                    Profile Settings
+                                </a>
+                                <div class="border-t border-gray-200 my-1"></div>
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
                                     <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">

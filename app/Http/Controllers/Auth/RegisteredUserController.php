@@ -46,6 +46,7 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        // Redirect new users to workspaces dashboard to create their first workspace
+        return redirect(route('workspaces.dashboard', absolute: false));
     }
 }

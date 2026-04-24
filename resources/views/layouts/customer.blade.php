@@ -24,8 +24,16 @@
                     </div>
                 </div>
 
-                <!-- Store Selector -->
-                @if(isset($activeStore) && $activeStore)
+                <!-- Context Selector (Workspace/Store) -->
+                @php
+                    $activeWorkspaceId = session('active_workspace_id');
+                    $activeWorkspace = $activeWorkspaceId ? \App\Models\Workspace::find($activeWorkspaceId) : null;
+                    $isStoreContext = isset($activeStore) && $activeStore;
+                    $isWorkspaceContext = $activeWorkspace && !$isStoreContext;
+                @endphp
+
+                @if($isStoreContext)
+                    <!-- Store Context -->
                     <div class="px-3 py-3 border-b border-white/10">
                         <a href="{{ route('stores.dashboard') }}" class="flex items-center justify-between p-2.5 rounded-lg hover:bg-white/5 transition group">
                             <div class="flex items-center gap-2 flex-1 min-w-0">
@@ -42,10 +50,81 @@
                             </svg>
                         </a>
                     </div>
+                @elseif($isWorkspaceContext)
+                    <!-- Workspace Context -->
+                    <div class="px-3 py-3 border-b border-white/10">
+                        <a href="{{ route('workspaces.dashboard') }}" class="flex items-center justify-between p-2.5 rounded-lg hover:bg-white/5 transition group">
+                            <div class="flex items-center gap-2 flex-1 min-w-0">
+                                <svg class="w-5 h-5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs text-blue-400 font-medium">Current Workspace</p>
+                                    <p class="text-sm font-semibold text-white truncate">{{ $activeWorkspace->name }}</p>
+                                </div>
+                            </div>
+                            <svg class="w-4 h-4 text-blue-400 opacity-0 group-hover:opacity-100 transition flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/>
+                            </svg>
+                        </a>
+                    </div>
                 @endif
 
                 <!-- Navigation -->
                 <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto" x-data="{ socialMediaOpen: {{ request()->routeIs('app.facebook-ads') || request()->routeIs('app.tiktok-ads') || request()->routeIs('app.ad-campaigns*') || request()->routeIs('app.campaign-creator*') ? 'true' : 'false' }}, aiApiOpen: {{ request()->routeIs('app.ai-settings') ? 'true' : 'false' }}, productsOpen: {{ request()->routeIs('app.products*') || request()->routeIs('app.categories*') ? 'true' : 'false' }} }">
+                
+                @if(request()->routeIs('workspaces.*'))
+                    <!-- Workspace Management Navigation -->
+                    <a href="{{ route('workspaces.dashboard') }}" class="{{ request()->routeIs('workspaces.dashboard') ? 'bg-blue-500/20 text-blue-400' : 'text-gray-400 hover:bg-white/5' }} flex items-center gap-3 px-3 py-2.5 rounded-lg transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        <span class="text-sm font-medium">My Workspaces</span>
+                    </a>
+
+                    <a href="{{ route('workspaces.create') }}" class="{{ request()->routeIs('workspaces.create') ? 'bg-blue-500/20 text-blue-400' : 'text-gray-400 hover:bg-white/5' }} flex items-center gap-3 px-3 py-2.5 rounded-lg transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <span class="text-sm font-medium">Create Workspace</span>
+                    </a>
+
+                @elseif(request()->routeIs('stores.dashboard') || request()->routeIs('stores.create') || request()->routeIs('stores.edit'))
+                    <!-- Store Management Navigation -->
+                    <a href="{{ route('workspaces.dashboard') }}" class="text-gray-400 hover:bg-white/5 flex items-center gap-3 px-3 py-2.5 rounded-lg transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        <span class="text-sm font-medium">Back to Workspaces</span>
+                    </a>
+
+                    <div class="border-t border-white/10 my-2"></div>
+
+                    <a href="{{ route('stores.dashboard') }}" class="{{ request()->routeIs('stores.dashboard') ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-400 hover:bg-white/5' }} flex items-center gap-3 px-3 py-2.5 rounded-lg transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                        <span class="text-sm font-medium">My Stores</span>
+                    </a>
+
+                    <a href="{{ route('stores.create') }}" class="{{ request()->routeIs('stores.create') ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-400 hover:bg-white/5' }} flex items-center gap-3 px-3 py-2.5 rounded-lg transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <span class="text-sm font-medium">Create Store</span>
+                    </a>
+
+                @else
+                    <!-- Store App Navigation (Products, WhatsApp, etc.) -->
+                    <a href="{{ route('stores.dashboard') }}" class="text-gray-400 hover:bg-white/5 flex items-center gap-3 px-3 py-2.5 rounded-lg transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        <span class="text-sm font-medium">Back to Stores</span>
+                    </a>
+
+                    <div class="border-t border-white/10 my-2"></div>
+
                     <a href="{{ route('app.dashboard') }}" class="{{ request()->routeIs('app.dashboard') ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-400 hover:bg-white/5' }} flex items-center gap-3 px-3 py-2.5 rounded-lg transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
@@ -189,6 +268,7 @@
                         </svg>
                         <span class="text-sm font-medium">System Connect</span>
                     </a>
+                @endif
                 </nav>
 
                 <!-- User Profile -->
@@ -214,9 +294,14 @@
                                 </a>
                                 <div class="border-t border-white/10 my-1"></div>
                             @endif
-                            <a href="{{ route('stores.dashboard') }}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 transition">
-                                My Stores
+                            <a href="{{ route('workspaces.dashboard') }}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 transition">
+                                My Workspaces
                             </a>
+                            @if(session('active_workspace_id'))
+                                <a href="{{ route('stores.dashboard') }}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 transition">
+                                    My Stores
+                                </a>
+                            @endif
                             <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 transition">
                                 Profile Settings
                             </a>
@@ -244,21 +329,39 @@
                     <div>
                         @if (isset($header))
                             {{ $header }}
+                        @else
+                            <h2 class="text-xl font-semibold text-white">
+                                @if(request()->routeIs('workspaces.*'))
+                                    Workspace Management
+                                @elseif(request()->routeIs('stores.*'))
+                                    Store Management
+                                @elseif(request()->routeIs('app.*'))
+                                    @if(isset($activeStore))
+                                        {{ $activeStore->name }}
+                                    @else
+                                        Dashboard
+                                    @endif
+                                @else
+                                    Dashboard
+                                @endif
+                            </h2>
                         @endif
                     </div>
                     <div class="flex items-center gap-4">
-                        <button class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition">
-                            Upgrade
-                        </button>
-                        <div class="flex items-center gap-2 text-sm">
-                            <span class="text-gray-400">fr</span>
-                            <span class="text-gray-600">|</span>
-                            <span class="text-gray-400">MAD</span>
-                        </div>
-                        <div class="flex items-center gap-2 text-sm">
-                            <span class="text-white font-medium">900</span>
-                            <span class="text-gray-400">tokens left</span>
-                        </div>
+                        @if(request()->routeIs('app.*'))
+                            <button class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition">
+                                Upgrade
+                            </button>
+                            <div class="flex items-center gap-2 text-sm">
+                                <span class="text-gray-400">fr</span>
+                                <span class="text-gray-600">|</span>
+                                <span class="text-gray-400">MAD</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm">
+                                <span class="text-white font-medium">900</span>
+                                <span class="text-gray-400">tokens left</span>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </header>
