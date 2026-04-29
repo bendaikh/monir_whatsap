@@ -59,6 +59,13 @@ Route::middleware(['auth'])->prefix('workspaces')->name('workspaces.')->group(fu
     Route::put('/{workspace}', [\App\Http\Controllers\WorkspaceController::class, 'update'])->name('update');
     Route::delete('/{workspace}', [\App\Http\Controllers\WorkspaceController::class, 'destroy'])->name('destroy');
     Route::post('/{workspace}/switch', [\App\Http\Controllers\WorkspaceController::class, 'switch'])->name('switch');
+    
+    // AI API Integration (Workspace Level)
+    Route::get('/ai-settings', [CustomerDashboardController::class, 'aiSettings'])->name('ai-settings');
+    Route::post('/ai-settings/openai', [CustomerDashboardController::class, 'saveOpenAiSettings'])->name('ai-settings.openai.save');
+    Route::post('/ai-settings/openai/test', [CustomerDashboardController::class, 'testOpenAiConnection'])->name('ai-settings.openai.test');
+    Route::post('/ai-settings/anthropic', [CustomerDashboardController::class, 'saveAnthropicSettings'])->name('ai-settings.anthropic.save');
+    Route::post('/ai-settings/anthropic/test', [CustomerDashboardController::class, 'testAnthropicConnection'])->name('ai-settings.anthropic.test');
 });
 
 // Store Management Routes (must come before app routes) - requires active workspace
@@ -77,11 +84,6 @@ Route::middleware(['auth', 'require.workspace'])->prefix('stores')->name('stores
 Route::middleware(['auth', 'require.workspace', 'require.store'])->prefix('app')->name('app.')->group(function () {
     Route::get('/dashboard', [CustomerDashboardController::class, 'dashboard'])->name('dashboard');
     Route::get('/whatsapp', [CustomerDashboardController::class, 'whatsapp'])->name('whatsapp');
-    Route::get('/ai-settings', [CustomerDashboardController::class, 'aiSettings'])->name('ai-settings');
-    Route::post('/ai-settings/openai', [CustomerDashboardController::class, 'saveOpenAiSettings'])->name('ai-settings.openai.save');
-    Route::post('/ai-settings/openai/test', [CustomerDashboardController::class, 'testOpenAiConnection'])->name('ai-settings.openai.test');
-    Route::post('/ai-settings/anthropic', [CustomerDashboardController::class, 'saveAnthropicSettings'])->name('ai-settings.anthropic.save');
-    Route::post('/ai-settings/anthropic/test', [CustomerDashboardController::class, 'testAnthropicConnection'])->name('ai-settings.anthropic.test');
     Route::get('/conversations', [CustomerDashboardController::class, 'conversations'])->name('conversations');
     Route::get('/conversations/{id}', [CustomerDashboardController::class, 'conversationDetail'])->name('conversation.detail');
     Route::get('/orders', [CustomerDashboardController::class, 'orders'])->name('orders');

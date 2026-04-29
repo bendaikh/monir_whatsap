@@ -90,7 +90,7 @@ class CampaignCreatorController extends Controller
             if (!$aiSetting || empty($aiSetting->openai_api_key_encrypted)) {
                 return response()->json([
                     'error' => 'OpenAI API key not configured. Please configure your OpenAI settings first.',
-                    'redirect_url' => route('app.ai-settings')
+                    'redirect_url' => route('workspaces.ai-settings')
                 ], 400);
             }
             
@@ -99,7 +99,7 @@ class CampaignCreatorController extends Controller
             } catch (\Exception $e) {
                 return response()->json([
                     'error' => 'Unable to decrypt your API key. Please reconfigure your OpenAI settings.',
-                    'redirect_url' => route('app.ai-settings')
+                    'redirect_url' => route('workspaces.ai-settings')
                 ], 400);
             }
             

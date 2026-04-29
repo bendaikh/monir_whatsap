@@ -494,7 +494,7 @@ class AdCampaignsController extends Controller
             \Log::warning('No OpenAI API key configured for user', ['user_id' => $user->id]);
             return response()->json([
                 'error' => 'OpenAI API key not configured. Please configure your OpenAI settings first.',
-                'redirect_url' => route('app.ai-settings')
+                'redirect_url' => route('workspaces.ai-settings')
             ], 400);
         }
         
@@ -504,7 +504,7 @@ class AdCampaignsController extends Controller
             \Log::error('Failed to decrypt OpenAI API key', ['user_id' => $user->id, 'error' => $e->getMessage()]);
             return response()->json([
                 'error' => 'Unable to decrypt your API key. Please reconfigure your OpenAI settings.',
-                'redirect_url' => route('app.ai-settings')
+                'redirect_url' => route('workspaces.ai-settings')
             ], 400);
         }
         

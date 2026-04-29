@@ -49,7 +49,7 @@
                     @endif
                 </div>
 
-                <form method="POST" action="{{ route('app.ai-settings.openai.save') }}" class="space-y-4">
+                <form method="POST" action="{{ route('workspaces.ai-settings.openai.save') }}" class="space-y-4">
                     @csrf
                     <div>
                         <label for="openai_api_key" class="block text-sm font-medium text-gray-300 mb-2">Clé API</label>
@@ -93,7 +93,7 @@
                 </form>
 
                 @if($aiSetting && $aiSetting->openai_api_key_encrypted)
-                    <form method="POST" action="{{ route('app.ai-settings.openai.test') }}" class="mt-4 pt-4 border-t border-white/10">
+                    <form method="POST" action="{{ route('workspaces.ai-settings.openai.test') }}" class="mt-4 pt-4 border-t border-white/10">
                         @csrf
                         <button type="submit" class="px-5 py-2.5 bg-[#0a1628] border border-white/15 hover:border-cyan-500/50 text-white text-sm font-medium rounded-lg transition">
                             Tester la connexion OpenAI
@@ -116,7 +116,7 @@
                     @endif
                 </div>
 
-                <form method="POST" action="{{ route('app.ai-settings.anthropic.save') }}" class="space-y-4">
+                <form method="POST" action="{{ route('workspaces.ai-settings.anthropic.save') }}" class="space-y-4">
                     @csrf
                     <div>
                         <label for="anthropic_api_key" class="block text-sm font-medium text-gray-300 mb-2">Clé API Anthropic</label>
@@ -151,7 +151,7 @@
                 </form>
 
                 @if($aiSetting && $aiSetting->anthropic_api_key_encrypted)
-                    <form method="POST" action="{{ route('app.ai-settings.anthropic.test') }}" class="mt-4 pt-4 border-t border-white/10">
+                    <form method="POST" action="{{ route('workspaces.ai-settings.anthropic.test') }}" class="mt-4 pt-4 border-t border-white/10">
                         @csrf
                         <button type="submit" class="px-5 py-2.5 bg-[#0a1628] border border-white/15 hover:border-purple-500/50 text-white text-sm font-medium rounded-lg transition">
                             Tester la connexion Anthropic

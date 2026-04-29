@@ -91,7 +91,7 @@
         </svg>
         <div>
             <span class="font-semibold">AI Landing Page Feature Requires Configuration</span>
-            <span class="block text-sm mt-1">Please <a href="{{ route('app.ai-settings') }}" class="underline hover:text-purple-200">configure your AI API settings</a> to use the AI landing page generation feature.</span>
+            <span class="block text-sm mt-1">Please <a href="{{ route('workspaces.ai-settings') }}" class="underline hover:text-purple-200">configure your AI API settings</a> to use the AI landing page generation feature.</span>
         </div>
     </div>
     @endif

@@ -11,6 +11,7 @@ class AiApiSetting extends Model
     use HasFactory;
 
     protected $fillable = [
+        'workspace_id',
         'user_id',
         'openai_api_key_encrypted',
         'openai_model',
@@ -22,6 +23,11 @@ class AiApiSetting extends Model
     protected $casts = [
         'auto_reply_enabled' => 'boolean',
     ];
+
+    public function workspace()
+    {
+        return $this->belongsTo(Workspace::class);
+    }
 
     public function user()
     {

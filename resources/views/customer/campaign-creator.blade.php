@@ -61,7 +61,7 @@
             <div>
                 <p class="font-semibold mb-2">AI Features Not Configured</p>
                 <p class="text-sm mb-3">You need to configure your OpenAI API key to use AI-powered ad copy generation.</p>
-                <a href="{{ route('app.ai-settings') }}#openai-connect" class="text-sm px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition inline-block">
+                <a href="{{ route('workspaces.ai-settings') }}#openai-connect" class="text-sm px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition inline-block">
                     Configure OpenAI
                 </a>
             </div>

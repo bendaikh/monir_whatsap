@@ -135,17 +135,14 @@ class CustomerDashboardController extends Controller
     public function aiSettings()
     {
         $user = auth()->user();
-        $storeId = $this->getActiveStoreId();
-        
-        $profiles = WhatsappProfile::where('user_id', $user->id)
-            ->when($storeId, function($q) use ($storeId) {
-                $q->where('store_id', $storeId);
-            })
-            ->get();
+        $workspaceId = session('active_workspace_id');
             
-        $aiSetting = AiApiSetting::where('user_id', $user->id)->first();
+        $aiSetting = null;
+        if ($workspaceId) {
+            $aiSetting = AiApiSetting::where('workspace_id', $workspaceId)->first();
+        }
 
-        return view('customer.ai-settings', compact('profiles', 'aiSetting'));
+        return view('workspaces.ai-settings', compact('aiSetting'));
     }
 
     public function saveOpenAiSettings(Request $request)
@@ -157,8 +154,15 @@ class CustomerDashboardController extends Controller
             'auto_reply_enabled' => 'nullable|boolean',
         ]);
 
-        $user = $request->user();
-        $setting = AiApiSetting::firstOrNew(['user_id' => $user->id]);
+        $workspaceId = session('active_workspace_id');
+        
+        if (!$workspaceId) {
+            return redirect()
+                ->route('workspaces.dashboard')
+                ->with('error', 'Please select a workspace first.');
+        }
+
+        $setting = AiApiSetting::firstOrNew(['workspace_id' => $workspaceId]);
         $setting->openai_model = $validated['openai_model'];
         $setting->auto_reply_enabled = $request->boolean('auto_reply_enabled');
 
@@ -171,18 +175,26 @@ class CustomerDashboardController extends Controller
         $setting->save();
 
         return redirect()
-            ->route('app.ai-settings')
+            ->route('workspaces.ai-settings')
             ->withFragment('openai-connect')
             ->with('success', 'Paramètres OpenAI enregistrés.');
     }
 
     public function testOpenAiConnection(Request $request)
     {
-        $setting = AiApiSetting::where('user_id', $request->user()->id)->first();
+        $workspaceId = session('active_workspace_id');
+        
+        if (!$workspaceId) {
+            return redirect()
+                ->route('workspaces.dashboard')
+                ->with('error', 'Please select a workspace first.');
+        }
+
+        $setting = AiApiSetting::where('workspace_id', $workspaceId)->first();
 
         if (! $setting || empty($setting->openai_api_key_encrypted)) {
             return redirect()
-                ->route('app.ai-settings')
+                ->route('workspaces.ai-settings')
                 ->withFragment('openai-connect')
                 ->with('openai_error', 'Enregistrez d\'abord une clé API OpenAI.');
         }
@@ -191,7 +203,7 @@ class CustomerDashboardController extends Controller
             $apiKey = Crypt::decryptString($setting->openai_api_key_encrypted);
         } catch (\Throwable) {
             return redirect()
-                ->route('app.ai-settings')
+                ->route('workspaces.ai-settings')
                 ->withFragment('openai-connect')
                 ->with('openai_error', 'Impossible de lire la clé enregistrée. Saisissez-la à nouveau et enregistrez.');
         }
@@ -205,13 +217,13 @@ class CustomerDashboardController extends Controller
             $message = data_get($response->json(), 'error.message') ?: $response->body();
 
             return redirect()
-                ->route('app.ai-settings')
+                ->route('workspaces.ai-settings')
                 ->withFragment('openai-connect')
                 ->with('openai_error', is_string($message) ? $message : 'La requête vers OpenAI a échoué.');
         }
 
         return redirect()
-            ->route('app.ai-settings')
+            ->route('workspaces.ai-settings')
             ->withFragment('openai-connect')
             ->with('openai_success', 'Connexion OpenAI réussie.');
     }
@@ -224,8 +236,15 @@ class CustomerDashboardController extends Controller
             'clear_anthropic_key' => 'nullable|boolean',
         ]);
 
-        $user = $request->user();
-        $setting = AiApiSetting::firstOrNew(['user_id' => $user->id]);
+        $workspaceId = session('active_workspace_id');
+        
+        if (!$workspaceId) {
+            return redirect()
+                ->route('workspaces.dashboard')
+                ->with('error', 'Please select a workspace first.');
+        }
+
+        $setting = AiApiSetting::firstOrNew(['workspace_id' => $workspaceId]);
         $setting->anthropic_model = $validated['anthropic_model'];
 
         if ($request->boolean('clear_anthropic_key')) {
@@ -237,18 +256,26 @@ class CustomerDashboardController extends Controller
         $setting->save();
 
         return redirect()
-            ->route('app.ai-settings')
+            ->route('workspaces.ai-settings')
             ->withFragment('anthropic-connect')
             ->with('success', 'Paramètres Anthropic enregistrés.');
     }
 
     public function testAnthropicConnection(Request $request)
     {
-        $setting = AiApiSetting::where('user_id', $request->user()->id)->first();
+        $workspaceId = session('active_workspace_id');
+        
+        if (!$workspaceId) {
+            return redirect()
+                ->route('workspaces.dashboard')
+                ->with('error', 'Please select a workspace first.');
+        }
+
+        $setting = AiApiSetting::where('workspace_id', $workspaceId)->first();
 
         if (! $setting || empty($setting->anthropic_api_key_encrypted)) {
             return redirect()
-                ->route('app.ai-settings')
+                ->route('workspaces.ai-settings')
                 ->withFragment('anthropic-connect')
                 ->with('anthropic_error', 'Enregistrez d\'abord une clé API Anthropic.');
         }
@@ -257,7 +284,7 @@ class CustomerDashboardController extends Controller
             $apiKey = Crypt::decryptString($setting->anthropic_api_key_encrypted);
         } catch (\Throwable) {
             return redirect()
-                ->route('app.ai-settings')
+                ->route('workspaces.ai-settings')
                 ->withFragment('anthropic-connect')
                 ->with('anthropic_error', 'Impossible de lire la clé enregistrée. Saisissez-la à nouveau et enregistrez.');
         }
@@ -280,13 +307,13 @@ class CustomerDashboardController extends Controller
             $message = data_get($response->json(), 'error.message') ?: $response->body();
 
             return redirect()
-                ->route('app.ai-settings')
+                ->route('workspaces.ai-settings')
                 ->withFragment('anthropic-connect')
                 ->with('anthropic_error', is_string($message) ? $message : 'La requête vers Anthropic a échoué.');
         }
 
         return redirect()
-            ->route('app.ai-settings')
+            ->route('workspaces.ai-settings')
             ->withFragment('anthropic-connect')
             ->with('anthropic_success', 'Connexion Anthropic réussie.');
     }

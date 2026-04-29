@@ -47,7 +47,7 @@
                                     <x-dropdown-link :href="route('app.website-customization')">
                                         {{ __('Website Customization') }}
                                     </x-dropdown-link>
-                                    <x-dropdown-link :href="route('app.ai-settings')">
+                                    <x-dropdown-link :href="route('workspaces.ai-settings')">
                                         {{ __('AI Settings') }}
                                     </x-dropdown-link>
                                     <x-dropdown-link :href="route('app.facebook-ads')">
@@ -164,7 +164,7 @@
                 <x-responsive-nav-link :href="route('app.website-customization')" :active="request()->routeIs('app.website-customization')">
                     {{ __('Website Customization') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('app.ai-settings')" :active="request()->routeIs('app.ai-settings')">
+                <x-responsive-nav-link :href="route('workspaces.ai-settings')" :active="request()->routeIs('workspaces.ai-settings')">
                     {{ __('AI Settings') }}
                 </x-responsive-nav-link>
             @else
