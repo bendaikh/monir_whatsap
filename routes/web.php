@@ -60,7 +60,7 @@ Route::middleware(['auth'])->prefix('workspaces')->name('workspaces.')->group(fu
     Route::delete('/{workspace}', [\App\Http\Controllers\WorkspaceController::class, 'destroy'])->name('destroy');
     Route::post('/{workspace}/switch', [\App\Http\Controllers\WorkspaceController::class, 'switch'])->name('switch');
     
-    // AI API Integration (Workspace Level)
+    // AI API Integration (User Level - Global for all workspaces)
     Route::get('/ai-settings', [CustomerDashboardController::class, 'aiSettings'])->name('ai-settings');
     Route::post('/ai-settings/openai', [CustomerDashboardController::class, 'saveOpenAiSettings'])->name('ai-settings.openai.save');
     Route::post('/ai-settings/openai/test', [CustomerDashboardController::class, 'testOpenAiConnection'])->name('ai-settings.openai.test');

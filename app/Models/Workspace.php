@@ -44,9 +44,4 @@ class Workspace extends Model
     {
         return $this->hasMany(TikTokAdAccount::class);
     }
-
-    public function aiApiSetting()
-    {
-        return $this->hasOne(AiApiSetting::class);
-    }
 }
