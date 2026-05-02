@@ -72,7 +72,12 @@ class ProductController extends Controller
             return view('product-landing-theme2', compact('product', 'relatedProducts', 'store'));
         }
 
-        if ($product->landing_page_fr || $product->landing_page_en || $product->landing_page_ar) {
+        $hasLandingPageContent = !empty($product->landing_page_translations) 
+            || $product->landing_page_fr 
+            || $product->landing_page_en 
+            || $product->landing_page_ar;
+        
+        if ($hasLandingPageContent) {
             return view('product-landing', compact('product', 'relatedProducts', 'store'));
         }
 
@@ -94,7 +99,7 @@ class ProductController extends Controller
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
             'note' => 'nullable|string|max:1000',
-            'language' => 'required|in:fr,en,ar',
+            'language' => 'required|string|max:10',
         ]);
 
         $lead = \App\Models\ProductLead::create([
@@ -114,6 +119,36 @@ class ProductController extends Controller
             'fr' => 'Merci ! Nous vous contactons bientôt.',
             'en' => 'Thank you! We will contact you soon.',
             'ar' => 'شكرا لك! سنتصل بك قريبا.',
+            'es' => '¡Gracias! Nos pondremos en contacto pronto.',
+            'de' => 'Danke! Wir werden Sie bald kontaktieren.',
+            'it' => 'Grazie! Ti contatteremo presto.',
+            'pt' => 'Obrigado! Entraremos em contato em breve.',
+            'ru' => 'Спасибо! Мы скоро свяжемся с вами.',
+            'zh' => '谢谢!我们很快会联系您。',
+            'ja' => 'ありがとうございます!すぐにご連絡いたします。',
+            'ko' => '감사합니다! 곧 연락드리겠습니다.',
+            'nl' => 'Bedankt! We nemen binnenkort contact op.',
+            'pl' => 'Dziękujemy! Wkrótce się z Tobą skontaktujemy.',
+            'tr' => 'Teşekkürler! Kısa süre içinde sizinle iletişime geçeceğiz.',
+            'hi' => 'धन्यवाद! हम जल्द ही आपसे संपर्क करेंगे।',
+            'th' => 'ขอบคุณ! เราจะติดต่อคุณเร็วๆ นี้',
+            'vi' => 'Cảm ơn bạn! Chúng tôi sẽ liên lạc sớm.',
+            'id' => 'Terima kasih! Kami akan menghubungi Anda segera.',
+            'ms' => 'Terima kasih! Kami akan menghubungi anda tidak lama lagi.',
+            'he' => 'תודה! ניצור איתך קשר בקרוב.',
+            'el' => 'Σας ευχαριστούμε! Θα επικοινωνήσουμε σύντομα.',
+            'cs' => 'Děkujeme! Brzy se ozveme.',
+            'sv' => 'Tack! Vi kontaktar dig snart.',
+            'no' => 'Takk! Vi kontakter deg snart.',
+            'da' => 'Tak! Vi kontakter dig snart.',
+            'fi' => 'Kiitos! Otamme sinuun yhteyttä pian.',
+            'hu' => 'Köszönjük! Hamarosan felvesszük Önnel a kapcsolatot.',
+            'ro' => 'Multumim! Va vom contacta in curand.',
+            'uk' => 'Дякуємо! Ми скоро зв\'яжемося з вами.',
+            'sw' => 'Asante! Tutakuwasiliana hivi karibuni.',
+            'bn' => 'ধন্যবাদ! আমরা শীঘ্রই আপনার সাথে যোগাযোগ করব।',
+            'fa' => 'با تشکر! به زودی با شما تماس خواهیم گرفت.',
+            'ur' => 'شکریہ! ہم جلد ہی آپ سے رابطہ کریں گے۔',
         ];
 
         return back()->with('success', $successMessages[$validated['language']] ?? $successMessages['fr']);

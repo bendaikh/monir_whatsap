@@ -1,5 +1,43 @@
+@php
+    // UI Translations for all supported languages
+    $uiTranslations = [
+        'fr' => ['quantity_deals' => 'Offres de Quantité', 'buy' => 'Achetez', 'available_options' => 'Options disponibles', 'stock' => 'Stock', 'or_contact' => 'Ou contactez-nous directement :', 'call' => 'Appeler', 'features' => 'Les Caractéristiques', 'how_it_works' => 'Comment ça marche', 'testimonials' => 'Témoignages', 'faqs' => 'Questions Fréquentes', 'contact_us' => 'Contactez-nous', 'your_name' => 'Votre nom', 'phone_number' => 'Numéro de téléphone', 'note_optional' => 'Note (optionnel)', 'send' => 'Envoyer', 'order_now' => 'Commander maintenant', 'gallery' => 'Galerie de Photos'],
+        'en' => ['quantity_deals' => 'Quantity Deals', 'buy' => 'Buy', 'available_options' => 'Available Options', 'stock' => 'Stock', 'or_contact' => 'Or contact us directly:', 'call' => 'Call', 'features' => 'Features', 'how_it_works' => 'How It Works', 'testimonials' => 'Testimonials', 'faqs' => 'Frequently Asked Questions', 'contact_us' => 'Contact Us', 'your_name' => 'Your name', 'phone_number' => 'Phone number', 'note_optional' => 'Note (optional)', 'send' => 'Send', 'order_now' => 'Order Now', 'gallery' => 'Photo Gallery'],
+        'ar' => ['quantity_deals' => 'عروض الكمية', 'buy' => 'اشتري', 'available_options' => 'الخيارات المتاحة', 'stock' => 'المخزون', 'or_contact' => 'أو اتصل بنا مباشرة:', 'call' => 'اتصل', 'features' => 'المميزات', 'how_it_works' => 'كيف تعمل', 'testimonials' => 'الشهادات', 'faqs' => 'الأسئلة الشائعة', 'contact_us' => 'اتصل بنا', 'your_name' => 'اسمك', 'phone_number' => 'رقم الهاتف', 'note_optional' => 'ملاحظة (اختياري)', 'send' => 'إرسال', 'order_now' => 'اطلب الآن', 'gallery' => 'معرض الصور'],
+        'es' => ['quantity_deals' => 'Ofertas por Cantidad', 'buy' => 'Comprar', 'available_options' => 'Opciones Disponibles', 'stock' => 'Stock', 'or_contact' => 'O contáctanos directamente:', 'call' => 'Llamar', 'features' => 'Características', 'how_it_works' => 'Cómo Funciona', 'testimonials' => 'Testimonios', 'faqs' => 'Preguntas Frecuentes', 'contact_us' => 'Contáctanos', 'your_name' => 'Tu nombre', 'phone_number' => 'Número de teléfono', 'note_optional' => 'Nota (opcional)', 'send' => 'Enviar', 'order_now' => 'Ordenar Ahora', 'gallery' => 'Galería de Fotos'],
+        'de' => ['quantity_deals' => 'Mengenrabatte', 'buy' => 'Kaufen', 'available_options' => 'Verfügbare Optionen', 'stock' => 'Lagerbestand', 'or_contact' => 'Oder kontaktieren Sie uns direkt:', 'call' => 'Anrufen', 'features' => 'Eigenschaften', 'how_it_works' => 'So funktioniert es', 'testimonials' => 'Testimonials', 'faqs' => 'Häufig gestellte Fragen', 'contact_us' => 'Kontaktiere uns', 'your_name' => 'Ihr Name', 'phone_number' => 'Telefonnummer', 'note_optional' => 'Notiz (optional)', 'send' => 'Senden', 'order_now' => 'Jetzt bestellen', 'gallery' => 'Fotogalerie'],
+        'it' => ['quantity_deals' => 'Offerte per Quantità', 'buy' => 'Acquista', 'available_options' => 'Opzioni Disponibili', 'stock' => 'Stock', 'or_contact' => 'Oppure contattaci direttamente:', 'call' => 'Chiama', 'features' => 'Caratteristiche', 'how_it_works' => 'Come Funziona', 'testimonials' => 'Testimonianze', 'faqs' => 'Domande Frequenti', 'contact_us' => 'Contattaci', 'your_name' => 'Il tuo nome', 'phone_number' => 'Numero di telefono', 'note_optional' => 'Nota (opzionale)', 'send' => 'Invia', 'order_now' => 'Ordina Ora', 'gallery' => 'Galleria Foto'],
+        'pt' => ['quantity_deals' => 'Ofertas por Quantidade', 'buy' => 'Comprar', 'available_options' => 'Opções Disponíveis', 'stock' => 'Estoque', 'or_contact' => 'Ou contacte-nos diretamente:', 'call' => 'Ligar', 'features' => 'Características', 'how_it_works' => 'Como Funciona', 'testimonials' => 'Depoimentos', 'faqs' => 'Perguntas Frequentes', 'contact_us' => 'Contate-nos', 'your_name' => 'Seu nome', 'phone_number' => 'Número de telefone', 'note_optional' => 'Nota (opcional)', 'send' => 'Enviar', 'order_now' => 'Pedir Agora', 'gallery' => 'Galeria de Fotos'],
+        'ru' => ['quantity_deals' => 'Скидки на количество', 'buy' => 'Купить', 'available_options' => 'Доступные варианты', 'stock' => 'Наличие', 'or_contact' => 'Или свяжитесь с нами напрямую:', 'call' => 'Позвонить', 'features' => 'Особенности', 'how_it_works' => 'Как это работает', 'testimonials' => 'Отзывы', 'faqs' => 'Часто задаваемые вопросы', 'contact_us' => 'Свяжитесь с нами', 'your_name' => 'Ваше имя', 'phone_number' => 'Номер телефона', 'note_optional' => 'Заметка (необязательно)', 'send' => 'Отправить', 'order_now' => 'Заказать сейчас', 'gallery' => 'Фотогалерея'],
+        'zh' => ['quantity_deals' => '数量优惠', 'buy' => '购买', 'available_options' => '可用选项', 'stock' => '库存', 'or_contact' => '或直接联系我们:', 'call' => '致电', 'features' => '特征', 'how_it_works' => '工作原理', 'testimonials' => '客户评价', 'faqs' => '常见问题', 'contact_us' => '联系我们', 'your_name' => '您的姓名', 'phone_number' => '电话号码', 'note_optional' => '备注(可选)', 'send' => '发送', 'order_now' => '立即订购', 'gallery' => '照片画廊'],
+        'ja' => ['quantity_deals' => '数量割引', 'buy' => '買う', 'available_options' => '利用可能なオプション', 'stock' => '在庫', 'or_contact' => 'または直接お問い合わせください:', 'call' => '電話する', 'features' => '機能', 'how_it_works' => '使い方', 'testimonials' => 'お客様の声', 'faqs' => 'よくある質問', 'contact_us' => 'お問い合わせ', 'your_name' => 'お名前', 'phone_number' => '電話番号', 'note_optional' => 'メモ(任意)', 'send' => '送信', 'order_now' => '今すぐ注文', 'gallery' => 'フォトギャラリー'],
+        'ko' => ['quantity_deals' => '수량 할인', 'buy' => '구매', 'available_options' => '사용 가능한 옵션', 'stock' => '재고', 'or_contact' => '또는 직접 문의하세요:', 'call' => '전화', 'features' => '특징', 'how_it_works' => '작동 방법', 'testimonials' => '고객 후기', 'faqs' => '자주 묻는 질문', 'contact_us' => '문의하기', 'your_name' => '이름', 'phone_number' => '전화 번호', 'note_optional' => '메모 (선택사항)', 'send' => '보내기', 'order_now' => '지금 주문', 'gallery' => '사진 갤러리'],
+        'tr' => ['quantity_deals' => 'Miktar Fırsatları', 'buy' => 'Satın Al', 'available_options' => 'Mevcut Seçenekler', 'stock' => 'Stok', 'or_contact' => 'Veya doğrudan bizimle iletişime geçin:', 'call' => 'Ara', 'features' => 'Özellikler', 'how_it_works' => 'Nasıl Çalışır', 'testimonials' => 'Müşteri Yorumları', 'faqs' => 'Sıkça Sorulan Sorular', 'contact_us' => 'Bize Ulaşın', 'your_name' => 'Adınız', 'phone_number' => 'Telefon numarası', 'note_optional' => 'Not (isteğe bağlı)', 'send' => 'Gönder', 'order_now' => 'Şimdi Sipariş Ver', 'gallery' => 'Fotoğraf Galerisi'],
+        'nl' => ['quantity_deals' => 'Hoeveelheidskortingen', 'buy' => 'Kopen', 'available_options' => 'Beschikbare Opties', 'stock' => 'Voorraad', 'or_contact' => 'Of neem direct contact met ons op:', 'call' => 'Bellen', 'features' => 'Kenmerken', 'how_it_works' => 'Hoe het werkt', 'testimonials' => 'Getuigenissen', 'faqs' => 'Veelgestelde Vragen', 'contact_us' => 'Contacteer Ons', 'your_name' => 'Uw naam', 'phone_number' => 'Telefoonnummer', 'note_optional' => 'Notitie (optioneel)', 'send' => 'Versturen', 'order_now' => 'Bestel Nu', 'gallery' => 'Fotogalerij'],
+        'pl' => ['quantity_deals' => 'Oferty ilościowe', 'buy' => 'Kup', 'available_options' => 'Dostępne Opcje', 'stock' => 'Magazyn', 'or_contact' => 'Lub skontaktuj się z nami bezpośrednio:', 'call' => 'Zadzwoń', 'features' => 'Funkcje', 'how_it_works' => 'Jak to działa', 'testimonials' => 'Opinie', 'faqs' => 'Często zadawane pytania', 'contact_us' => 'Skontaktuj się', 'your_name' => 'Twoje imię', 'phone_number' => 'Numer telefonu', 'note_optional' => 'Notatka (opcjonalnie)', 'send' => 'Wyślij', 'order_now' => 'Zamów teraz', 'gallery' => 'Galeria zdjęć'],
+        'hi' => ['quantity_deals' => 'मात्रा डील्स', 'buy' => 'खरीदें', 'available_options' => 'उपलब्ध विकल्प', 'stock' => 'स्टॉक', 'or_contact' => 'या सीधे हमसे संपर्क करें:', 'call' => 'कॉल', 'features' => 'विशेषताएं', 'how_it_works' => 'यह कैसे काम करता है', 'testimonials' => 'प्रशंसापत्र', 'faqs' => 'अक्सर पूछे जाने वाले प्रश्न', 'contact_us' => 'हमसे संपर्क करें', 'your_name' => 'आपका नाम', 'phone_number' => 'फ़ोन नंबर', 'note_optional' => 'नोट (वैकल्पिक)', 'send' => 'भेजें', 'order_now' => 'अभी ऑर्डर करें', 'gallery' => 'फोटो गैलरी'],
+        'th' => ['quantity_deals' => 'ข้อเสนอจำนวน', 'buy' => 'ซื้อ', 'available_options' => 'ตัวเลือกที่มี', 'stock' => 'สต็อก', 'or_contact' => 'หรือติดต่อเราโดยตรง:', 'call' => 'โทร', 'features' => 'คุณสมบัติ', 'how_it_works' => 'วิธีการทำงาน', 'testimonials' => 'รีวิว', 'faqs' => 'คำถามที่พบบ่อย', 'contact_us' => 'ติดต่อเรา', 'your_name' => 'ชื่อของคุณ', 'phone_number' => 'หมายเลขโทรศัพท์', 'note_optional' => 'หมายเหตุ (ไม่บังคับ)', 'send' => 'ส่ง', 'order_now' => 'สั่งซื้อเลย', 'gallery' => 'คลังภาพ'],
+        'vi' => ['quantity_deals' => 'Ưu đãi số lượng', 'buy' => 'Mua', 'available_options' => 'Tùy chọn có sẵn', 'stock' => 'Tồn kho', 'or_contact' => 'Hoặc liên hệ trực tiếp:', 'call' => 'Gọi', 'features' => 'Tính năng', 'how_it_works' => 'Cách hoạt động', 'testimonials' => 'Đánh giá', 'faqs' => 'Câu hỏi thường gặp', 'contact_us' => 'Liên hệ', 'your_name' => 'Tên của bạn', 'phone_number' => 'Số điện thoại', 'note_optional' => 'Ghi chú (tùy chọn)', 'send' => 'Gửi', 'order_now' => 'Đặt hàng ngay', 'gallery' => 'Thư viện ảnh'],
+        'id' => ['quantity_deals' => 'Penawaran Kuantitas', 'buy' => 'Beli', 'available_options' => 'Opsi Tersedia', 'stock' => 'Stok', 'or_contact' => 'Atau hubungi kami langsung:', 'call' => 'Panggil', 'features' => 'Fitur', 'how_it_works' => 'Cara Kerja', 'testimonials' => 'Testimoni', 'faqs' => 'Pertanyaan yang Sering Diajukan', 'contact_us' => 'Hubungi Kami', 'your_name' => 'Nama Anda', 'phone_number' => 'Nomor telepon', 'note_optional' => 'Catatan (opsional)', 'send' => 'Kirim', 'order_now' => 'Pesan Sekarang', 'gallery' => 'Galeri Foto'],
+        'ms' => ['quantity_deals' => 'Tawaran Kuantiti', 'buy' => 'Beli', 'available_options' => 'Pilihan Tersedia', 'stock' => 'Stok', 'or_contact' => 'Atau hubungi kami secara langsung:', 'call' => 'Panggil', 'features' => 'Ciri-ciri', 'how_it_works' => 'Cara Ia Berfungsi', 'testimonials' => 'Testimoni', 'faqs' => 'Soalan Lazim', 'contact_us' => 'Hubungi Kami', 'your_name' => 'Nama Anda', 'phone_number' => 'Nombor telefon', 'note_optional' => 'Nota (pilihan)', 'send' => 'Hantar', 'order_now' => 'Pesan Sekarang', 'gallery' => 'Galeri Foto'],
+        'he' => ['quantity_deals' => 'מבצעי כמות', 'buy' => 'קנה', 'available_options' => 'אפשרויות זמינות', 'stock' => 'מלאי', 'or_contact' => 'או צרו איתנו קשר ישירות:', 'call' => 'התקשר', 'features' => 'תכונות', 'how_it_works' => 'איך זה עובד', 'testimonials' => 'המלצות', 'faqs' => 'שאלות נפוצות', 'contact_us' => 'צור קשר', 'your_name' => 'השם שלך', 'phone_number' => 'מספר טלפון', 'note_optional' => 'הערה (אופציונלי)', 'send' => 'שלח', 'order_now' => 'הזמן עכשיו', 'gallery' => 'גלריית תמונות'],
+        'el' => ['quantity_deals' => 'Προσφορές Ποσότητας', 'buy' => 'Αγορά', 'available_options' => 'Διαθέσιμες Επιλογές', 'stock' => 'Απόθεμα', 'or_contact' => 'Ή επικοινωνήστε μαζί μας απευθείας:', 'call' => 'Κλήση', 'features' => 'Χαρακτηριστικά', 'how_it_works' => 'Πώς λειτουργεί', 'testimonials' => 'Μαρτυρίες', 'faqs' => 'Συχνές Ερωτήσεις', 'contact_us' => 'Επικοινωνία', 'your_name' => 'Το όνομά σας', 'phone_number' => 'Αριθμός τηλεφώνου', 'note_optional' => 'Σημείωση (προαιρετικό)', 'send' => 'Αποστολή', 'order_now' => 'Παραγγείλετε τώρα', 'gallery' => 'Γκαλερί Φωτογραφιών'],
+        'cs' => ['quantity_deals' => 'Množstevní slevy', 'buy' => 'Koupit', 'available_options' => 'Dostupné možnosti', 'stock' => 'Sklad', 'or_contact' => 'Nebo nás kontaktujte přímo:', 'call' => 'Volat', 'features' => 'Funkce', 'how_it_works' => 'Jak to funguje', 'testimonials' => 'Reference', 'faqs' => 'Časté otázky', 'contact_us' => 'Kontaktujte nás', 'your_name' => 'Vaše jméno', 'phone_number' => 'Telefonní číslo', 'note_optional' => 'Poznámka (volitelné)', 'send' => 'Odeslat', 'order_now' => 'Objednat nyní', 'gallery' => 'Fotogalerie'],
+        'sv' => ['quantity_deals' => 'Kvantitetserbjudanden', 'buy' => 'Köp', 'available_options' => 'Tillgängliga alternativ', 'stock' => 'Lager', 'or_contact' => 'Eller kontakta oss direkt:', 'call' => 'Ring', 'features' => 'Funktioner', 'how_it_works' => 'Så fungerar det', 'testimonials' => 'Omdömen', 'faqs' => 'Vanliga frågor', 'contact_us' => 'Kontakta oss', 'your_name' => 'Ditt namn', 'phone_number' => 'Telefonnummer', 'note_optional' => 'Notering (valfritt)', 'send' => 'Skicka', 'order_now' => 'Beställ nu', 'gallery' => 'Bildgalleri'],
+        'no' => ['quantity_deals' => 'Mengdetilbud', 'buy' => 'Kjøp', 'available_options' => 'Tilgjengelige alternativer', 'stock' => 'Lager', 'or_contact' => 'Eller kontakt oss direkte:', 'call' => 'Ring', 'features' => 'Funksjoner', 'how_it_works' => 'Hvordan det fungerer', 'testimonials' => 'Vurderinger', 'faqs' => 'Ofte stilte spørsmål', 'contact_us' => 'Kontakt oss', 'your_name' => 'Ditt navn', 'phone_number' => 'Telefonnummer', 'note_optional' => 'Merknad (valgfritt)', 'send' => 'Send', 'order_now' => 'Bestill nå', 'gallery' => 'Bildegalleri'],
+        'da' => ['quantity_deals' => 'Mængderabatter', 'buy' => 'Køb', 'available_options' => 'Tilgængelige muligheder', 'stock' => 'Lager', 'or_contact' => 'Eller kontakt os direkte:', 'call' => 'Ring', 'features' => 'Funktioner', 'how_it_works' => 'Sådan fungerer det', 'testimonials' => 'Anmeldelser', 'faqs' => 'Ofte stillede spørgsmål', 'contact_us' => 'Kontakt os', 'your_name' => 'Dit navn', 'phone_number' => 'Telefonnummer', 'note_optional' => 'Note (valgfrit)', 'send' => 'Send', 'order_now' => 'Bestil nu', 'gallery' => 'Fotogalleri'],
+        'fi' => ['quantity_deals' => 'Määräalennukset', 'buy' => 'Osta', 'available_options' => 'Saatavilla olevat vaihtoehdot', 'stock' => 'Varasto', 'or_contact' => 'Tai ota yhteyttä suoraan:', 'call' => 'Soita', 'features' => 'Ominaisuudet', 'how_it_works' => 'Näin se toimii', 'testimonials' => 'Arvostelut', 'faqs' => 'Usein kysytyt kysymykset', 'contact_us' => 'Ota yhteyttä', 'your_name' => 'Nimesi', 'phone_number' => 'Puhelinnumero', 'note_optional' => 'Huomautus (valinnainen)', 'send' => 'Lähetä', 'order_now' => 'Tilaa nyt', 'gallery' => 'Kuvagalleria'],
+        'hu' => ['quantity_deals' => 'Mennyiségi Ajánlatok', 'buy' => 'Vásárolj', 'available_options' => 'Elérhető opciók', 'stock' => 'Készlet', 'or_contact' => 'Vagy lépjen kapcsolatba velünk közvetlenül:', 'call' => 'Hívás', 'features' => 'Jellemzők', 'how_it_works' => 'Hogyan működik', 'testimonials' => 'Vélemények', 'faqs' => 'Gyakran Ismételt Kérdések', 'contact_us' => 'Lépjen kapcsolatba', 'your_name' => 'Az Ön neve', 'phone_number' => 'Telefonszám', 'note_optional' => 'Megjegyzés (opcionális)', 'send' => 'Küldés', 'order_now' => 'Rendeljen most', 'gallery' => 'Fotógaléria'],
+        'ro' => ['quantity_deals' => 'Oferte de Cantitate', 'buy' => 'Cumpără', 'available_options' => 'Opțiuni Disponibile', 'stock' => 'Stoc', 'or_contact' => 'Sau contactați-ne direct:', 'call' => 'Apel', 'features' => 'Caracteristici', 'how_it_works' => 'Cum funcționează', 'testimonials' => 'Mărturii', 'faqs' => 'Întrebări frecvente', 'contact_us' => 'Contactați-ne', 'your_name' => 'Numele tău', 'phone_number' => 'Număr de telefon', 'note_optional' => 'Notă (opțional)', 'send' => 'Trimite', 'order_now' => 'Comandă acum', 'gallery' => 'Galerie foto'],
+        'uk' => ['quantity_deals' => 'Знижки на кількість', 'buy' => 'Купити', 'available_options' => 'Доступні варіанти', 'stock' => 'Наявність', 'or_contact' => 'Або зв\'яжіться з нами безпосередньо:', 'call' => 'Дзвонити', 'features' => 'Особливості', 'how_it_works' => 'Як це працює', 'testimonials' => 'Відгуки', 'faqs' => 'Поширені запитання', 'contact_us' => 'Зв\'яжіться з нами', 'your_name' => 'Ваше ім\'я', 'phone_number' => 'Номер телефону', 'note_optional' => 'Примітка (необов\'язково)', 'send' => 'Надіслати', 'order_now' => 'Замовити зараз', 'gallery' => 'Фотогалерея'],
+        'sw' => ['quantity_deals' => 'Ofa za Idadi', 'buy' => 'Nunua', 'available_options' => 'Chaguzi Zilizopo', 'stock' => 'Hifadhi', 'or_contact' => 'Au wasiliana nasi moja kwa moja:', 'call' => 'Piga simu', 'features' => 'Vipengele', 'how_it_works' => 'Jinsi Inavyofanya kazi', 'testimonials' => 'Ushuhuda', 'faqs' => 'Maswali Yanayoulizwa Mara kwa Mara', 'contact_us' => 'Wasiliana Nasi', 'your_name' => 'Jina lako', 'phone_number' => 'Nambari ya simu', 'note_optional' => 'Kumbuka (hiari)', 'send' => 'Tuma', 'order_now' => 'Agiza Sasa', 'gallery' => 'Nyumba ya sanaa ya Picha'],
+        'bn' => ['quantity_deals' => 'পরিমাণ ডিল', 'buy' => 'কিনুন', 'available_options' => 'উপলব্ধ বিকল্প', 'stock' => 'স্টক', 'or_contact' => 'অথবা সরাসরি আমাদের সাথে যোগাযোগ করুন:', 'call' => 'কল', 'features' => 'বৈশিষ্ট্য', 'how_it_works' => 'এটি কিভাবে কাজ করে', 'testimonials' => 'প্রশংসাপত্র', 'faqs' => 'সচরাচর জিজ্ঞাস্য', 'contact_us' => 'যোগাযোগ করুন', 'your_name' => 'আপনার নাম', 'phone_number' => 'ফোন নম্বর', 'note_optional' => 'নোট (ঐচ্ছিক)', 'send' => 'পাঠান', 'order_now' => 'এখনই অর্ডার করুন', 'gallery' => 'ফটো গ্যালারি'],
+        'fa' => ['quantity_deals' => 'تخفیف های عمده', 'buy' => 'خرید', 'available_options' => 'گزینه های موجود', 'stock' => 'موجودی', 'or_contact' => 'یا مستقیماً با ما تماس بگیرید:', 'call' => 'تماس', 'features' => 'ویژگی ها', 'how_it_works' => 'نحوه عملکرد', 'testimonials' => 'نظرات', 'faqs' => 'سوالات متداول', 'contact_us' => 'تماس با ما', 'your_name' => 'نام شما', 'phone_number' => 'شماره تلفن', 'note_optional' => 'یادداشت (اختیاری)', 'send' => 'ارسال', 'order_now' => 'همین حالا سفارش دهید', 'gallery' => 'گالری تصاویر'],
+        'ur' => ['quantity_deals' => 'مقدار کی پیشکشیں', 'buy' => 'خریدیں', 'available_options' => 'دستیاب اختیارات', 'stock' => 'اسٹاک', 'or_contact' => 'یا براہ راست ہم سے رابطہ کریں:', 'call' => 'کال', 'features' => 'خصوصیات', 'how_it_works' => 'یہ کیسے کام کرتا ہے', 'testimonials' => 'تعریفیں', 'faqs' => 'اکثر پوچھے گئے سوالات', 'contact_us' => 'ہم سے رابطہ کریں', 'your_name' => 'آپ کا نام', 'phone_number' => 'فون نمبر', 'note_optional' => 'نوٹ (اختیاری)', 'send' => 'بھیجیں', 'order_now' => 'ابھی آرڈر کریں', 'gallery' => 'تصاویر کی گیلری'],
+    ];
+@endphp
 <!DOCTYPE html>
-<html lang="fr" class="scroll-smooth" x-data="{ currentLang: 'fr' }">
+<html lang="{{ $product->landing_page_languages[0] ?? 'fr' }}" class="scroll-smooth" x-data="{ currentLang: '{{ $product->landing_page_languages[0] ?? 'fr' }}', rtlLangs: ['ar', 'he', 'fa', 'ur'], uiStrings: @js($uiTranslations), t(key) { return this.uiStrings[this.currentLang]?.[key] || this.uiStrings['en']?.[key] || this.uiStrings['fr']?.[key] || key; } }">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -27,7 +65,7 @@
             content_ids: ['{{ $product->id }}'],
             content_type: 'product',
             value: {{ $product->price }},
-            currency: 'MAD'
+            currency: '{{ $product->landing_page_currency ?? 'MAD' }}'
         });
     </script>
     <noscript>
@@ -48,7 +86,7 @@
             content_id: '{{ $product->id }}',
             content_type: 'product',
             value: {{ $product->price }},
-            currency: 'MAD'
+            currency: '{{ $product->landing_page_currency ?? 'MAD' }}'
           });
         }(window, document, 'ttq');
     </script>
@@ -65,7 +103,7 @@
         }
     </style>
 </head>
-<body class="antialiased bg-white" :class="{'rtl': currentLang === 'ar'}">
+<body class="antialiased bg-white" :class="{'rtl': rtlLangs.includes(currentLang)}">
     @php
         // Prepare default testimonials in PHP to avoid JavaScript issues
         $defaultTestimonials = [
@@ -146,43 +184,147 @@
             return $data;
         }
 
-        // Fix all language data
-        $fixedFr = sanitizeForJs(fixTestimonials($product->landing_page_fr, 'fr', $defaultTestimonials));
-        $fixedEn = sanitizeForJs(fixTestimonials($product->landing_page_en, 'en', $defaultTestimonials));
-        $fixedAr = sanitizeForJs(fixTestimonials($product->landing_page_ar, 'ar', $defaultTestimonials));
+        // Build translations array from new unified column or fall back to legacy columns
+        $translations = $product->landing_page_translations ?? [];
+        if (empty($translations)) {
+            if (!empty($product->landing_page_fr)) $translations['fr'] = $product->landing_page_fr;
+            if (!empty($product->landing_page_en)) $translations['en'] = $product->landing_page_en;
+            if (!empty($product->landing_page_ar)) $translations['ar'] = $product->landing_page_ar;
+        }
+
+        $pageData = [];
+        foreach ($translations as $lang => $data) {
+            $pageData[$lang] = sanitizeForJs(fixTestimonials($data, $lang, $defaultTestimonials));
+        }
+
+        // Ensure legacy languages have entries
+        foreach (['fr', 'en', 'ar'] as $legacyLang) {
+            if (!isset($pageData[$legacyLang])) {
+                $pageData[$legacyLang] = sanitizeForJs(fixTestimonials(null, $legacyLang, $defaultTestimonials));
+            }
+        }
         
-        // Sanitize product name and description for JavaScript
+        // FALLBACK: Ensure all enabled languages have data
+        // If a selected language has no content, copy from the first available language
+        $enabledLangs = $product->landing_page_languages ?? ['fr'];
+        $availableLangs = array_keys($pageData);
+        $fallbackLang = !empty($availableLangs) ? $availableLangs[0] : 'fr';
+        
+        foreach ($enabledLangs as $lang) {
+            if (!isset($pageData[$lang]) || empty($pageData[$lang]['features'])) {
+                // Copy data from fallback language
+                $pageData[$lang] = $pageData[$fallbackLang] ?? [];
+            }
+        }
+        
         $safeName = sanitizeForJs($product->name);
         $safeDescription = sanitizeForJs(strip_tags($product->description ?? ''));
+        
+        // Debug: Log what's in translations
+        \Log::info('Landing page view - translations data', [
+            'product_id' => $product->id,
+            'landing_page_translations_type' => gettype($translations),
+            'translations_keys' => array_keys($translations),
+            'pageData_keys' => array_keys($pageData),
+            'raw_translations_sample' => array_map(function($lang) use ($translations) {
+                $data = $translations[$lang] ?? null;
+                return [
+                    'has_data' => !empty($data),
+                    'is_array' => is_array($data),
+                    'keys' => is_array($data) ? array_keys($data) : [],
+                    'features_count' => is_array($data) && isset($data['features']) ? count($data['features']) : 0,
+                ];
+            }, array_keys($translations)),
+        ]);
     @endphp
     <script>
         const productName = {!! json_encode($safeName, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) !!};
         const productDescription = {!! json_encode($safeDescription, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) !!};
-        const pageData = {
-            fr: {!! json_encode($fixedFr, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) !!},
-            en: {!! json_encode($fixedEn, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) !!},
-            ar: {!! json_encode($fixedAr, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) !!}
-        };
+        const pageData = {!! json_encode($pageData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) !!};
+        
+        // Debug: Log pageData to console
+        console.log('DEBUG - pageData:', pageData);
+        console.log('DEBUG - pageData keys:', Object.keys(pageData));
+        Object.keys(pageData).forEach(lang => {
+            console.log(`DEBUG - pageData[${lang}]:`, {
+                hero_title: pageData[lang]?.hero_title ? 'YES' : 'NO',
+                features_count: pageData[lang]?.features?.length || 0,
+                steps_count: pageData[lang]?.steps?.length || 0,
+                testimonials_count: pageData[lang]?.testimonials?.length || 0,
+                faqs_count: pageData[lang]?.faqs?.length || 0,
+            });
+        });
     </script>
 
     <!-- Language Switcher - Fixed Top Right -->
-    <div class="fixed top-6 right-6 z-50 bg-white shadow-2xl rounded-xl p-2 flex gap-2 border border-gray-200">
-        <button @click="currentLang = 'fr'" 
-                :class="currentLang === 'fr' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
-                class="px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200">
-            🇫🇷 FR
-        </button>
-        <button @click="currentLang = 'en'" 
-                :class="currentLang === 'en' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
-                class="px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200">
-            🇬🇧 EN
-        </button>
-        <button @click="currentLang = 'ar'" 
-                :class="currentLang === 'ar' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
-                class="px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200">
-            🇸🇦 AR
-        </button>
+    @php
+        $enabledLanguages = $product->landing_page_languages ?? ['fr'];
+        $currencySymbol = match($product->landing_page_currency ?? 'MAD') {
+            'USD' => '$', 'EUR' => '€', 'GBP' => '£', 'SAR' => 'ر.س', 'AED' => 'د.إ',
+            'JPY' => '¥', 'CNY' => '¥', 'INR' => '₹', 'KRW' => '₩', 'RUB' => '₽',
+            'TRY' => '₺', 'CAD' => 'C$', 'AUD' => 'A$', 'CHF' => 'CHF', 'BRL' => 'R$',
+            'MXN' => 'Mex$', 'ZAR' => 'R', 'TZS' => 'TSh', 'KES' => 'KSh', 'EGP' => 'E£',
+            'NGN' => '₦', 'THB' => '฿', 'IDR' => 'Rp', 'VND' => '₫', 'PHP' => '₱',
+            'MYR' => 'RM', 'SGD' => 'S$', 'HKD' => 'HK$', 'TWD' => 'NT$', 'NZD' => 'NZ$',
+            'DKK' => 'kr', 'NOK' => 'kr', 'SEK' => 'kr', 'PLN' => 'zł', 'CZK' => 'Kč',
+            'HUF' => 'Ft', 'RON' => 'lei', 'UAH' => '₴', 'ILS' => '₪', 'QAR' => 'ر.ق',
+            'KWD' => 'د.ك', 'BHD' => 'د.ب', 'OMR' => 'ر.ع.', 'JOD' => 'د.أ',
+            default => 'د.م.'
+        };
+        $currencyCode = $product->landing_page_currency ?? 'MAD';
+        
+        $availableLanguages = [
+            'fr' => ['flag' => '🇫🇷', 'code' => 'FR', 'name' => 'Français', 'dir' => 'ltr'],
+            'en' => ['flag' => '🇬🇧', 'code' => 'EN', 'name' => 'English', 'dir' => 'ltr'],
+            'ar' => ['flag' => '🇸🇦', 'code' => 'AR', 'name' => 'العربية', 'dir' => 'rtl'],
+            'es' => ['flag' => '🇪🇸', 'code' => 'ES', 'name' => 'Español', 'dir' => 'ltr'],
+            'de' => ['flag' => '🇩🇪', 'code' => 'DE', 'name' => 'Deutsch', 'dir' => 'ltr'],
+            'it' => ['flag' => '🇮🇹', 'code' => 'IT', 'name' => 'Italiano', 'dir' => 'ltr'],
+            'pt' => ['flag' => '🇵🇹', 'code' => 'PT', 'name' => 'Português', 'dir' => 'ltr'],
+            'ru' => ['flag' => '🇷🇺', 'code' => 'RU', 'name' => 'Русский', 'dir' => 'ltr'],
+            'zh' => ['flag' => '🇨🇳', 'code' => 'ZH', 'name' => '中文', 'dir' => 'ltr'],
+            'ja' => ['flag' => '🇯🇵', 'code' => 'JA', 'name' => '日本語', 'dir' => 'ltr'],
+            'ko' => ['flag' => '🇰🇷', 'code' => 'KO', 'name' => '한국어', 'dir' => 'ltr'],
+            'nl' => ['flag' => '🇳🇱', 'code' => 'NL', 'name' => 'Nederlands', 'dir' => 'ltr'],
+            'pl' => ['flag' => '🇵🇱', 'code' => 'PL', 'name' => 'Polski', 'dir' => 'ltr'],
+            'tr' => ['flag' => '🇹🇷', 'code' => 'TR', 'name' => 'Türkçe', 'dir' => 'ltr'],
+            'hi' => ['flag' => '🇮🇳', 'code' => 'HI', 'name' => 'हिन्दी', 'dir' => 'ltr'],
+            'th' => ['flag' => '🇹🇭', 'code' => 'TH', 'name' => 'ไทย', 'dir' => 'ltr'],
+            'vi' => ['flag' => '🇻🇳', 'code' => 'VI', 'name' => 'Tiếng Việt', 'dir' => 'ltr'],
+            'id' => ['flag' => '🇮🇩', 'code' => 'ID', 'name' => 'Indonesia', 'dir' => 'ltr'],
+            'ms' => ['flag' => '🇲🇾', 'code' => 'MS', 'name' => 'Melayu', 'dir' => 'ltr'],
+            'he' => ['flag' => '🇮🇱', 'code' => 'HE', 'name' => 'עברית', 'dir' => 'rtl'],
+            'el' => ['flag' => '🇬🇷', 'code' => 'EL', 'name' => 'Ελληνικά', 'dir' => 'ltr'],
+            'cs' => ['flag' => '🇨🇿', 'code' => 'CS', 'name' => 'Čeština', 'dir' => 'ltr'],
+            'sv' => ['flag' => '🇸🇪', 'code' => 'SV', 'name' => 'Svenska', 'dir' => 'ltr'],
+            'no' => ['flag' => '🇳🇴', 'code' => 'NO', 'name' => 'Norsk', 'dir' => 'ltr'],
+            'da' => ['flag' => '🇩🇰', 'code' => 'DA', 'name' => 'Dansk', 'dir' => 'ltr'],
+            'fi' => ['flag' => '🇫🇮', 'code' => 'FI', 'name' => 'Suomi', 'dir' => 'ltr'],
+            'hu' => ['flag' => '🇭🇺', 'code' => 'HU', 'name' => 'Magyar', 'dir' => 'ltr'],
+            'ro' => ['flag' => '🇷🇴', 'code' => 'RO', 'name' => 'Română', 'dir' => 'ltr'],
+            'uk' => ['flag' => '🇺🇦', 'code' => 'UK', 'name' => 'Українська', 'dir' => 'ltr'],
+            'sw' => ['flag' => '🇹🇿', 'code' => 'SW', 'name' => 'Kiswahili', 'dir' => 'ltr'],
+            'bn' => ['flag' => '🇧🇩', 'code' => 'BN', 'name' => 'বাংলা', 'dir' => 'ltr'],
+            'fa' => ['flag' => '🇮🇷', 'code' => 'FA', 'name' => 'فارسی', 'dir' => 'rtl'],
+            'ur' => ['flag' => '🇵🇰', 'code' => 'UR', 'name' => 'اردو', 'dir' => 'rtl'],
+        ];
+        
+        $rtlLanguages = array_keys(array_filter($availableLanguages, fn($l) => $l['dir'] === 'rtl'));
+        $defaultLang = $enabledLanguages[0] ?? 'fr';
+    @endphp
+    @if(count($enabledLanguages) > 1)
+    <div class="fixed top-6 right-6 z-50 bg-white shadow-2xl rounded-xl p-2 flex gap-2 border border-gray-200 max-w-[calc(100vw-3rem)] overflow-x-auto flex-nowrap">
+        @foreach($enabledLanguages as $lang)
+            @if(isset($availableLanguages[$lang]))
+                <button @click="currentLang = '{{ $lang }}'" 
+                        :class="currentLang === '{{ $lang }}' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                        class="px-3 py-2 rounded-lg font-semibold text-sm transition-all duration-200 whitespace-nowrap flex-shrink-0">
+                    {{ $availableLanguages[$lang]['flag'] }} {{ $availableLanguages[$lang]['code'] }}
+                </button>
+            @endif
+        @endforeach
     </div>
+    @endif
 
     <!-- Hero Section -->
     <section class="relative bg-gradient-to-br from-blue-700 via-blue-600 to-blue-800 py-16 lg:py-24">
@@ -223,9 +365,9 @@
                             </div>
                         @else
                             <div class="bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-3 border border-white/30">
-                                <div class="text-4xl font-black text-white">{{ number_format($product->price, 2) }} <span class="text-xl">MAD</span></div>
+                                <div class="text-4xl font-black text-white">{{ number_format($product->price, 2) }} <span class="text-xl">{{ $currencyCode }}</span></div>
                                 @if($product->compare_at_price && $product->compare_at_price > $product->price)
-                                <div class="text-sm line-through text-white/70">{{ number_format($product->compare_at_price, 2) }} MAD</div>
+                                <div class="text-sm line-through text-white/70">{{ number_format($product->compare_at_price, 2) }} {{ $currencyCode }}</div>
                                 @endif
                             </div>
                             @if($product->discount_percentage)
@@ -243,7 +385,7 @@
                             <svg class="w-6 h-6 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            <span x-text="currentLang === 'ar' ? 'عروض الكمية' : (currentLang === 'en' ? 'Quantity Deals' : 'Offres de Quantité')">Offres de Quantité</span>
+                            <span x-text="t('quantity_deals')">Offres de Quantité</span>
                         </h3>
                         <div class="space-y-2" id="promotionsContainerForm">
                             @foreach($product->activePromotions as $index => $promotion)
@@ -262,11 +404,11 @@
                                            onchange="updatePromotionDisplayForm(this)">
                                     <div class="flex-1 flex items-center justify-between">
                                         <div class="font-semibold text-yellow-200">
-                                            <span x-text="currentLang === 'ar' ? 'اشتري' : (currentLang === 'en' ? 'Buy' : 'Achetez')">Achetez</span>
+                                            <span x-text="t('buy')">Achetez</span>
                                             {{ $promotion->quantity_range }}
                                         </div>
                                         <div class="flex items-center gap-2">
-                                            <span class="text-2xl font-black text-white">{{ number_format($promotion->price, 2) }} MAD</span>
+                                            <span class="text-2xl font-black text-white">{{ number_format($promotion->price, 2) }} {{ $currencyCode }}</span>
                                             @if($promotion->discount_percentage > 0)
                                             <span class="text-xs bg-yellow-400 text-blue-900 px-2 py-1 rounded-full font-bold">
                                                 -{{ $promotion->discount_percentage }}%
@@ -285,7 +427,7 @@
                     @if($product->has_variations && $product->activeVariations->isNotEmpty())
                     <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20">
                         <h3 class="text-xl font-bold text-white mb-4" 
-                            x-text="currentLang === 'ar' ? 'الخيارات المتاحة' : (currentLang === 'en' ? 'Available Options' : 'Options disponibles')">
+                            x-text="t('available_options')">
                             Options disponibles
                         </h3>
                         
@@ -320,13 +462,13 @@
                                         <div>
                                             <div class="font-semibold text-white">{{ $displayName }}</div>
                                             <div class="text-xs text-white/70">
-                                                <span x-text="currentLang === 'ar' ? 'المخزون: {{ $variation->stock }}' : 'Stock: {{ $variation->stock }}'">Stock: {{ $variation->stock }}</span>
+                                                <span x-text="t('stock') + ': {{ $variation->stock }}'">Stock: {{ $variation->stock }}</span>
                                             </div>
                                         </div>
                                         <div class="text-right">
-                                            <div class="text-2xl font-black text-white">{{ number_format($variation->price, 2) }} MAD</div>
+                                            <div class="text-2xl font-black text-white">{{ number_format($variation->price, 2) }} {{ $currencyCode }}</div>
                                             @if($variation->compare_at_price && $variation->compare_at_price > $variation->price)
-                                            <div class="text-xs line-through text-white/70">{{ number_format($variation->compare_at_price, 2) }} MAD</div>
+                                            <div class="text-xs line-through text-white/70">{{ number_format($variation->compare_at_price, 2) }} {{ $currencyCode }}</div>
                                             @endif
                                         </div>
                                     </div>
@@ -352,7 +494,7 @@
                                     content_ids: ['{{ $product->id }}'],
                                     content_type: 'product',
                                     value: {{ $product->price }},
-                                    currency: 'MAD'
+                                    currency: '{{ $currencyCode }}'
                                 });
                             </script>
                             @endif
@@ -365,13 +507,13 @@
                                     content_id: '{{ $product->id }}',
                                     content_type: 'product',
                                     value: {{ $product->price }},
-                                    currency: 'MAD'
+                                    currency: '{{ $currencyCode }}'
                                 });
                             </script>
                             @endif
                         @endif
 
-                        <h2 class="text-2xl lg:text-3xl font-black mb-6 text-gray-900 text-center" x-text="pageData[currentLang]?.form_title || 'Contactez-nous'">
+                        <h2 class="text-2xl lg:text-3xl font-black mb-6 text-gray-900 text-center" x-text="pageData[currentLang]?.form_title || t('contact_us')">
                             Contactez-nous
                         </h2>
 
@@ -380,13 +522,13 @@
                             <input type="hidden" name="language" x-model="currentLang">
 
                             <div>
-                                <label class="block text-gray-900 font-bold mb-2" x-text="pageData[currentLang]?.form_name_placeholder || 'Votre nom'">
+                                <label class="block text-gray-900 font-bold mb-2" x-text="pageData[currentLang]?.form_name_placeholder || t('your_name')">
                                     Votre nom
                                 </label>
                                 <input type="text" 
                                        name="name" 
                                        required
-                                       :placeholder="pageData[currentLang]?.form_name_placeholder || 'Entrez votre nom'"
+                                       :placeholder="pageData[currentLang]?.form_name_placeholder || t('your_name')"
                                        class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all">
                                 @error('name')
                                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -394,13 +536,13 @@
                             </div>
 
                             <div>
-                                <label class="block text-gray-900 font-bold mb-2" x-text="pageData[currentLang]?.form_phone_placeholder || 'Numéro de téléphone'">
+                                <label class="block text-gray-900 font-bold mb-2" x-text="pageData[currentLang]?.form_phone_placeholder || t('phone_number')">
                                     Numéro de téléphone
                                 </label>
                                 <input type="tel" 
                                        name="phone" 
                                        required
-                                       :placeholder="pageData[currentLang]?.form_phone_placeholder || 'Entrez votre numéro'"
+                                       :placeholder="pageData[currentLang]?.form_phone_placeholder || t('phone_number')"
                                        class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all">
                                 @error('phone')
                                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -408,12 +550,12 @@
                             </div>
 
                             <div>
-                                <label class="block text-gray-900 font-bold mb-2" x-text="pageData[currentLang]?.form_note_placeholder || 'Note (optionnel)'">
+                                <label class="block text-gray-900 font-bold mb-2" x-text="pageData[currentLang]?.form_note_placeholder || t('note_optional')">
                                     Note (optionnel)
                                 </label>
                                 <textarea name="note" 
                                           rows="3"
-                                          :placeholder="pageData[currentLang]?.form_note_placeholder || 'Ajoutez vos questions ou commentaires'"
+                                          :placeholder="pageData[currentLang]?.form_note_placeholder || t('note_optional')"
                                           class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all resize-none"></textarea>
                                 @error('note')
                                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -425,7 +567,7 @@
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                                 </svg>
-                                <span x-text="pageData[currentLang]?.form_submit_button || 'Envoyer'">
+                                <span x-text="pageData[currentLang]?.form_submit_button || t('send')">
                                     Envoyer
                                 </span>
                             </button>
@@ -433,10 +575,8 @@
 
                         <!-- Alternative Contact Methods -->
                         <div class="mt-8 pt-8 border-t-2 border-gray-200">
-                            <p class="text-gray-700 text-center mb-4 font-semibold">
-                                <span x-show="currentLang === 'fr'">Ou contactez-nous directement :</span>
-                                <span x-show="currentLang === 'en'">Or contact us directly:</span>
-                                <span x-show="currentLang === 'ar'">أو اتصل بنا مباشرة:</span>
+                            <p class="text-gray-700 text-center mb-4 font-semibold" x-text="t('or_contact')">
+                                Ou contactez-nous directement :
                             </p>
                             <div class="grid grid-cols-2 gap-4">
                                 <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $product->user->phone ?? '') }}?text={{ urlencode('Hello, I am interested in ' . $product->name) }}" 
@@ -453,9 +593,7 @@
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                                     </svg>
-                                    <span class="text-sm" x-show="currentLang === 'fr'">Appeler</span>
-                                    <span class="text-sm" x-show="currentLang === 'en'">Call</span>
-                                    <span class="text-sm" x-show="currentLang === 'ar'">اتصل</span>
+                                    <span class="text-sm" x-text="t('call')">Appeler</span>
                                 </a>
                             </div>
                         </div>
@@ -471,21 +609,20 @@
                             return !empty($text) || $hasImage || $hasVideo;
                         };
                         
-                        // Check product description field
                         $productDesc = $product->description ?? '';
                         $hasProductDesc = $hasRealContentRight($productDesc);
+
+                        $langDescriptions = [];
+                        foreach ($translations as $lang => $data) {
+                            $desc = $data['description'] ?? '';
+                            if ($hasRealContentRight($desc)) {
+                                $langDescriptions[$lang] = $desc;
+                            }
+                        }
                         
-                        // Check landing page builder descriptions
-                        $descFrRight = $product->landing_page_fr['description'] ?? '';
-                        $descEnRight = $product->landing_page_en['description'] ?? '';
-                        $descArRight = $product->landing_page_ar['description'] ?? '';
-                        
-                        $showFrRight = $hasRealContentRight($descFrRight);
-                        $showEnRight = $hasRealContentRight($descEnRight);
-                        $showArRight = $hasRealContentRight($descArRight);
-                        
-                        $hasLandingDesc = $showFrRight || $showEnRight || $showArRight;
+                        $hasLandingDesc = !empty($langDescriptions);
                         $hasAnyDescription = $hasProductDesc || $hasLandingDesc;
+                        $rtlLangs = ['ar', 'he', 'fa', 'ur'];
                     @endphp
                     @if($hasAnyDescription)
                     <div class="mt-6 prose prose-lg max-w-none text-white leading-relaxed description-content-right" x-cloak>
@@ -496,22 +633,14 @@
                         </div>
                         @endif
                         
-                        {{-- Show landing page builder descriptions if available --}}
-                        @if($showFrRight)
-                        <div x-show="currentLang === 'fr'" class="{{ $hasProductDesc ? 'mt-6 pt-6' : '' }}">
-                            {!! $descFrRight !!}
+                        {{-- Show landing page builder descriptions for all available languages --}}
+                        @foreach($langDescriptions as $lang => $desc)
+                        <div x-show="currentLang === '{{ $lang }}'" 
+                             @if(in_array($lang, $rtlLangs)) dir="rtl" @endif 
+                             class="{{ $hasProductDesc ? 'mt-6 pt-6' : '' }}">
+                            {!! $desc !!}
                         </div>
-                        @endif
-                        @if($showEnRight)
-                        <div x-show="currentLang === 'en'" class="{{ $hasProductDesc ? 'mt-6 pt-6' : '' }}">
-                            {!! $descEnRight !!}
-                        </div>
-                        @endif
-                        @if($showArRight)
-                        <div x-show="currentLang === 'ar'" dir="rtl" class="{{ $hasProductDesc ? 'mt-6 pt-6' : '' }}">
-                            {!! $descArRight !!}
-                        </div>
-                        @endif
+                        @endforeach
                     </div>
                     @endif
                 </div>
@@ -575,34 +704,69 @@
     <div class="section-divider"></div>
 
     <!-- Landing Page Sections (Image with Description) - BEFORE Features -->
-    @if($product->landing_page_sections && count($product->landing_page_sections) > 0 && ($product->landing_page_fr['show_product_sections'] ?? true))
+    @php
+        $firstAvailableLang = null;
+        foreach ($enabledLanguages as $lang) {
+            if (isset($translations[$lang])) {
+                $firstAvailableLang = $lang;
+                break;
+            }
+        }
+        if (!$firstAvailableLang && !empty($translations)) {
+            $firstAvailableLang = array_key_first($translations);
+        }
+        $showProductSections = $firstAvailableLang ? ($translations[$firstAvailableLang]['show_product_sections'] ?? true) : true;
+    @endphp
+    @if($product->landing_page_sections && count($product->landing_page_sections) > 0 && $showProductSections)
     <section class="py-16 lg:py-20 bg-white">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="max-w-6xl mx-auto space-y-12">
                 @foreach($product->landing_page_sections as $index => $section)
+                @php
+                    $sectionTranslations = $section['translations'] ?? [];
+                    // Build fallback translations if legacy structure is present
+                    if (empty($sectionTranslations)) {
+                        foreach (['fr', 'en', 'ar'] as $lang) {
+                            if (!empty($section["title_{$lang}"])) {
+                                $sectionTranslations[$lang] = [
+                                    'title' => $section["title_{$lang}"] ?? '',
+                                    'description' => $section["description_{$lang}"] ?? '',
+                                ];
+                            }
+                        }
+                    }
+                    $sectionFallbackTitle = '';
+                    $sectionFallbackDesc = '';
+                    foreach ($sectionTranslations as $data) {
+                        if (!empty($data['title'])) {
+                            $sectionFallbackTitle = $data['title'];
+                            $sectionFallbackDesc = $data['description'] ?? '';
+                            break;
+                        }
+                    }
+                @endphp
                 <div class="grid md:grid-cols-2 gap-8 items-center {{ $index % 2 == 1 ? 'md:flex-row-reverse' : '' }}">
                     <!-- Image -->
                     <div class="relative {{ $index % 2 == 1 ? 'md:order-2' : '' }}">
                         @if(!empty($section['image']))
                         <div class="rounded-2xl overflow-hidden shadow-xl">
                             <img src="/storage/{{ $section['image'] }}" 
-                                 alt="{{ $section['title_fr'] ?? 'Product feature' }}" 
+                                 alt="{{ $sectionFallbackTitle }}" 
                                  class="w-full h-[350px] object-cover">
                         </div>
                         @endif
                     </div>
                     
                     <!-- Content -->
-                    <div class="{{ $index % 2 == 1 ? 'md:order-1' : '' }}" x-cloak>
-                        <h3 class="text-2xl lg:text-3xl font-black mb-4 text-gray-900">
-                            <span x-show="currentLang === 'fr'">{{ $section['title_fr'] ?? '' }}</span>
-                            <span x-show="currentLang === 'en'">{{ $section['title_en'] ?? $section['title_fr'] ?? '' }}</span>
-                            <span x-show="currentLang === 'ar'">{{ $section['title_ar'] ?? $section['title_fr'] ?? '' }}</span>
+                    <div class="{{ $index % 2 == 1 ? 'md:order-1' : '' }}" x-cloak 
+                         x-data="{ sectionTranslations: @js($sectionTranslations), fallbackTitle: @js($sectionFallbackTitle), fallbackDesc: @js($sectionFallbackDesc) }">
+                        <h3 class="text-2xl lg:text-3xl font-black mb-4 text-gray-900"
+                            x-text="sectionTranslations[currentLang]?.title || fallbackTitle">
+                            {{ $sectionFallbackTitle }}
                         </h3>
-                        <p class="text-gray-600 text-lg leading-relaxed">
-                            <span x-show="currentLang === 'fr'">{{ $section['description_fr'] ?? '' }}</span>
-                            <span x-show="currentLang === 'en'">{{ $section['description_en'] ?? $section['description_fr'] ?? '' }}</span>
-                            <span x-show="currentLang === 'ar'">{{ $section['description_ar'] ?? $section['description_fr'] ?? '' }}</span>
+                        <p class="text-gray-600 text-lg leading-relaxed"
+                           x-text="sectionTranslations[currentLang]?.description || fallbackDesc">
+                            {{ $sectionFallbackDesc }}
                         </p>
                     </div>
                 </div>
@@ -622,10 +786,8 @@
     <section class="py-16 lg:py-20 bg-gray-50" x-cloak>
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
-                <h2 class="text-3xl lg:text-4xl font-black text-gray-900 mb-4">
-                    <span x-show="currentLang === 'fr'">المميزات / Les Caractéristiques</span>
-                    <span x-show="currentLang === 'en'">Features</span>
-                    <span x-show="currentLang === 'ar'">المميزات</span>
+                <h2 class="text-3xl lg:text-4xl font-black text-gray-900 mb-4" x-text="t('features')">
+                    Les Caractéristiques
                 </h2>
             </div>
             
@@ -647,7 +809,7 @@
     <section class="py-16 lg:py-20 bg-white" x-cloak>
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
-                <h2 class="text-3xl lg:text-4xl font-black text-gray-900 mb-4" x-text="pageData[currentLang]?.steps_title || 'Comment ça marche'"></h2>
+                <h2 class="text-3xl lg:text-4xl font-black text-gray-900 mb-4" x-text="pageData[currentLang]?.steps_title || t('how_it_works')"></h2>
             </div>
             
             <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -662,7 +824,7 @@
                         </div>
                         <!-- Arrow for desktop -->
                         <div class="hidden md:block absolute top-10 right-0 transform translate-x-1/2" x-show="index < 2">
-                            <svg class="w-8 h-8 text-blue-300" :class="{'rotate-180': currentLang === 'ar'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-8 h-8 text-blue-300" :class="{'rotate-180': rtlLangs.includes(currentLang)}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                             </svg>
                         </div>
@@ -677,7 +839,7 @@
     <section class="py-16 lg:py-20 bg-white" x-cloak>
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
-                <h2 class="text-3xl lg:text-4xl font-black text-gray-900 mb-4" x-text="pageData[currentLang]?.testimonials_title || 'Témoignages'"></h2>
+                <h2 class="text-3xl lg:text-4xl font-black text-gray-900 mb-4" x-text="pageData[currentLang]?.testimonials_title || t('testimonials')"></h2>
             </div>
             
             <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -703,7 +865,7 @@
     <section class="py-16 lg:py-20 bg-gray-50" x-cloak x-data="{ openFaq: null }">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
-                <h2 class="text-3xl lg:text-4xl font-black text-gray-900 mb-4" x-text="pageData[currentLang]?.faqs_title || 'Questions Fréquentes'"></h2>
+                <h2 class="text-3xl lg:text-4xl font-black text-gray-900 mb-4" x-text="pageData[currentLang]?.faqs_title || t('faqs')"></h2>
             </div>
             
             <div class="max-w-3xl mx-auto space-y-4">
@@ -729,10 +891,8 @@
     @if(false)
     <section class="py-16 lg:py-20 bg-white">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl lg:text-4xl font-black text-center mb-12 text-gray-900">
-                <span x-show="currentLang === 'fr'">Galerie de Photos</span>
-                <span x-show="currentLang === 'en'">Photo Gallery</span>
-                <span x-show="currentLang === 'ar'">معرض الصور</span>
+            <h2 class="text-3xl lg:text-4xl font-black text-center mb-12 text-gray-900" x-text="t('gallery')">
+                Galerie de Photos
             </h2>
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 @foreach($product->all_images as $image)
@@ -831,7 +991,7 @@
             // Update price display in form
             const priceContainer = document.getElementById('variationPriceForm');
             if (priceContainer) {
-                let priceHtml = price.toFixed(2) + ' <span class="text-xl">MAD</span>';
+                let priceHtml = price.toFixed(2) + ' <span class="text-xl">{{ $currencyCode }}</span>';
                 priceContainer.innerHTML = priceHtml;
             }
         }
@@ -855,9 +1015,7 @@
         <svg class="w-6 h-6 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
         </svg>
-        <span x-show="currentLang === 'fr'">Commander</span>
-        <span x-show="currentLang === 'en'">Order Now</span>
-        <span x-show="currentLang === 'ar'">اطلب الآن</span>
+        <span x-text="t('order_now')">Commander</span>
     </button>
 
     <style>
@@ -873,11 +1031,7 @@
     <!-- Footer -->
     <footer class="bg-gray-900 text-white py-8">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p class="text-lg">&copy; {{ date('Y') }} {{ config('app.name') }}. 
-                <span x-show="currentLang === 'fr'">Tous droits réservés.</span>
-                <span x-show="currentLang === 'en'">All rights reserved.</span>
-                <span x-show="currentLang === 'ar'">جميع الحقوق محفوظة.</span>
-            </p>
+            <p class="text-lg">&copy; {{ date('Y') }} {{ config('app.name') }}.</p>
         </div>
     </footer>
 </body>

@@ -19,7 +19,7 @@ class AiLandingPageService
         $this->aiSetting = AiApiSetting::where('user_id', $user->id)->first();
     }
 
-    public function generateLandingPage(Product $product, array $languages = ['fr', 'en', 'ar'])
+    public function generateLandingPage(Product $product, array $languages = ['fr'])
     {
         if (!$this->aiSetting) {
             throw new \Exception('AI API settings not configured. Please configure your AI settings first.');
@@ -27,17 +27,35 @@ class AiLandingPageService
 
         $categoryName = $product->category ? $product->category->name : 'General';
 
+        if (empty($languages)) {
+            $languages = ['fr'];
+            Log::info('No languages selected for product ' . $product->id . ', defaulting to French.');
+        }
+
+        Log::info('Generating landing page for product ' . $product->id . ' in languages: ' . implode(', ', $languages) . ' (product selected: ' . implode(', ', $product->landing_page_languages ?? ['none']) . ')');
+
         $results = [];
         foreach ($languages as $language) {
-            $prompt = $this->buildPrompt($product, $categoryName, $language);
+            try {
+                $prompt = $this->buildPrompt($product, $categoryName, $language);
 
-            if (!empty($this->aiSetting->openai_api_key_encrypted)) {
-                $results[$language] = $this->generateWithOpenAI($prompt);
-            } elseif (!empty($this->aiSetting->anthropic_api_key_encrypted)) {
-                $results[$language] = $this->generateWithAnthropic($prompt);
-            } else {
-                throw new \Exception('No AI API key configured. Please add an OpenAI or Anthropic API key.');
+                if (!empty($this->aiSetting->openai_api_key_encrypted)) {
+                    $results[$language] = $this->generateWithOpenAI($prompt);
+                } elseif (!empty($this->aiSetting->anthropic_api_key_encrypted)) {
+                    $results[$language] = $this->generateWithAnthropic($prompt);
+                } else {
+                    throw new \Exception('No AI API key configured. Please add an OpenAI or Anthropic API key.');
+                }
+                
+                Log::info("Successfully generated content for language: {$language}");
+            } catch (\Exception $e) {
+                Log::error("Failed to generate content for language {$language}: " . $e->getMessage());
+                // Continue with other languages instead of failing entirely
             }
+        }
+
+        if (empty($results)) {
+            throw new \Exception('Failed to generate landing page content for any of the selected languages.');
         }
 
         return $results;
@@ -48,7 +66,37 @@ class AiLandingPageService
         $languageInstructions = [
             'fr' => 'Generate all content in French (Français)',
             'en' => 'Generate all content in English',
-            'ar' => 'Generate all content in Arabic (العربية)'
+            'ar' => 'Generate all content in Arabic (العربية)',
+            'es' => 'Generate all content in Spanish (Español)',
+            'de' => 'Generate all content in German (Deutsch)',
+            'it' => 'Generate all content in Italian (Italiano)',
+            'pt' => 'Generate all content in Portuguese (Português)',
+            'ru' => 'Generate all content in Russian (Русский)',
+            'zh' => 'Generate all content in Chinese (中文)',
+            'ja' => 'Generate all content in Japanese (日本語)',
+            'ko' => 'Generate all content in Korean (한국어)',
+            'nl' => 'Generate all content in Dutch (Nederlands)',
+            'pl' => 'Generate all content in Polish (Polski)',
+            'tr' => 'Generate all content in Turkish (Türkçe)',
+            'hi' => 'Generate all content in Hindi (हिन्दी)',
+            'th' => 'Generate all content in Thai (ไทย)',
+            'vi' => 'Generate all content in Vietnamese (Tiếng Việt)',
+            'id' => 'Generate all content in Indonesian (Bahasa Indonesia)',
+            'ms' => 'Generate all content in Malay (Bahasa Melayu)',
+            'he' => 'Generate all content in Hebrew (עברית)',
+            'el' => 'Generate all content in Greek (Ελληνικά)',
+            'cs' => 'Generate all content in Czech (Čeština)',
+            'sv' => 'Generate all content in Swedish (Svenska)',
+            'no' => 'Generate all content in Norwegian (Norsk)',
+            'da' => 'Generate all content in Danish (Dansk)',
+            'fi' => 'Generate all content in Finnish (Suomi)',
+            'hu' => 'Generate all content in Hungarian (Magyar)',
+            'ro' => 'Generate all content in Romanian (Română)',
+            'uk' => 'Generate all content in Ukrainian (Українська)',
+            'sw' => 'Generate all content in Swahili (Kiswahili)',
+            'bn' => 'Generate all content in Bengali (বাংলা)',
+            'fa' => 'Generate all content in Persian (فارسی)',
+            'ur' => 'Generate all content in Urdu (اردو)',
         ];
 
         $instruction = $languageInstructions[$language] ?? $languageInstructions['fr'];
@@ -83,8 +131,8 @@ Create compelling landing page content for the following product:
 
 Product Name: {$product->name}
 Category: {$categoryName}
-Price: {$product->price} MAD
-" . ($product->compare_at_price ? "Original Price: {$product->compare_at_price} MAD\n" : "") . "
+Price: {$product->price} {$product->landing_page_currency}
+" . ($product->compare_at_price ? "Original Price: {$product->compare_at_price} {$product->landing_page_currency}\n" : "") . "
 Description: {$product->description}
 
 Generate a professional, conversion-optimized landing page in JSON format with these fields:
@@ -254,24 +302,47 @@ Other requirements:
     {
         $updateData = [];
 
-        // Save multi-language data
-        if (isset($landingPageData['fr'])) {
-            $updateData['landing_page_fr'] = $landingPageData['fr'];
-        }
-        if (isset($landingPageData['en'])) {
-            $updateData['landing_page_en'] = $landingPageData['en'];
-        }
-        if (isset($landingPageData['ar'])) {
-            $updateData['landing_page_ar'] = $landingPageData['ar'];
+        // Save ALL languages to unified JSON column (supports unlimited languages)
+        $updateData['landing_page_translations'] = $landingPageData;
+
+        // Keep backward compatibility with legacy fr/en/ar columns
+        $legacyLanguages = ['fr', 'en', 'ar'];
+        foreach ($legacyLanguages as $lang) {
+            if (isset($landingPageData[$lang])) {
+                $updateData["landing_page_{$lang}"] = $landingPageData[$lang];
+            }
         }
 
-        // Keep backward compatibility - save French as default
-        if (isset($landingPageData['fr'])) {
-            $updateData['landing_page_hero_title'] = $landingPageData['fr']['hero_title'] ?? null;
-            $updateData['landing_page_hero_description'] = $landingPageData['fr']['hero_description'] ?? null;
-            $updateData['landing_page_features'] = $landingPageData['fr']['features'] ?? [];
-            $updateData['landing_page_cta'] = $landingPageData['fr']['cta'] ?? null;
-            $updateData['landing_page_content'] = $landingPageData['fr']['full_description'] ?? null;
+        // Keep backward compatibility - save first generated language as default
+        // Priority: user's selected first language > fr > en > ar > any other
+        $firstLanguage = null;
+        $productLanguages = $product->landing_page_languages ?? [];
+        
+        foreach ($productLanguages as $lang) {
+            if (isset($landingPageData[$lang])) {
+                $firstLanguage = $lang;
+                break;
+            }
+        }
+        
+        if (!$firstLanguage) {
+            if (isset($landingPageData['fr'])) {
+                $firstLanguage = 'fr';
+            } elseif (isset($landingPageData['en'])) {
+                $firstLanguage = 'en';
+            } elseif (isset($landingPageData['ar'])) {
+                $firstLanguage = 'ar';
+            } else {
+                $firstLanguage = array_key_first($landingPageData);
+            }
+        }
+
+        if ($firstLanguage && isset($landingPageData[$firstLanguage])) {
+            $updateData['landing_page_hero_title'] = $landingPageData[$firstLanguage]['hero_title'] ?? null;
+            $updateData['landing_page_hero_description'] = $landingPageData[$firstLanguage]['hero_description'] ?? null;
+            $updateData['landing_page_features'] = $landingPageData[$firstLanguage]['features'] ?? [];
+            $updateData['landing_page_cta'] = $landingPageData[$firstLanguage]['cta'] ?? null;
+            $updateData['landing_page_content'] = $landingPageData[$firstLanguage]['full_description'] ?? null;
         }
 
         // Generate landing page sections from product images (excluding the first/main image)
@@ -282,47 +353,83 @@ Other requirements:
 
         $product->update($updateData);
         
+        // Force a fresh load to verify data was saved
+        $product->refresh();
+        $savedTranslations = $product->landing_page_translations ?? [];
+        
         Log::info('Landing page data saved for product: ' . $product->id, [
-            'sections_count' => count($landingSections)
+            'sections_count' => count($landingSections),
+            'languages_saved' => array_keys($savedTranslations),
+            'has_features_per_lang' => array_map(function($lang) use ($savedTranslations) {
+                return isset($savedTranslations[$lang]['features']) ? count($savedTranslations[$lang]['features']) : 0;
+            }, array_keys($savedTranslations)),
+            'sample_data_check' => array_map(function($lang) use ($savedTranslations) {
+                return [
+                    'hero_title' => isset($savedTranslations[$lang]['hero_title']) ? substr($savedTranslations[$lang]['hero_title'], 0, 30) . '...' : 'MISSING',
+                    'features_count' => isset($savedTranslations[$lang]['features']) ? count($savedTranslations[$lang]['features']) : 0,
+                    'steps_count' => isset($savedTranslations[$lang]['steps']) ? count($savedTranslations[$lang]['steps']) : 0,
+                    'faqs_count' => isset($savedTranslations[$lang]['faqs']) ? count($savedTranslations[$lang]['faqs']) : 0,
+                ];
+            }, array_keys($savedTranslations)),
         ]);
     }
 
     /**
      * Generate landing page sections from product images with AI-generated descriptions
+     * Now supports ALL languages dynamically
      */
     protected function generateLandingSectionsFromImages(Product $product, array $landingPageData): array
     {
         $images = $product->images ?? [];
         
-        // Skip if no images or only 1 image (which is the main/hero image)
         if (count($images) <= 1) {
             return [];
         }
 
-        // Get AI-generated image sections if available from landing page data
-        // Check both top-level and language-nested data
-        $imageSectionsFr = $landingPageData['fr']['image_sections'] ?? $landingPageData['image_sections'] ?? null;
-        $imageSectionsEn = $landingPageData['en']['image_sections'] ?? $landingPageData['image_sections'] ?? null;
-        $imageSectionsAr = $landingPageData['ar']['image_sections'] ?? $landingPageData['image_sections'] ?? null;
+        $imageSectionsByLang = [];
+        foreach ($landingPageData as $lang => $data) {
+            if (isset($data['image_sections']) && is_array($data['image_sections'])) {
+                $imageSectionsByLang[$lang] = $data['image_sections'];
+            }
+        }
+
+        // Fallback language (prefer fr > en > ar > first available)
+        $fallbackLang = null;
+        foreach (['fr', 'en', 'ar'] as $preferredLang) {
+            if (isset($imageSectionsByLang[$preferredLang])) {
+                $fallbackLang = $preferredLang;
+                break;
+            }
+        }
+        if (!$fallbackLang && !empty($imageSectionsByLang)) {
+            $fallbackLang = array_key_first($imageSectionsByLang);
+        }
 
         $sections = [];
-        
-        // Skip the first image (it's the hero/main image), use remaining images
         $sectionImages = array_slice($images, 1);
         
         foreach ($sectionImages as $index => $imagePath) {
             $section = [
                 'image' => $imagePath,
-                'title_fr' => $imageSectionsFr[$index]['title'] ?? '',
-                'description_fr' => $imageSectionsFr[$index]['description'] ?? '',
-                'title_en' => $imageSectionsEn[$index]['title'] ?? $imageSectionsFr[$index]['title'] ?? '',
-                'description_en' => $imageSectionsEn[$index]['description'] ?? $imageSectionsFr[$index]['description'] ?? '',
-                'title_ar' => $imageSectionsAr[$index]['title'] ?? $imageSectionsFr[$index]['title'] ?? '',
-                'description_ar' => $imageSectionsAr[$index]['description'] ?? $imageSectionsFr[$index]['description'] ?? '',
+                'translations' => [],
             ];
-            
-            // If AI didn't provide enough sections, use generic ones based on product info
-            if (empty($section['title_fr'])) {
+
+            foreach ($imageSectionsByLang as $lang => $sectionsData) {
+                $section['translations'][$lang] = [
+                    'title' => $sectionsData[$index]['title'] ?? '',
+                    'description' => $sectionsData[$index]['description'] ?? '',
+                ];
+            }
+
+            // Legacy fields for backward compatibility (fr/en/ar)
+            foreach (['fr', 'en', 'ar'] as $lang) {
+                $section["title_{$lang}"] = $imageSectionsByLang[$lang][$index]['title'] 
+                    ?? ($fallbackLang ? ($imageSectionsByLang[$fallbackLang][$index]['title'] ?? '') : '');
+                $section["description_{$lang}"] = $imageSectionsByLang[$lang][$index]['description'] 
+                    ?? ($fallbackLang ? ($imageSectionsByLang[$fallbackLang][$index]['description'] ?? '') : '');
+            }
+
+            if (empty($section['title_fr']) && empty($section['title_en']) && empty($section['title_ar'])) {
                 $section['title_fr'] = "Détail du produit " . ($index + 1);
                 $section['description_fr'] = "Découvrez la qualité exceptionnelle de notre " . $product->name . ".";
             }
@@ -371,7 +478,37 @@ Other requirements:
         $languageInstructions = [
             'fr' => 'Generate all content in French (Français)',
             'en' => 'Generate all content in English',
-            'ar' => 'Generate all content in Arabic (العربية)'
+            'ar' => 'Generate all content in Arabic (العربية)',
+            'es' => 'Generate all content in Spanish (Español)',
+            'de' => 'Generate all content in German (Deutsch)',
+            'it' => 'Generate all content in Italian (Italiano)',
+            'pt' => 'Generate all content in Portuguese (Português)',
+            'ru' => 'Generate all content in Russian (Русский)',
+            'zh' => 'Generate all content in Chinese (中文)',
+            'ja' => 'Generate all content in Japanese (日本語)',
+            'ko' => 'Generate all content in Korean (한국어)',
+            'nl' => 'Generate all content in Dutch (Nederlands)',
+            'pl' => 'Generate all content in Polish (Polski)',
+            'tr' => 'Generate all content in Turkish (Türkçe)',
+            'hi' => 'Generate all content in Hindi (हिन्दी)',
+            'th' => 'Generate all content in Thai (ไทย)',
+            'vi' => 'Generate all content in Vietnamese (Tiếng Việt)',
+            'id' => 'Generate all content in Indonesian (Bahasa Indonesia)',
+            'ms' => 'Generate all content in Malay (Bahasa Melayu)',
+            'he' => 'Generate all content in Hebrew (עברית)',
+            'el' => 'Generate all content in Greek (Ελληνικά)',
+            'cs' => 'Generate all content in Czech (Čeština)',
+            'sv' => 'Generate all content in Swedish (Svenska)',
+            'no' => 'Generate all content in Norwegian (Norsk)',
+            'da' => 'Generate all content in Danish (Dansk)',
+            'fi' => 'Generate all content in Finnish (Suomi)',
+            'hu' => 'Generate all content in Hungarian (Magyar)',
+            'ro' => 'Generate all content in Romanian (Română)',
+            'uk' => 'Generate all content in Ukrainian (Українська)',
+            'sw' => 'Generate all content in Swahili (Kiswahili)',
+            'bn' => 'Generate all content in Bengali (বাংলা)',
+            'fa' => 'Generate all content in Persian (فارسی)',
+            'ur' => 'Generate all content in Urdu (اردو)',
         ];
 
         $instruction = $languageInstructions[$language] ?? $languageInstructions['fr'];

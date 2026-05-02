@@ -407,6 +407,9 @@ class CustomerDashboardController extends Controller
             'landing_sections.*.description_en' => 'nullable|string',
             'landing_sections.*.title_ar' => 'nullable|string|max:255',
             'landing_sections.*.description_ar' => 'nullable|string',
+            'landing_page_currency' => 'nullable|string|max:10',
+            'landing_page_languages' => 'nullable|array',
+            'landing_page_languages.*' => 'string|max:10',
         ]);
 
         $validated['user_id'] = auth()->id();
@@ -418,6 +421,13 @@ class CustomerDashboardController extends Controller
         $validated['is_featured'] = $request->has('is_featured');
         $validated['has_variations'] = $hasVariations;
         $validated['has_promotions'] = $hasPromotions;
+        
+        // Set landing page currency (default to MAD if not provided)
+        $validated['landing_page_currency'] = $request->input('landing_page_currency', 'MAD');
+        
+        // Set landing page languages (default to French if not provided)
+        $selectedLanguages = $request->input('landing_page_languages', []);
+        $validated['landing_page_languages'] = !empty($selectedLanguages) ? $selectedLanguages : ['fr'];
 
         // If has variations, stock/sku/price will be managed by variations
         if ($hasVariations) {

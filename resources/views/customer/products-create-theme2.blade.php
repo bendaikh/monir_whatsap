@@ -93,9 +93,385 @@
     @endif
 
     <div class="max-w-4xl">
-        <form action="{{ route('app.products.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+        <form action="{{ route('app.products.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6" id="productForm">
             @csrf
             <input type="hidden" name="theme" value="{{ $theme }}">
+            
+            <!-- Landing Page Configuration (FIRST - Currency & Languages) -->
+            <div class="bg-gradient-to-br from-indigo-900 to-purple-900 border border-indigo-500/50 rounded-xl p-6 shadow-xl">
+                <h3 class="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                    <svg class="w-7 h-7 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                    </svg>
+                    Landing Page Configuration
+                </h3>
+                <p class="text-indigo-200 text-sm mb-6">Configure currency and languages for your product's landing page. This affects pricing display and AI content generation.</p>
+
+                <div class="space-y-6">
+                    <!-- Currency Selection -->
+                    <div>
+                        <label for="landing_page_currency" class="block text-sm font-semibold text-white mb-3">
+                            <span class="flex items-center gap-2">
+                                <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Currency *
+                            </span>
+                            <span class="block text-xs text-indigo-300 font-normal mt-1">All prices on the landing page will be displayed in this currency</span>
+                        </label>
+                        <select 
+                            id="landing_page_currency" 
+                            name="landing_page_currency"
+                            class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                            onchange="updateCurrencyDisplay()"
+                            required
+                        >
+                            <optgroup label="🌍 Popular Currencies">
+                                <option value="USD" data-symbol="$">USD - US Dollar ($)</option>
+                                <option value="EUR" data-symbol="€">EUR - Euro (€)</option>
+                                <option value="GBP" data-symbol="£">GBP - British Pound (£)</option>
+                                <option value="MAD" data-symbol="د.م." selected>MAD - Moroccan Dirham (د.م.)</option>
+                                <option value="AED" data-symbol="د.إ">AED - UAE Dirham (د.إ)</option>
+                                <option value="SAR" data-symbol="ر.س">SAR - Saudi Riyal (ر.س)</option>
+                            </optgroup>
+                            <optgroup label="💵 Americas">
+                                <option value="ARS" data-symbol="$">ARS - Argentine Peso ($)</option>
+                                <option value="BRL" data-symbol="R$">BRL - Brazilian Real (R$)</option>
+                                <option value="CAD" data-symbol="$">CAD - Canadian Dollar ($)</option>
+                                <option value="CLP" data-symbol="$">CLP - Chilean Peso ($)</option>
+                                <option value="COP" data-symbol="$">COP - Colombian Peso ($)</option>
+                                <option value="MXN" data-symbol="$">MXN - Mexican Peso ($)</option>
+                                <option value="PEN" data-symbol="S/">PEN - Peruvian Sol (S/)</option>
+                            </optgroup>
+                            <optgroup label="🌏 Asia-Pacific">
+                                <option value="AUD" data-symbol="$">AUD - Australian Dollar ($)</option>
+                                <option value="BDT" data-symbol="৳">BDT - Bangladeshi Taka (৳)</option>
+                                <option value="CNY" data-symbol="¥">CNY - Chinese Yuan (¥)</option>
+                                <option value="HKD" data-symbol="$">HKD - Hong Kong Dollar ($)</option>
+                                <option value="IDR" data-symbol="Rp">IDR - Indonesian Rupiah (Rp)</option>
+                                <option value="INR" data-symbol="₹">INR - Indian Rupee (₹)</option>
+                                <option value="JPY" data-symbol="¥">JPY - Japanese Yen (¥)</option>
+                                <option value="KRW" data-symbol="₩">KRW - South Korean Won (₩)</option>
+                                <option value="MYR" data-symbol="RM">MYR - Malaysian Ringgit (RM)</option>
+                                <option value="NZD" data-symbol="$">NZD - New Zealand Dollar ($)</option>
+                                <option value="PHP" data-symbol="₱">PHP - Philippine Peso (₱)</option>
+                                <option value="PKR" data-symbol="₨">PKR - Pakistani Rupee (₨)</option>
+                                <option value="SGD" data-symbol="$">SGD - Singapore Dollar ($)</option>
+                                <option value="THB" data-symbol="฿">THB - Thai Baht (฿)</option>
+                                <option value="VND" data-symbol="₫">VND - Vietnamese Dong (₫)</option>
+                            </optgroup>
+                            <optgroup label="🌍 Africa & Middle East">
+                                <option value="EGP" data-symbol="£">EGP - Egyptian Pound (£)</option>
+                                <option value="GHS" data-symbol="₵">GHS - Ghanaian Cedi (₵)</option>
+                                <option value="ILS" data-symbol="₪">ILS - Israeli Shekel (₪)</option>
+                                <option value="JOD" data-symbol="د.ا">JOD - Jordanian Dinar (د.ا)</option>
+                                <option value="KES" data-symbol="KSh">KES - Kenyan Shilling (KSh)</option>
+                                <option value="KWD" data-symbol="د.ك">KWD - Kuwaiti Dinar (د.ك)</option>
+                                <option value="LBP" data-symbol="ل.ل">LBP - Lebanese Pound (ل.ل)</option>
+                                <option value="NGN" data-symbol="₦">NGN - Nigerian Naira (₦)</option>
+                                <option value="OMR" data-symbol="ر.ع.">OMR - Omani Rial (ر.ع.)</option>
+                                <option value="QAR" data-symbol="ر.ق">QAR - Qatari Riyal (ر.ق)</option>
+                                <option value="TND" data-symbol="د.ت">TND - Tunisian Dinar (د.ت)</option>
+                                <option value="TRY" data-symbol="₺">TRY - Turkish Lira (₺)</option>
+                                <option value="TZS" data-symbol="TSh">TZS - Tanzanian Shilling (TSh)</option>
+                                <option value="ZAR" data-symbol="R">ZAR - South African Rand (R)</option>
+                            </optgroup>
+                            <optgroup label="🇪🇺 Europe">
+                                <option value="BGN" data-symbol="лв">BGN - Bulgarian Lev (лв)</option>
+                                <option value="CHF" data-symbol="Fr">CHF - Swiss Franc (Fr)</option>
+                                <option value="CZK" data-symbol="Kč">CZK - Czech Koruna (Kč)</option>
+                                <option value="DKK" data-symbol="kr">DKK - Danish Krone (kr)</option>
+                                <option value="HUF" data-symbol="Ft">HUF - Hungarian Forint (Ft)</option>
+                                <option value="NOK" data-symbol="kr">NOK - Norwegian Krone (kr)</option>
+                                <option value="PLN" data-symbol="zł">PLN - Polish Złoty (zł)</option>
+                                <option value="RON" data-symbol="lei">RON - Romanian Leu (lei)</option>
+                                <option value="RUB" data-symbol="₽">RUB - Russian Ruble (₽)</option>
+                                <option value="SEK" data-symbol="kr">SEK - Swedish Krona (kr)</option>
+                                <option value="UAH" data-symbol="₴">UAH - Ukrainian Hryvnia (₴)</option>
+                            </optgroup>
+                        </select>
+                        <p class="mt-2 text-xs text-indigo-200">
+                            <span class="font-semibold">Selected:</span> <span id="selectedCurrencyDisplay" class="text-white">MAD - Moroccan Dirham (د.م.)</span>
+                        </p>
+                        @error('landing_page_currency')
+                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Languages Selection -->
+                    <div>
+                        <label class="block text-sm font-semibold text-white mb-3">
+                            <span class="flex items-center gap-2">
+                                <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                                </svg>
+                                Landing Page Languages *
+                            </span>
+                            <span class="block text-xs text-indigo-300 font-normal mt-1">Select languages for AI to generate content in. Will show as tabs on landing page.</span>
+                        </label>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-96 overflow-y-auto p-4 bg-white/5 rounded-lg border border-white/10">
+                            <!-- Popular Languages -->
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="en" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇬🇧 English</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="fr" checked class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇫🇷 French</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="ar" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇸🇦 Arabic</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="es" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇪🇸 Spanish</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="de" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇩🇪 German</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="it" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇮🇹 Italian</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="pt" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇵🇹 Portuguese</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="zh" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇨🇳 Chinese</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="ja" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇯🇵 Japanese</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="ko" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇰🇷 Korean</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="ru" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇷🇺 Russian</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="hi" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇮🇳 Hindi</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="tr" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇹🇷 Turkish</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="nl" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇳🇱 Dutch</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="pl" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇵🇱 Polish</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="sv" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇸🇪 Swedish</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="no" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇳🇴 Norwegian</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="da" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇩🇰 Danish</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="fi" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇫🇮 Finnish</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="cs" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇨🇿 Czech</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="el" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇬🇷 Greek</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="th" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇹🇭 Thai</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="vi" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇻🇳 Vietnamese</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="id" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇮🇩 Indonesian</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="ms" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇲🇾 Malay</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="he" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇮🇱 Hebrew</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="uk" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇺🇦 Ukrainian</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="ro" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇷🇴 Romanian</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="hu" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇭🇺 Hungarian</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="bg" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇧🇬 Bulgarian</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="sw" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇹🇿 Swahili</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="bn" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇧🇩 Bengali</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="fa" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇮🇷 Persian</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-3 p-3 bg-white/10 rounded-lg cursor-pointer hover:bg-white/20 transition border border-white/20">
+                                <input type="checkbox" name="landing_page_languages[]" value="ur" class="rounded bg-white/10 border-white/30 text-indigo-500 focus:ring-indigo-500 w-5 h-5" onchange="updateLanguagePreview()" />
+                                <div class="flex-1 text-sm">
+                                    <div class="text-white font-medium">🇵🇰 Urdu</div>
+                                </div>
+                            </label>
+                        </div>
+                        @error('landing_page_languages')
+                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                        
+                        <!-- Language Preview -->
+                        <div class="mt-4 p-4 bg-indigo-500/20 border border-indigo-400/50 rounded-lg">
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-indigo-300 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <div class="text-sm text-indigo-100 flex-1">
+                                    <p class="font-semibold mb-2">Selected Languages (will appear as tabs on landing page):</p>
+                                    <div id="languageTabsPreview" class="flex flex-wrap gap-2">
+                                        <span class="px-3 py-1.5 bg-indigo-500 text-white rounded-lg text-xs font-medium">🇫🇷 French</span>
+                                    </div>
+                                    <p class="text-xs text-indigo-200 mt-3">✨ AI will generate landing page content in the selected languages</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <!-- Product Information Card -->
             <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6">
@@ -154,7 +530,9 @@
                     <!-- Price and Compare Price -->
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label for="price" class="block text-sm font-medium text-gray-300 mb-2">Sale Price (MAD) *</label>
+                            <label for="price" class="block text-sm font-medium text-gray-300 mb-2">
+                                Sale Price (<span id="priceCurrencyLabel">MAD</span>) *
+                            </label>
                             <input 
                                 type="number" 
                                 id="price" 
@@ -172,7 +550,9 @@
                         </div>
 
                         <div>
-                            <label for="compare_at_price" class="block text-sm font-medium text-gray-300 mb-2">Original Price (MAD) <span class="text-yellow-400">- shows as crossed out</span></label>
+                            <label for="compare_at_price" class="block text-sm font-medium text-gray-300 mb-2">
+                                Original Price (<span id="comparePriceCurrencyLabel">MAD</span>) <span class="text-yellow-400">- shows as crossed out</span>
+                            </label>
                             <input 
                                 type="number" 
                                 id="compare_at_price" 
@@ -663,6 +1043,78 @@
     <script>
         let featureCounter = 3;
         let sectionCounter = 0;
+
+        // Language name mapping for preview
+        const languageNames = {
+            'en': { flag: '🇬🇧', name: 'English' },
+            'fr': { flag: '🇫🇷', name: 'French' },
+            'ar': { flag: '🇸🇦', name: 'Arabic' },
+            'es': { flag: '🇪🇸', name: 'Spanish' },
+            'de': { flag: '🇩🇪', name: 'German' },
+            'it': { flag: '🇮🇹', name: 'Italian' },
+            'pt': { flag: '🇵🇹', name: 'Portuguese' },
+            'zh': { flag: '🇨🇳', name: 'Chinese' },
+            'ja': { flag: '🇯🇵', name: 'Japanese' },
+            'ko': { flag: '🇰🇷', name: 'Korean' },
+            'ru': { flag: '🇷🇺', name: 'Russian' },
+            'hi': { flag: '🇮🇳', name: 'Hindi' },
+            'tr': { flag: '🇹🇷', name: 'Turkish' },
+            'nl': { flag: '🇳🇱', name: 'Dutch' },
+            'pl': { flag: '🇵🇱', name: 'Polish' },
+            'sv': { flag: '🇸🇪', name: 'Swedish' },
+            'no': { flag: '🇳🇴', name: 'Norwegian' },
+            'da': { flag: '🇩🇰', name: 'Danish' },
+            'fi': { flag: '🇫🇮', name: 'Finnish' },
+            'cs': { flag: '🇨🇿', name: 'Czech' },
+            'el': { flag: '🇬🇷', name: 'Greek' },
+            'th': { flag: '🇹🇭', name: 'Thai' },
+            'vi': { flag: '🇻🇳', name: 'Vietnamese' },
+            'id': { flag: '🇮🇩', name: 'Indonesian' },
+            'ms': { flag: '🇲🇾', name: 'Malay' },
+            'he': { flag: '🇮🇱', name: 'Hebrew' },
+            'uk': { flag: '🇺🇦', name: 'Ukrainian' },
+            'ro': { flag: '🇷🇴', name: 'Romanian' },
+            'hu': { flag: '🇭🇺', name: 'Hungarian' },
+            'bg': { flag: '🇧🇬', name: 'Bulgarian' },
+            'sw': { flag: '🇹🇿', name: 'Swahili' },
+            'bn': { flag: '🇧🇩', name: 'Bengali' },
+            'fa': { flag: '🇮🇷', name: 'Persian' },
+            'ur': { flag: '🇵🇰', name: 'Urdu' }
+        };
+
+        function updateCurrencyDisplay() {
+            const select = document.getElementById('landing_page_currency');
+            const selectedOption = select.options[select.selectedIndex];
+            const currencyCode = selectedOption.value;
+            const currencyText = selectedOption.text;
+            
+            // Update the currency display text
+            document.getElementById('selectedCurrencyDisplay').textContent = currencyText;
+            
+            // Update price labels
+            document.getElementById('priceCurrencyLabel').textContent = currencyCode;
+            document.getElementById('comparePriceCurrencyLabel').textContent = currencyCode;
+        }
+
+        function updateLanguagePreview() {
+            const checkboxes = document.querySelectorAll('input[name="landing_page_languages[]"]:checked');
+            const preview = document.getElementById('languageTabsPreview');
+            
+            preview.innerHTML = '';
+            
+            if (checkboxes.length === 0) {
+                preview.innerHTML = '<span class="text-gray-400 text-xs italic">No languages selected</span>';
+            } else {
+                checkboxes.forEach(checkbox => {
+                    const lang = checkbox.value;
+                    const langInfo = languageNames[lang] || { flag: '🌐', name: lang.toUpperCase() };
+                    const span = document.createElement('span');
+                    span.className = 'px-3 py-1.5 bg-indigo-500 text-white rounded-lg text-xs font-medium';
+                    span.textContent = `${langInfo.flag} ${langInfo.name}`;
+                    preview.appendChild(span);
+                });
+            }
+        }
 
         function addFeature() {
             const container = document.getElementById('featuresContainer');

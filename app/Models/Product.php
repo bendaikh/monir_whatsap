@@ -41,6 +41,9 @@ class Product extends Model
         'landing_page_fr',
         'landing_page_en',
         'landing_page_ar',
+        'landing_page_currency',
+        'landing_page_languages',
+        'landing_page_translations',
         'landing_page_status',
         'landing_page_sections'
     ];
@@ -60,8 +63,74 @@ class Product extends Model
         'landing_page_fr' => 'array',
         'landing_page_en' => 'array',
         'landing_page_ar' => 'array',
+        'landing_page_languages' => 'array',
+        'landing_page_translations' => 'array',
         'landing_page_sections' => 'array',
     ];
+
+    /**
+     * Get landing page content for a specific language.
+     * Supports both new (landing_page_translations) and legacy (landing_page_fr/en/ar) formats.
+     *
+     * @param string|null $language Language code. If null, uses first available language.
+     * @return array|null
+     */
+    public function getLandingPageContent(?string $language = null): ?array
+    {
+        $translations = $this->landing_page_translations ?? [];
+
+        if (empty($translations)) {
+            $translations = [];
+            if (!empty($this->landing_page_fr)) {
+                $translations['fr'] = $this->landing_page_fr;
+            }
+            if (!empty($this->landing_page_en)) {
+                $translations['en'] = $this->landing_page_en;
+            }
+            if (!empty($this->landing_page_ar)) {
+                $translations['ar'] = $this->landing_page_ar;
+            }
+        }
+
+        if (empty($translations)) {
+            return null;
+        }
+
+        if ($language && isset($translations[$language])) {
+            return $translations[$language];
+        }
+
+        $enabledLanguages = $this->landing_page_languages ?? ['fr'];
+        foreach ($enabledLanguages as $lang) {
+            if (isset($translations[$lang])) {
+                return $translations[$lang];
+            }
+        }
+
+        return reset($translations) ?: null;
+    }
+
+    /**
+     * Get all available languages for this product's landing page.
+     * Returns an array of language codes that have content.
+     *
+     * @return array
+     */
+    public function getAvailableLanguages(): array
+    {
+        $translations = $this->landing_page_translations ?? [];
+        
+        if (!empty($translations)) {
+            return array_keys($translations);
+        }
+
+        $legacy = [];
+        if (!empty($this->landing_page_fr)) $legacy[] = 'fr';
+        if (!empty($this->landing_page_en)) $legacy[] = 'en';
+        if (!empty($this->landing_page_ar)) $legacy[] = 'ar';
+
+        return $legacy;
+    }
 
     protected static function boot()
     {

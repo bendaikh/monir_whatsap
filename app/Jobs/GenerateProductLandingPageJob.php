@@ -45,7 +45,11 @@ class GenerateProductLandingPageJob implements ShouldQueue
 
             // Generate landing page
             $aiService = new AiLandingPageService($user);
-            $landingPageData = $aiService->generateLandingPage($this->product);
+            
+            // Use product's selected languages, default to ['fr'] if none selected
+            $languages = $this->product->landing_page_languages ?? ['fr'];
+            
+            $landingPageData = $aiService->generateLandingPage($this->product, $languages);
             $aiService->saveLandingPageToProduct($this->product, $landingPageData);
 
             // Update status to completed

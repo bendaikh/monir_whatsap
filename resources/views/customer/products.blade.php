@@ -80,9 +80,9 @@
                                     <span class="text-sm text-gray-300">{{ $product->category->name ?? 'Uncategorized' }}</span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-white">{{ number_format($product->price, 2) }} MAD</div>
+                                    <div class="text-sm font-medium text-white">{{ number_format($product->price, 2) }} {{ $product->landing_page_currency ?? 'MAD' }}</div>
                                     @if($product->compare_at_price)
-                                        <div class="text-xs text-gray-400 line-through">{{ number_format($product->compare_at_price, 2) }} MAD</div>
+                                        <div class="text-xs text-gray-400 line-through">{{ number_format($product->compare_at_price, 2) }} {{ $product->landing_page_currency ?? 'MAD' }}</div>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
