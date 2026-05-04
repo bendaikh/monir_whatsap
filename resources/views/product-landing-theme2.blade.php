@@ -66,6 +66,7 @@
     $ctaText = $td['cta_text'] ?? 'ORDER NOW';
     $ctaColor = $td['cta_color'] ?? 'orange';
     $titleColor = $td['title_color'] ?? '#000000';
+    $titleBackgroundColor = $td['title_background_color'] ?? '';
     $titleFont = $td['title_font'] ?? 'bebas';
     $statsCustomers = $td['stats_customers'] ?? '325';
     $statsRating = $td['stats_rating'] ?? '4.8';
@@ -354,7 +355,7 @@
                     </div>
                     @endif
 
-                    <h1 class="text-3xl md:text-4xl lg:text-5xl font-black uppercase leading-tight drop-shadow-[0_4px_0_rgba(0,0,0,0.25)]" style="color: {{ $titleColor }}; font-family: {{ $titleFontFamily }}; letter-spacing: 0.02em;">
+                    <h1 class="text-3xl md:text-4xl lg:text-5xl font-black uppercase leading-tight drop-shadow-[0_4px_0_rgba(0,0,0,0.25)] {{ $titleBackgroundColor ? 'inline-block px-4 py-2 rounded-lg' : '' }}" style="color: {{ $titleColor }}; font-family: {{ $titleFontFamily }}; letter-spacing: 0.02em;{{ $titleBackgroundColor ? ' background-color: ' . $titleBackgroundColor . ';' : '' }}">
                         {{ $product->name }}
                     </h1>
 
@@ -371,11 +372,11 @@
                     <div class="flex items-center justify-center lg:justify-start gap-4 pt-2">
                         <div class="bg-white text-gray-900 px-6 py-3 rounded-2xl shadow-xl">
                             <div class="flex items-baseline gap-2">
-                                <span class="font-display text-5xl md:text-6xl font-black">{{ number_format($product->price, 0) }}</span>
+                                <span id="mainSalePrice" class="font-display text-5xl md:text-6xl font-black" data-base-price="{{ $product->price }}">{{ number_format($product->price, 0) }}</span>
                                 <span class="text-xl font-bold text-gray-600">{{ $currencyCode }}</span>
                             </div>
                             @if($product->compare_at_price && $product->compare_at_price > $product->price)
-                            <div class="text-sm line-through text-red-500 text-center font-semibold">{{ number_format($product->compare_at_price, 0) }} {{ $currencyCode }}</div>
+                            <div id="mainComparePrice" class="text-sm line-through text-red-500 text-center font-semibold">{{ number_format($product->compare_at_price, 0) }} {{ $currencyCode }}</div>
                             @endif
                         </div>
                         @if($product->compare_at_price && $product->compare_at_price > $product->price)
@@ -413,7 +414,7 @@
                     <div class="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-2xl p-4 border-2 border-yellow-300 mb-4">
                         <h3 class="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
                             <span class="text-xl">💰</span>
-                            <span x-text="currentLang === 'ar' ? 'عروض الكمية' : (currentLang === 'sw' ? 'Ofa za Kiasi' : (currentLang === 'en' ? 'Quantity Deals' : 'Offres de Quantité'))">Offres de Quantité</span>
+                            <span x-text="currentLang === 'ar' ? 'اختر العرض' : (currentLang === 'sw' ? 'Chagua Ofa' : (currentLang === 'en' ? 'Choose Your Offer' : 'Choisissez votre offre'))">Choisissez votre offre</span>
                         </h3>
                         <div class="space-y-2" id="promotionsContainerForm">
                             @foreach($product->activePromotions as $index => $promotion)
@@ -422,6 +423,7 @@
                                    data-min-quantity="{{ $promotion->min_quantity }}"
                                    data-max-quantity="{{ $promotion->max_quantity ?? '' }}"
                                    data-price="{{ $promotion->price }}"
+                                   data-label="{{ $promotion->label ?? '' }}"
                                    data-discount="{{ $promotion->discount_percentage }}">
                                 <div class="flex items-center gap-3">
                                     <input type="radio" 
@@ -432,8 +434,12 @@
                                            onchange="updatePromotionDisplayForm(this)">
                                     <div class="flex-1 flex items-center justify-between">
                                         <div class="font-semibold text-gray-700 text-sm">
-                                            <span x-text="currentLang === 'ar' ? 'اشتري' : (currentLang === 'sw' ? 'Nunua' : (currentLang === 'en' ? 'Buy' : 'Achetez'))">Achetez</span>
-                                            {{ $promotion->quantity_range }}
+                                            @if($promotion->label)
+                                                {{ $promotion->label }}
+                                            @else
+                                                <span x-text="currentLang === 'ar' ? 'اشتري' : (currentLang === 'sw' ? 'Nunua' : (currentLang === 'en' ? 'Buy' : 'Achetez'))">Achetez</span>
+                                                {{ $promotion->quantity_range }}
+                                            @endif
                                         </div>
                                         <div class="flex items-center gap-2">
                                             <span class="text-lg font-black text-gray-900">{{ number_format($promotion->price, 2) }} {{ $currencyCode }}</span>
@@ -516,6 +522,9 @@
 
                         <input type="tel" name="phone" required
                             :placeholder="t('phone')"
+                            pattern="[0-9]+"
+                            inputmode="numeric"
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                             class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-yellow-400 text-gray-900 font-semibold">
 
                         <textarea name="note" rows="2"
@@ -710,7 +719,7 @@
             <div class="inline-block bg-yellow-300 text-gray-900 px-4 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider mb-4">
                 🔥 {{ $promoBadge }}
             </div>
-            <h2 class="font-display text-4xl md:text-6xl font-black uppercase mb-3 drop-shadow-lg" style="color: {{ $titleColor }};">
+            <h2 class="font-display text-4xl md:text-6xl font-black uppercase mb-3 drop-shadow-lg {{ $titleBackgroundColor ? 'inline-block px-4 py-2 rounded-lg' : '' }}" style="color: {{ $titleColor }};{{ $titleBackgroundColor ? ' background-color: ' . $titleBackgroundColor . ';' : '' }}">
                 {{ $product->name }}
             </h2>
             <p class="text-lg md:text-xl font-bold mb-6 opacity-95"
@@ -857,6 +866,11 @@
 
     @if($product->has_promotions && $product->activePromotions->isNotEmpty())
     <script>
+        // Format number with thousand separators (no decimals)
+        function formatPrice(price) {
+            return Math.round(price).toLocaleString('en-US').replace(/,/g, ' ');
+        }
+        
         // Promotion selection handler for form
         function updatePromotionDisplayForm(radio) {
             const option = radio.closest('.promotion-option-form');
@@ -874,6 +888,19 @@
             // Add active state to selected option
             option.classList.remove('border-gray-200');
             option.classList.add('border-yellow-400', 'ring-2', 'ring-yellow-200');
+            
+            // Update the main sale price display
+            const mainSalePrice = document.getElementById('mainSalePrice');
+            if (mainSalePrice) {
+                mainSalePrice.textContent = formatPrice(price);
+            }
+            
+            // Update the sticky mobile bar price if it exists
+            const stickyBar = document.querySelector('a[href="#order-form"].fixed.bottom-0');
+            if (stickyBar) {
+                const currencyCode = '{{ $currencyCode }}';
+                stickyBar.innerHTML = stickyBar.innerHTML.replace(/- [\d\s,.]+ [A-Z]+/, '- ' + formatPrice(price) + ' ' + currencyCode);
+            }
         }
         
         // Set default promotion on page load

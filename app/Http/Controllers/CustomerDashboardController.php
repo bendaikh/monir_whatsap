@@ -399,6 +399,7 @@ class CustomerDashboardController extends Controller
             'promotions.*.min_quantity' => 'required_with:promotions|integer|min:1',
             'promotions.*.max_quantity' => 'nullable|integer|min:1',
             'promotions.*.price' => 'required_with:promotions|numeric|min:0',
+            'promotions.*.label' => 'required_with:promotions|string|max:255',
             'landing_sections' => 'nullable|array',
             'landing_sections.*.image' => 'nullable|image|max:2048',
             'landing_sections.*.title_fr' => 'nullable|string|max:255',
@@ -547,6 +548,7 @@ class CustomerDashboardController extends Controller
                     'min_quantity' => $promotionData['min_quantity'],
                     'max_quantity' => $promotionData['max_quantity'] ?? null,
                     'price' => $promotionData['price'],
+                    'label' => $promotionData['label'] ?? null,
                     'is_active' => true,
                 ]);
             }
@@ -663,6 +665,7 @@ class CustomerDashboardController extends Controller
             'promotions.*.min_quantity' => 'required_with:promotions|integer|min:1',
             'promotions.*.max_quantity' => 'nullable|integer|min:1',
             'promotions.*.price' => 'required_with:promotions|numeric|min:0',
+            'promotions.*.label' => 'required_with:promotions|string|max:255',
             'landing_sections' => 'nullable|array',
             'landing_sections.*.image' => 'nullable|image|max:2048',
             'landing_sections.*.existing_image' => 'nullable|string',
@@ -816,6 +819,7 @@ class CustomerDashboardController extends Controller
                         'min_quantity' => $promotionData['min_quantity'],
                         'max_quantity' => $promotionData['max_quantity'] ?? null,
                         'price' => $promotionData['price'],
+                        'label' => $promotionData['label'] ?? null,
                         'is_active' => true,
                     ];
 

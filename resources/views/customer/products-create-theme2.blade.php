@@ -1049,10 +1049,49 @@
                             </div>
                         </div>
                         
+                        <!-- Title Background Color -->
+                        <div class="mt-4">
+                            <label for="title_background_color" class="block text-sm font-medium text-gray-300 mb-2">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                                    </svg>
+                                    Title Background Color <span class="text-gray-500 font-normal">(optional)</span>
+                                </span>
+                            </label>
+                            <div class="flex gap-2">
+                                <input 
+                                    type="color" 
+                                    id="title_background_color_picker" 
+                                    value="{{ old('theme_data.title_background_color', '#000000') }}"
+                                    onchange="document.getElementById('title_background_color').value = this.value; updateTitlePreview()"
+                                    class="w-12 h-12 rounded-lg cursor-pointer border border-white/10 bg-transparent"
+                                />
+                                <input 
+                                    type="text" 
+                                    id="title_background_color" 
+                                    name="theme_data[title_background_color]" 
+                                    value="{{ old('theme_data.title_background_color', '') }}"
+                                    onchange="document.getElementById('title_background_color_picker').value = this.value || '#000000'; updateTitlePreview()"
+                                    class="flex-1 px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent uppercase"
+                                    placeholder="#000000 (leave empty for no background)"
+                                    pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+                                />
+                                <button 
+                                    type="button" 
+                                    onclick="document.getElementById('title_background_color').value = ''; updateTitlePreview();"
+                                    class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition text-sm"
+                                >
+                                    Clear
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Add a background color behind your title and product name. Leave empty for no background.</p>
+                        </div>
+                        
                         <!-- Title Preview -->
                         <div class="mt-4 p-4 bg-gradient-to-r from-red-500 via-red-600 to-red-700 rounded-lg">
                             <p class="text-xs text-white/70 mb-2">Preview:</p>
-                            <h2 id="titlePreview" class="text-3xl font-black uppercase" style="color: {{ old('theme_data.title_color', '#ffffff') }}; font-family: 'Bebas Neue', sans-serif;">
+                            <h2 id="titlePreview" class="text-3xl font-black uppercase inline-block px-3 py-1 rounded" style="color: {{ old('theme_data.title_color', '#ffffff') }}; font-family: 'Bebas Neue', sans-serif;">
                                 YOUR PRODUCT TITLE
                             </h2>
                         </div>
@@ -2027,12 +2066,14 @@
                 const minQty = div.querySelector('input[name*="[min_quantity]"]');
                 const maxQty = div.querySelector('input[name*="[max_quantity]"]');
                 const price = div.querySelector('input[name*="[price]"]');
+                const label = div.querySelector('input[name*="[label]"]');
                 
                 if (minQty && price) {
                     promotions.push({
                         min_quantity: minQty.value || '',
                         max_quantity: maxQty ? (maxQty.value || null) : null,
-                        price: price.value || ''
+                        price: price.value || '',
+                        label: label ? (label.value || '') : ''
                     });
                 }
             });
@@ -2064,6 +2105,27 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
+                
+                <!-- Custom Label (Required) -->
+                <div class="mb-3">
+                    <label class="block text-xs font-medium text-yellow-400 mb-1">
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
+                            </svg>
+                            Display Label * <span class="text-gray-500 font-normal">(shown to customers)</span>
+                        </span>
+                    </label>
+                    <input 
+                        type="text" 
+                        name="promotions[${promotionId}][label]" 
+                        required
+                        class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-yellow-500/50 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        placeholder="e.g., Buy 2 Get 10% Off, Pack of 3, Family Bundle..."
+                        oninput="updatePromotionsJson()"
+                    />
+                    <p class="text-xs text-gray-500 mt-1">This label will be displayed on the landing page instead of quantity/price details</p>
+                </div>
                 
                 <div class="grid grid-cols-3 gap-3">
                     <div>
@@ -2170,6 +2232,7 @@
             const titlePreview = document.getElementById('titlePreview');
             const colorInput = document.getElementById('title_color');
             const fontSelect = document.getElementById('title_font');
+            const bgColorInput = document.getElementById('title_background_color');
             
             if (titlePreview && colorInput) {
                 titlePreview.style.color = colorInput.value;
@@ -2178,6 +2241,14 @@
             if (titlePreview && fontSelect) {
                 const fontKey = fontSelect.value;
                 titlePreview.style.fontFamily = fontFamilies[fontKey] || fontFamilies['bebas'];
+            }
+            
+            if (titlePreview && bgColorInput) {
+                if (bgColorInput.value && bgColorInput.value.trim() !== '') {
+                    titlePreview.style.backgroundColor = bgColorInput.value;
+                } else {
+                    titlePreview.style.backgroundColor = 'transparent';
+                }
             }
         }
 

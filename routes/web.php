@@ -32,6 +32,7 @@ Route::get('/', function () {
 Route::get('/store/{subdomain}', [ProductController::class, 'index'])->name('store.home');
 Route::get('/store/{subdomain}/product/{slug}', [ProductController::class, 'show'])->name('store.product.show');
 Route::post('/store/{subdomain}/product/{slug}/submit-lead', [ProductController::class, 'submitLead'])->name('store.product.submit-lead');
+Route::get('/store/{subdomain}/product/{slug}/thank-you/{lead}', [ProductController::class, 'thankYou'])->name('store.product.thank-you');
 
 // WhatsApp Webhook (no auth required for external services)
 Route::post('/webhook/whatsapp', [WhatsAppController::class, 'webhook'])->name('whatsapp.webhook');

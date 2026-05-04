@@ -90,7 +90,8 @@ class ProductController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
         
-        $product = Product::where('slug', $slug)
+        $product = Product::with(['activePromotions'])
+            ->where('slug', $slug)
             ->where('is_active', true)
             ->where('store_id', $store->id)
             ->firstOrFail();
@@ -100,7 +101,15 @@ class ProductController extends Controller
             'phone' => 'required|string|max:20',
             'note' => 'nullable|string|max:1000',
             'language' => 'required|string|max:10',
+            'selected_promotion_form' => 'nullable|exists:product_promotions,id',
         ]);
+
+        // Get selected promotion if any
+        $selectedPromotionId = $request->input('selected_promotion_form');
+        $selectedPromotion = null;
+        if ($selectedPromotionId) {
+            $selectedPromotion = \App\Models\ProductPromotion::find($selectedPromotionId);
+        }
 
         $lead = \App\Models\ProductLead::create([
             'product_id' => $product->id,
@@ -111,46 +120,41 @@ class ProductController extends Controller
             'language' => $validated['language'],
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
+            'selected_promotion_id' => $selectedPromotionId,
         ]);
 
         \App\Jobs\PushOrderToExternalApi::dispatch($lead);
 
-        $successMessages = [
-            'fr' => 'Merci ! Nous vous contactons bientôt.',
-            'en' => 'Thank you! We will contact you soon.',
-            'ar' => 'شكرا لك! سنتصل بك قريبا.',
-            'es' => '¡Gracias! Nos pondremos en contacto pronto.',
-            'de' => 'Danke! Wir werden Sie bald kontaktieren.',
-            'it' => 'Grazie! Ti contatteremo presto.',
-            'pt' => 'Obrigado! Entraremos em contato em breve.',
-            'ru' => 'Спасибо! Мы скоро свяжемся с вами.',
-            'zh' => '谢谢!我们很快会联系您。',
-            'ja' => 'ありがとうございます!すぐにご連絡いたします。',
-            'ko' => '감사합니다! 곧 연락드리겠습니다.',
-            'nl' => 'Bedankt! We nemen binnenkort contact op.',
-            'pl' => 'Dziękujemy! Wkrótce się z Tobą skontaktujemy.',
-            'tr' => 'Teşekkürler! Kısa süre içinde sizinle iletişime geçeceğiz.',
-            'hi' => 'धन्यवाद! हम जल्द ही आपसे संपर्क करेंगे।',
-            'th' => 'ขอบคุณ! เราจะติดต่อคุณเร็วๆ นี้',
-            'vi' => 'Cảm ơn bạn! Chúng tôi sẽ liên lạc sớm.',
-            'id' => 'Terima kasih! Kami akan menghubungi Anda segera.',
-            'ms' => 'Terima kasih! Kami akan menghubungi anda tidak lama lagi.',
-            'he' => 'תודה! ניצור איתך קשר בקרוב.',
-            'el' => 'Σας ευχαριστούμε! Θα επικοινωνήσουμε σύντομα.',
-            'cs' => 'Děkujeme! Brzy se ozveme.',
-            'sv' => 'Tack! Vi kontaktar dig snart.',
-            'no' => 'Takk! Vi kontakter deg snart.',
-            'da' => 'Tak! Vi kontakter dig snart.',
-            'fi' => 'Kiitos! Otamme sinuun yhteyttä pian.',
-            'hu' => 'Köszönjük! Hamarosan felvesszük Önnel a kapcsolatot.',
-            'ro' => 'Multumim! Va vom contacta in curand.',
-            'uk' => 'Дякуємо! Ми скоро зв\'яжемося з вами.',
-            'sw' => 'Asante! Tutakuwasiliana hivi karibuni.',
-            'bn' => 'ধন্যবাদ! আমরা শীঘ্রই আপনার সাথে যোগাযোগ করব।',
-            'fa' => 'با تشکر! به زودی با شما تماس خواهیم گرفت.',
-            'ur' => 'شکریہ! ہم جلد ہی آپ سے رابطہ کریں گے۔',
-        ];
+        // Redirect to thank you page
+        return redirect()->route('store.product.thank-you', [
+            'subdomain' => $subdomain,
+            'slug' => $slug,
+            'lead' => $lead->id
+        ]);
+    }
 
-        return back()->with('success', $successMessages[$validated['language']] ?? $successMessages['fr']);
+    public function thankYou($subdomain, $slug, $leadId)
+    {
+        $store = Store::where('subdomain', $subdomain)
+            ->where('is_active', true)
+            ->firstOrFail();
+        
+        $product = Product::with(['activePromotions'])
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->where('store_id', $store->id)
+            ->firstOrFail();
+
+        $lead = \App\Models\ProductLead::where('id', $leadId)
+            ->where('product_id', $product->id)
+            ->firstOrFail();
+
+        // Get the selected promotion if any
+        $selectedPromotion = null;
+        if ($lead->selected_promotion_id) {
+            $selectedPromotion = \App\Models\ProductPromotion::find($lead->selected_promotion_id);
+        }
+
+        return view('product-thank-you-theme2', compact('product', 'store', 'lead', 'selectedPromotion'));
     }
 }

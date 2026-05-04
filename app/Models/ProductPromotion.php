@@ -12,6 +12,7 @@ class ProductPromotion extends Model
         'min_quantity',
         'max_quantity',
         'price',
+        'label',
         'promotion_type',
         'is_active',
         'order',

@@ -15,6 +15,7 @@ class ProductLead extends Model
         'language',
         'ip_address',
         'user_agent',
+        'selected_promotion_id',
     ];
 
     public function product()
@@ -25,5 +26,10 @@ class ProductLead extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function selectedPromotion()
+    {
+        return $this->belongsTo(ProductPromotion::class, 'selected_promotion_id');
     }
 }
