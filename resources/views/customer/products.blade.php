@@ -51,19 +51,20 @@
         @if($products->count() > 0)
             <!-- Products Table -->
             <div class="bg-[#0f1c2e] border border-white/10 rounded-xl overflow-hidden">
-                <table class="w-full">
-                    <thead class="bg-[#0a1628] border-b border-white/10">
-                        <tr>
-                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Product</th>
-                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Category</th>
-                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Price</th>
-                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Stock</th>
-                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">AI Images</th>
-                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">AI Page</th>
-                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[1000px]">
+                        <thead class="bg-[#0a1628] border-b border-white/10">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Product</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Category</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Price</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Stock</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">AI Images</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">AI Page</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase tracking-wider sticky right-0 bg-[#0a1628] shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.3)]">Actions</th>
+                            </tr>
+                        </thead>
                     <tbody class="divide-y divide-white/10">
                         @foreach($products as $product)
                             <tr class="hover:bg-white/5 transition">
@@ -174,7 +175,7 @@
                                         <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-500/20 text-gray-400">Inactive</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-[#0f1c2e] shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.3)]">
                                     <div class="flex items-center justify-end gap-2">
                                         @if($store)
                                         <a href="{{ route('store.product.show', [$store->subdomain, $product->slug]) }}" target="_blank" class="text-blue-400 hover:text-blue-300 transition" title="View Product Page">
@@ -205,6 +206,7 @@
                         @endforeach
                     </tbody>
                 </table>
+                </div>
             </div>
 
             <!-- Pagination -->
