@@ -171,6 +171,14 @@
             'cod' => ['💵', 'الدفع عند الاستلام'],
             'fast_delivery' => ['⚡', 'توصيل 24-48 ساعة'],
         ],
+        'sw' => [
+            'free_shipping' => ['🚚', 'Usafirishaji bure'],
+            'money_back' => ['💰', 'Dhamana ya kurudishiwa pesa'],
+            'secure_payment' => ['🔒', 'Malipo salama'],
+            'warranty' => ['✅', 'Dhamana ya mwaka 1'],
+            'cod' => ['💵', 'Lipa wakati wa utoaji'],
+            'fast_delivery' => ['⚡', 'Utoaji wa haraka 24-48h'],
+        ],
     ];
 
     $i18n = [
@@ -405,7 +413,7 @@
                     <div class="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-2xl p-4 border-2 border-yellow-300 mb-4">
                         <h3 class="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
                             <span class="text-xl">💰</span>
-                            <span x-text="currentLang === 'ar' ? 'عروض الكمية' : (currentLang === 'en' ? 'Quantity Deals' : 'Offres de Quantité')">Offres de Quantité</span>
+                            <span x-text="currentLang === 'ar' ? 'عروض الكمية' : (currentLang === 'sw' ? 'Ofa za Kiasi' : (currentLang === 'en' ? 'Quantity Deals' : 'Offres de Quantité'))">Offres de Quantité</span>
                         </h3>
                         <div class="space-y-2" id="promotionsContainerForm">
                             @foreach($product->activePromotions as $index => $promotion)
@@ -424,7 +432,7 @@
                                            onchange="updatePromotionDisplayForm(this)">
                                     <div class="flex-1 flex items-center justify-between">
                                         <div class="font-semibold text-gray-700 text-sm">
-                                            <span x-text="currentLang === 'ar' ? 'اشتري' : (currentLang === 'en' ? 'Buy' : 'Achetez')">Achetez</span>
+                                            <span x-text="currentLang === 'ar' ? 'اشتري' : (currentLang === 'sw' ? 'Nunua' : (currentLang === 'en' ? 'Buy' : 'Achetez'))">Achetez</span>
                                             {{ $promotion->quantity_range }}
                                         </div>
                                         <div class="flex items-center gap-2">
@@ -448,7 +456,7 @@
                     <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 border-2 border-blue-200 mb-4">
                         <h3 class="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
                             <span class="text-xl">🎨</span>
-                            <span x-text="currentLang === 'ar' ? 'الخيارات المتاحة' : (currentLang === 'en' ? 'Available Options' : 'Options disponibles')">Options disponibles</span>
+                            <span x-text="currentLang === 'ar' ? 'الخيارات المتاحة' : (currentLang === 'sw' ? 'Chaguo zinazopatikana' : (currentLang === 'en' ? 'Available Options' : 'Options disponibles'))">Options disponibles</span>
                         </h3>
                         <div class="space-y-2" id="variationsContainerForm">
                             @foreach($product->activeVariations as $index => $variation)
@@ -481,7 +489,7 @@
                                         <div>
                                             <div class="font-semibold text-gray-900 text-sm">{{ $displayName }}</div>
                                             <div class="text-xs text-gray-500">
-                                                <span x-text="(currentLang === 'ar' ? 'المخزون: ' : (currentLang === 'en' ? 'Stock: ' : 'Stock: ')) + '{{ $variation->stock }}'">Stock: {{ $variation->stock }}</span>
+                                                <span x-text="(currentLang === 'ar' ? 'المخزون: ' : (currentLang === 'sw' ? 'Hifadhi: ' : (currentLang === 'en' ? 'Stock: ' : 'Stock: '))) + '{{ $variation->stock }}'">Stock: {{ $variation->stock }}</span>
                                             </div>
                                         </div>
                                         <div class="text-right">
