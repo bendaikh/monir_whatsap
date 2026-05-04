@@ -464,6 +464,256 @@
                     </h2>
                 </div>
             </div>
+
+            <!-- Trust Badges (Theme 2 Only) -->
+            @php
+                $trustBadges = $product->theme_data['trust_badges'] ?? [];
+            @endphp
+            <div class="bg-gradient-to-br from-emerald-900/50 to-green-900/50 border border-emerald-500/30 rounded-xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                            <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                            Trust Badges
+                        </h3>
+                        <p class="text-sm text-gray-400 mt-1">Customize the trust badges displayed below the order form</p>
+                    </div>
+                    <button 
+                        type="button" 
+                        onclick="addTrustBadge()"
+                        class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition flex items-center gap-2 text-sm"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Add Badge
+                    </button>
+                </div>
+
+                <!-- Preview of trust badges -->
+                <div class="mb-4 p-4 bg-white rounded-lg">
+                    <p class="text-xs text-gray-500 mb-2">Preview:</p>
+                    <div id="trustBadgesPreview" class="flex flex-wrap gap-2">
+                        @if(!empty($trustBadges))
+                            @foreach($trustBadges as $badge)
+                                @if(!empty($badge['text']))
+                                <div class="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold text-gray-700">
+                                    <span>{{ $badge['emoji'] ?? '✅' }}</span>
+                                    <span>{{ $badge['text'] }}</span>
+                                </div>
+                                @endif
+                            @endforeach
+                        @else
+                            <div class="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold text-gray-700">
+                                <span>🚚</span>
+                                <span>Free Shipping</span>
+                            </div>
+                            <div class="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold text-gray-700">
+                                <span>💰</span>
+                                <span>Money Back Guarantee</span>
+                            </div>
+                            <div class="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold text-gray-700">
+                                <span>🔒</span>
+                                <span>Secure Payment</span>
+                            </div>
+                            <div class="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold text-gray-700">
+                                <span>✅</span>
+                                <span>1 Year Warranty</span>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <div id="trustBadgesContainer" class="space-y-3">
+                    @if(!empty($trustBadges))
+                        @foreach($trustBadges as $index => $badge)
+                        <div class="trust-badge-item flex gap-3 items-center bg-[#0a1628] rounded-lg p-3 border border-white/5">
+                            <div class="flex-shrink-0">
+                                <select name="theme_data[trust_badges][{{ $index }}][emoji]" class="w-16 px-2 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm text-center" onchange="updateTrustBadgesPreview()">
+                                    <option value="🚚" {{ ($badge['emoji'] ?? '') == '🚚' ? 'selected' : '' }}>🚚</option>
+                                    <option value="💰" {{ ($badge['emoji'] ?? '') == '💰' ? 'selected' : '' }}>💰</option>
+                                    <option value="🔒" {{ ($badge['emoji'] ?? '') == '🔒' ? 'selected' : '' }}>🔒</option>
+                                    <option value="✅" {{ ($badge['emoji'] ?? '') == '✅' ? 'selected' : '' }}>✅</option>
+                                    <option value="💵" {{ ($badge['emoji'] ?? '') == '💵' ? 'selected' : '' }}>💵</option>
+                                    <option value="⚡" {{ ($badge['emoji'] ?? '') == '⚡' ? 'selected' : '' }}>⚡</option>
+                                    <option value="🛡️" {{ ($badge['emoji'] ?? '') == '🛡️' ? 'selected' : '' }}>🛡️</option>
+                                    <option value="⭐" {{ ($badge['emoji'] ?? '') == '⭐' ? 'selected' : '' }}>⭐</option>
+                                    <option value="🎁" {{ ($badge['emoji'] ?? '') == '🎁' ? 'selected' : '' }}>🎁</option>
+                                    <option value="📦" {{ ($badge['emoji'] ?? '') == '📦' ? 'selected' : '' }}>📦</option>
+                                    <option value="🏷️" {{ ($badge['emoji'] ?? '') == '🏷️' ? 'selected' : '' }}>🏷️</option>
+                                    <option value="✨" {{ ($badge['emoji'] ?? '') == '✨' ? 'selected' : '' }}>✨</option>
+                                    <option value="💎" {{ ($badge['emoji'] ?? '') == '💎' ? 'selected' : '' }}>💎</option>
+                                    <option value="🔥" {{ ($badge['emoji'] ?? '') == '🔥' ? 'selected' : '' }}>🔥</option>
+                                    <option value="💯" {{ ($badge['emoji'] ?? '') == '💯' ? 'selected' : '' }}>💯</option>
+                                    <option value="🏆" {{ ($badge['emoji'] ?? '') == '🏆' ? 'selected' : '' }}>🏆</option>
+                                </select>
+                            </div>
+                            <input 
+                                type="text" 
+                                name="theme_data[trust_badges][{{ $index }}][text]" 
+                                value="{{ $badge['text'] ?? '' }}"
+                                class="flex-1 px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 text-sm"
+                                placeholder="Enter badge text"
+                                onkeyup="updateTrustBadgesPreview()"
+                            />
+                            <button type="button" onclick="removeTrustBadge(this)" class="text-red-400 hover:text-red-300 p-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        @endforeach
+                    @else
+                        <!-- Default trust badges if none exist -->
+                        <div class="trust-badge-item flex gap-3 items-center bg-[#0a1628] rounded-lg p-3 border border-white/5">
+                            <div class="flex-shrink-0">
+                                <select name="theme_data[trust_badges][0][emoji]" class="w-16 px-2 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm text-center" onchange="updateTrustBadgesPreview()">
+                                    <option value="🚚" selected>🚚</option>
+                                    <option value="💰">💰</option>
+                                    <option value="🔒">🔒</option>
+                                    <option value="✅">✅</option>
+                                    <option value="💵">💵</option>
+                                    <option value="⚡">⚡</option>
+                                    <option value="🛡️">🛡️</option>
+                                    <option value="⭐">⭐</option>
+                                    <option value="🎁">🎁</option>
+                                    <option value="📦">📦</option>
+                                    <option value="🏷️">🏷️</option>
+                                    <option value="✨">✨</option>
+                                    <option value="💎">💎</option>
+                                    <option value="🔥">🔥</option>
+                                    <option value="💯">💯</option>
+                                    <option value="🏆">🏆</option>
+                                </select>
+                            </div>
+                            <input 
+                                type="text" 
+                                name="theme_data[trust_badges][0][text]" 
+                                value="Free Shipping"
+                                class="flex-1 px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 text-sm"
+                                placeholder="Enter badge text"
+                                onkeyup="updateTrustBadgesPreview()"
+                            />
+                            <button type="button" onclick="removeTrustBadge(this)" class="text-red-400 hover:text-red-300 p-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="trust-badge-item flex gap-3 items-center bg-[#0a1628] rounded-lg p-3 border border-white/5">
+                            <div class="flex-shrink-0">
+                                <select name="theme_data[trust_badges][1][emoji]" class="w-16 px-2 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm text-center" onchange="updateTrustBadgesPreview()">
+                                    <option value="🚚">🚚</option>
+                                    <option value="💰" selected>💰</option>
+                                    <option value="🔒">🔒</option>
+                                    <option value="✅">✅</option>
+                                    <option value="💵">💵</option>
+                                    <option value="⚡">⚡</option>
+                                    <option value="🛡️">🛡️</option>
+                                    <option value="⭐">⭐</option>
+                                    <option value="🎁">🎁</option>
+                                    <option value="📦">📦</option>
+                                    <option value="🏷️">🏷️</option>
+                                    <option value="✨">✨</option>
+                                    <option value="💎">💎</option>
+                                    <option value="🔥">🔥</option>
+                                    <option value="💯">💯</option>
+                                    <option value="🏆">🏆</option>
+                                </select>
+                            </div>
+                            <input 
+                                type="text" 
+                                name="theme_data[trust_badges][1][text]" 
+                                value="Money Back Guarantee"
+                                class="flex-1 px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 text-sm"
+                                placeholder="Enter badge text"
+                                onkeyup="updateTrustBadgesPreview()"
+                            />
+                            <button type="button" onclick="removeTrustBadge(this)" class="text-red-400 hover:text-red-300 p-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="trust-badge-item flex gap-3 items-center bg-[#0a1628] rounded-lg p-3 border border-white/5">
+                            <div class="flex-shrink-0">
+                                <select name="theme_data[trust_badges][2][emoji]" class="w-16 px-2 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm text-center" onchange="updateTrustBadgesPreview()">
+                                    <option value="🚚">🚚</option>
+                                    <option value="💰">💰</option>
+                                    <option value="🔒" selected>🔒</option>
+                                    <option value="✅">✅</option>
+                                    <option value="💵">💵</option>
+                                    <option value="⚡">⚡</option>
+                                    <option value="🛡️">🛡️</option>
+                                    <option value="⭐">⭐</option>
+                                    <option value="🎁">🎁</option>
+                                    <option value="📦">📦</option>
+                                    <option value="🏷️">🏷️</option>
+                                    <option value="✨">✨</option>
+                                    <option value="💎">💎</option>
+                                    <option value="🔥">🔥</option>
+                                    <option value="💯">💯</option>
+                                    <option value="🏆">🏆</option>
+                                </select>
+                            </div>
+                            <input 
+                                type="text" 
+                                name="theme_data[trust_badges][2][text]" 
+                                value="Secure Payment"
+                                class="flex-1 px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 text-sm"
+                                placeholder="Enter badge text"
+                                onkeyup="updateTrustBadgesPreview()"
+                            />
+                            <button type="button" onclick="removeTrustBadge(this)" class="text-red-400 hover:text-red-300 p-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="trust-badge-item flex gap-3 items-center bg-[#0a1628] rounded-lg p-3 border border-white/5">
+                            <div class="flex-shrink-0">
+                                <select name="theme_data[trust_badges][3][emoji]" class="w-16 px-2 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm text-center" onchange="updateTrustBadgesPreview()">
+                                    <option value="🚚">🚚</option>
+                                    <option value="💰">💰</option>
+                                    <option value="🔒">🔒</option>
+                                    <option value="✅" selected>✅</option>
+                                    <option value="💵">💵</option>
+                                    <option value="⚡">⚡</option>
+                                    <option value="🛡️">🛡️</option>
+                                    <option value="⭐">⭐</option>
+                                    <option value="🎁">🎁</option>
+                                    <option value="📦">📦</option>
+                                    <option value="🏷️">🏷️</option>
+                                    <option value="✨">✨</option>
+                                    <option value="💎">💎</option>
+                                    <option value="🔥">🔥</option>
+                                    <option value="💯">💯</option>
+                                    <option value="🏆">🏆</option>
+                                </select>
+                            </div>
+                            <input 
+                                type="text" 
+                                name="theme_data[trust_badges][3][text]" 
+                                value="1 Year Warranty"
+                                class="flex-1 px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 text-sm"
+                                placeholder="Enter badge text"
+                                onkeyup="updateTrustBadgesPreview()"
+                            />
+                            <button type="button" onclick="removeTrustBadge(this)" class="text-red-400 hover:text-red-300 p-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                    @endif
+                </div>
+                
+                <p class="text-xs text-gray-500 mt-4">
+                    <span class="text-emerald-400">Tip:</span> Trust badges help increase conversions by showing customers your product guarantees and benefits.
+                </p>
+            </div>
             @endif
 
             <!-- Product Variations Card -->
@@ -974,6 +1224,7 @@
         let variationCounter = {{ $product->variations ? $product->variations->count() : 0 }};
         let promotionCounter = {{ $product->promotions ? $product->promotions->count() : 0 }};
         let headerItemCounter = {{ isset($product->theme_data['header_items']) ? count($product->theme_data['header_items']) : 3 }};
+        let trustBadgeCounter = {{ isset($product->theme_data['trust_badges']) ? count($product->theme_data['trust_badges']) : 4 }};
 
         function addHeaderItem() {
             const container = document.getElementById('headerItemsContainer');
@@ -1039,6 +1290,77 @@
             });
             
             preview.innerHTML = previewHtml || '<span class="text-gray-500">No items added</span>';
+        }
+
+        // Trust Badges Functions
+        function addTrustBadge() {
+            const container = document.getElementById('trustBadgesContainer');
+            if (!container) return;
+            
+            const badgeDiv = document.createElement('div');
+            badgeDiv.className = 'trust-badge-item flex gap-3 items-center bg-[#0a1628] rounded-lg p-3 border border-white/5';
+            badgeDiv.innerHTML = `
+                <div class="flex-shrink-0">
+                    <select name="theme_data[trust_badges][${trustBadgeCounter}][emoji]" class="w-16 px-2 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm text-center" onchange="updateTrustBadgesPreview()">
+                        <option value="🚚">🚚</option>
+                        <option value="💰">💰</option>
+                        <option value="🔒">🔒</option>
+                        <option value="✅">✅</option>
+                        <option value="💵">💵</option>
+                        <option value="⚡">⚡</option>
+                        <option value="🛡️">🛡️</option>
+                        <option value="⭐">⭐</option>
+                        <option value="🎁">🎁</option>
+                        <option value="📦">📦</option>
+                        <option value="🏷️">🏷️</option>
+                        <option value="✨">✨</option>
+                        <option value="💎">💎</option>
+                        <option value="🔥">🔥</option>
+                        <option value="💯">💯</option>
+                        <option value="🏆">🏆</option>
+                    </select>
+                </div>
+                <input 
+                    type="text" 
+                    name="theme_data[trust_badges][${trustBadgeCounter}][text]" 
+                    class="flex-1 px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 text-sm"
+                    placeholder="Enter badge text"
+                    onkeyup="updateTrustBadgesPreview()"
+                />
+                <button type="button" onclick="removeTrustBadge(this)" class="text-red-400 hover:text-red-300 p-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            `;
+            container.appendChild(badgeDiv);
+            trustBadgeCounter++;
+            updateTrustBadgesPreview();
+        }
+
+        function removeTrustBadge(btn) {
+            btn.closest('.trust-badge-item').remove();
+            updateTrustBadgesPreview();
+        }
+
+        function updateTrustBadgesPreview() {
+            const items = document.querySelectorAll('#trustBadgesContainer .trust-badge-item');
+            const preview = document.getElementById('trustBadgesPreview');
+            if (!preview) return;
+            
+            let previewHtml = '';
+            
+            items.forEach((item) => {
+                const emoji = item.querySelector('select').value;
+                const text = item.querySelector('input[type="text"]').value || 'Enter text...';
+                
+                previewHtml += `<div class="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold text-gray-700">
+                    <span>${emoji}</span>
+                    <span>${text}</span>
+                </div>`;
+            });
+            
+            preview.innerHTML = previewHtml || '<span class="text-gray-500">No badges added</span>';
         }
 
         // Load Google Fonts for title preview

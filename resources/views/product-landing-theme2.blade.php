@@ -72,6 +72,7 @@
     $statsReviews = $td['stats_reviews'] ?? '127';
     $staticFeatures = $td['features'] ?? [];
     $badges = $td['badges'] ?? [];
+    $customTrustBadges = $td['trust_badges'] ?? [];
     $images = $product->all_images ?? [];
     
     $fontFamilyMap = [
@@ -399,6 +400,104 @@
                     </div>
                     @endif
 
+                    <!-- Quantity-Based Promotions -->
+                    @if($product->has_promotions && $product->activePromotions->isNotEmpty())
+                    <div class="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-2xl p-4 border-2 border-yellow-300 mb-4">
+                        <h3 class="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                            <span class="text-xl">💰</span>
+                            <span x-text="currentLang === 'ar' ? 'عروض الكمية' : (currentLang === 'en' ? 'Quantity Deals' : 'Offres de Quantité')">Offres de Quantité</span>
+                        </h3>
+                        <div class="space-y-2" id="promotionsContainerForm">
+                            @foreach($product->activePromotions as $index => $promotion)
+                            <label class="block p-3 bg-white rounded-xl border-2 cursor-pointer hover:border-yellow-400 transition promotion-option-form {{ $index === 0 ? 'border-yellow-400 ring-2 ring-yellow-200' : 'border-gray-200' }}"
+                                   data-promotion-id="{{ $promotion->id }}"
+                                   data-min-quantity="{{ $promotion->min_quantity }}"
+                                   data-max-quantity="{{ $promotion->max_quantity ?? '' }}"
+                                   data-price="{{ $promotion->price }}"
+                                   data-discount="{{ $promotion->discount_percentage }}">
+                                <div class="flex items-center gap-3">
+                                    <input type="radio" 
+                                           name="selected_promotion_form" 
+                                           value="{{ $promotion->id }}" 
+                                           class="w-5 h-5 text-yellow-500 focus:ring-yellow-400"
+                                           {{ $index === 0 ? 'checked' : '' }}
+                                           onchange="updatePromotionDisplayForm(this)">
+                                    <div class="flex-1 flex items-center justify-between">
+                                        <div class="font-semibold text-gray-700 text-sm">
+                                            <span x-text="currentLang === 'ar' ? 'اشتري' : (currentLang === 'en' ? 'Buy' : 'Achetez')">Achetez</span>
+                                            {{ $promotion->quantity_range }}
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-lg font-black text-gray-900">{{ number_format($promotion->price, 2) }} {{ $currencyCode }}</span>
+                                            @if($promotion->discount_percentage > 0)
+                                            <span class="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-bold">
+                                                -{{ $promotion->discount_percentage }}%
+                                            </span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+
+                    <!-- Variations Selector -->
+                    @if($product->has_variations && $product->activeVariations->isNotEmpty())
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 border-2 border-blue-200 mb-4">
+                        <h3 class="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                            <span class="text-xl">🎨</span>
+                            <span x-text="currentLang === 'ar' ? 'الخيارات المتاحة' : (currentLang === 'en' ? 'Available Options' : 'Options disponibles')">Options disponibles</span>
+                        </h3>
+                        <div class="space-y-2" id="variationsContainerForm">
+                            @foreach($product->activeVariations as $index => $variation)
+                            @php
+                                $displayName = '';
+                                if (!empty($variation->attributes) && is_array($variation->attributes)) {
+                                    $attrParts = [];
+                                    foreach ($variation->attributes as $key => $value) {
+                                        $attrParts[] = ucfirst($key) . ': ' . $value;
+                                    }
+                                    $displayName = implode(' / ', $attrParts);
+                                }
+                                if (empty($displayName)) {
+                                    $displayName = 'Option ' . ($index + 1);
+                                }
+                            @endphp
+                            <label class="block p-3 bg-white rounded-xl border-2 cursor-pointer hover:border-blue-400 transition variation-option-form {{ $variation->is_default ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-200' }}"
+                                   data-variation-id="{{ $variation->id }}"
+                                   data-price="{{ $variation->price }}"
+                                   data-compare-price="{{ $variation->compare_at_price ?? 0 }}"
+                                   data-discount="{{ $variation->discount_percentage }}">
+                                <div class="flex items-center gap-3">
+                                    <input type="radio" 
+                                           name="selected_variation_form" 
+                                           value="{{ $variation->id }}" 
+                                           class="w-5 h-5 text-blue-500 focus:ring-blue-400"
+                                           {{ $variation->is_default ? 'checked' : '' }}
+                                           onchange="updateVariationDisplayForm(this)">
+                                    <div class="flex-1 flex items-center justify-between">
+                                        <div>
+                                            <div class="font-semibold text-gray-900 text-sm">{{ $displayName }}</div>
+                                            <div class="text-xs text-gray-500">
+                                                <span x-text="(currentLang === 'ar' ? 'المخزون: ' : (currentLang === 'en' ? 'Stock: ' : 'Stock: ')) + '{{ $variation->stock }}'">Stock: {{ $variation->stock }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-lg font-black text-gray-900">{{ number_format($variation->price, 2) }} {{ $currencyCode }}</div>
+                                            @if($variation->compare_at_price && $variation->compare_at_price > $variation->price)
+                                            <div class="text-xs line-through text-gray-400">{{ number_format($variation->compare_at_price, 2) }} {{ $currencyCode }}</div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+
                     <form action="{{ route('store.product.submit-lead', [$store->subdomain, $product->slug]) }}" method="POST" class="space-y-3">
                         @csrf
                         <input type="hidden" name="language" :value="currentLang">
@@ -422,15 +521,28 @@
 
                     <!-- Trust badges row -->
                     <div class="flex flex-wrap justify-center gap-2 mt-4 pt-4 border-t border-gray-200">
-                        @foreach(array_slice(empty($badges) ? ['free_shipping','money_back','cod','warranty'] : $badges, 0, 4) as $badgeKey)
-                            @php $b = $badgeLabels['fr'][$badgeKey] ?? null; @endphp
-                            @if($b)
-                            <div class="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold text-gray-700">
-                                <span>{{ $b[0] }}</span>
-                                <span x-text="badge('{{ $badgeKey }}')">{{ $b[1] }}</span>
-                            </div>
-                            @endif
-                        @endforeach
+                        @if(!empty($customTrustBadges))
+                            {{-- Custom trust badges from theme_data --}}
+                            @foreach(array_slice($customTrustBadges, 0, 4) as $customBadge)
+                                @if(!empty($customBadge['text']))
+                                <div class="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold text-gray-700">
+                                    <span>{{ $customBadge['emoji'] ?? '✅' }}</span>
+                                    <span>{{ $customBadge['text'] }}</span>
+                                </div>
+                                @endif
+                            @endforeach
+                        @else
+                            {{-- Fallback to predefined badges --}}
+                            @foreach(array_slice(empty($badges) ? ['free_shipping','money_back','secure_payment','warranty'] : $badges, 0, 4) as $badgeKey)
+                                @php $b = $badgeLabels['fr'][$badgeKey] ?? null; @endphp
+                                @if($b)
+                                <div class="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold text-gray-700">
+                                    <span>{{ $b[0] }}</span>
+                                    <span x-text="badge('{{ $badgeKey }}')">{{ $b[1] }}</span>
+                                </div>
+                                @endif
+                            @endforeach
+                        @endif
                     </div>
                 </div>
             </div>
@@ -590,7 +702,7 @@
             <div class="inline-block bg-yellow-300 text-gray-900 px-4 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider mb-4">
                 🔥 {{ $promoBadge }}
             </div>
-            <h2 class="font-display text-4xl md:text-6xl font-black uppercase mb-3 drop-shadow-lg">
+            <h2 class="font-display text-4xl md:text-6xl font-black uppercase mb-3 drop-shadow-lg" style="color: {{ $titleColor }};">
                 {{ $product->name }}
             </h2>
             <p class="text-lg md:text-xl font-bold mb-6 opacity-95"
@@ -685,22 +797,37 @@
     </section>
 
     <!-- Trust badges strip -->
-    @if(!empty($badges))
+    @if(!empty($customTrustBadges) || !empty($badges))
     <section class="bg-white py-6 border-y-2 border-gray-100">
         <div class="container mx-auto px-4 max-w-5xl">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                @foreach($badges as $badgeKey)
-                    @php $b = $badgeLabels['fr'][$badgeKey] ?? null; @endphp
-                    @if($b)
-                    <div class="flex items-center gap-2 bg-gray-50 border-l-4 border-emerald-500 px-3 py-2.5 rounded-lg">
-                        <span class="text-2xl">{{ $b[0] }}</span>
-                        <span class="font-bold text-gray-800 text-xs md:text-sm"
-                            x-text="badge('{{ $badgeKey }}')">
-                            {{ $b[1] }}
-                        </span>
-                    </div>
-                    @endif
-                @endforeach
+                @if(!empty($customTrustBadges))
+                    {{-- Custom trust badges from theme_data --}}
+                    @foreach($customTrustBadges as $customBadge)
+                        @if(!empty($customBadge['text']))
+                        <div class="flex items-center gap-2 bg-gray-50 border-l-4 border-emerald-500 px-3 py-2.5 rounded-lg">
+                            <span class="text-2xl">{{ $customBadge['emoji'] ?? '✅' }}</span>
+                            <span class="font-bold text-gray-800 text-xs md:text-sm">
+                                {{ $customBadge['text'] }}
+                            </span>
+                        </div>
+                        @endif
+                    @endforeach
+                @else
+                    {{-- Fallback to predefined badges --}}
+                    @foreach($badges as $badgeKey)
+                        @php $b = $badgeLabels['fr'][$badgeKey] ?? null; @endphp
+                        @if($b)
+                        <div class="flex items-center gap-2 bg-gray-50 border-l-4 border-emerald-500 px-3 py-2.5 rounded-lg">
+                            <span class="text-2xl">{{ $b[0] }}</span>
+                            <span class="font-bold text-gray-800 text-xs md:text-sm"
+                                x-text="badge('{{ $badgeKey }}')">
+                                {{ $b[1] }}
+                            </span>
+                        </div>
+                        @endif
+                    @endforeach
+                @endif
             </div>
         </div>
     </section>
@@ -719,6 +846,67 @@
             © {{ date('Y') }} — All rights reserved.
         </div>
     </footer>
+
+    @if($product->has_promotions && $product->activePromotions->isNotEmpty())
+    <script>
+        // Promotion selection handler for form
+        function updatePromotionDisplayForm(radio) {
+            const option = radio.closest('.promotion-option-form');
+            const minQuantity = parseInt(option.dataset.minQuantity);
+            const maxQuantity = option.dataset.maxQuantity ? parseInt(option.dataset.maxQuantity) : null;
+            const price = parseFloat(option.dataset.price);
+            const discount = option.dataset.discount;
+            
+            // Remove active state from all options
+            document.querySelectorAll('.promotion-option-form').forEach(opt => {
+                opt.classList.remove('border-yellow-400', 'ring-2', 'ring-yellow-200');
+                opt.classList.add('border-gray-200');
+            });
+            
+            // Add active state to selected option
+            option.classList.remove('border-gray-200');
+            option.classList.add('border-yellow-400', 'ring-2', 'ring-yellow-200');
+        }
+        
+        // Set default promotion on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const defaultRadio = document.querySelector('input[name="selected_promotion_form"]:checked');
+            if (defaultRadio) {
+                updatePromotionDisplayForm(defaultRadio);
+            }
+        });
+    </script>
+    @endif
+
+    @if($product->has_variations && $product->activeVariations->isNotEmpty())
+    <script>
+        // Variation selection handler for form
+        function updateVariationDisplayForm(radio) {
+            const option = radio.closest('.variation-option-form');
+            const price = parseFloat(option.dataset.price);
+            const comparePrice = parseFloat(option.dataset.comparePrice) || 0;
+            const discount = option.dataset.discount;
+            
+            // Remove active state from all options
+            document.querySelectorAll('.variation-option-form').forEach(opt => {
+                opt.classList.remove('border-blue-400', 'ring-2', 'ring-blue-200');
+                opt.classList.add('border-gray-200');
+            });
+            
+            // Add active state to selected option
+            option.classList.remove('border-gray-200');
+            option.classList.add('border-blue-400', 'ring-2', 'ring-blue-200');
+        }
+        
+        // Set default variation on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const defaultRadio = document.querySelector('input[name="selected_variation_form"]:checked');
+            if (defaultRadio) {
+                updateVariationDisplayForm(defaultRadio);
+            }
+        });
+    </script>
+    @endif
 
 </body>
 </html>
