@@ -345,7 +345,7 @@
                     </div>
                     @endif
 
-                    <h1 class="text-5xl md:text-7xl lg:text-8xl font-black uppercase leading-none drop-shadow-[0_4px_0_rgba(0,0,0,0.25)]" style="color: {{ $titleColor }}; font-family: {{ $titleFontFamily }}; letter-spacing: 0.02em;">
+                    <h1 class="text-3xl md:text-4xl lg:text-5xl font-black uppercase leading-tight drop-shadow-[0_4px_0_rgba(0,0,0,0.25)]" style="color: {{ $titleColor }}; font-family: {{ $titleFontFamily }}; letter-spacing: 0.02em;">
                         {{ $product->name }}
                     </h1>
 
