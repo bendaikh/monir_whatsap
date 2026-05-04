@@ -622,7 +622,309 @@
                             @enderror
                         </div>
                     </div>
+
+                    <!-- Product Variations Toggle -->
+                    <div class="border-t border-white/10 pt-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label for="has_variations" class="block text-sm font-medium text-gray-300">Product has variations</label>
+                                <p class="text-xs text-gray-500 mt-1">Enable if this product comes in different sizes, colors, or other options</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="hidden" name="has_variations" value="0">
+                                <input 
+                                    type="checkbox" 
+                                    id="has_variations" 
+                                    name="has_variations" 
+                                    value="1"
+                                    class="sr-only peer"
+                                    {{ old('has_variations') ? 'checked' : '' }}
+                                    onchange="toggleVariations(this.checked)"
+                                />
+                                <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                    </div>
                 </div>
+            </div>
+
+            <!-- Product Variations Card -->
+            <div id="variationsCard" class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6 hidden">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Product Variations</h3>
+                        <p class="text-xs text-gray-500 mt-1">Add different options for this product (e.g., sizes, colors)</p>
+                    </div>
+                    <button 
+                        type="button" 
+                        onclick="addVariation()"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition flex items-center gap-2 text-sm"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Add Variation
+                    </button>
+                </div>
+
+                <div id="variationsContainer" class="space-y-4">
+                </div>
+
+                <div id="noVariationsMessage" class="text-center py-8 text-gray-500 text-sm">
+                    <svg class="w-12 h-12 text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                    </svg>
+                    Click "Add Variation" to create your first product variation
+                </div>
+            </div>
+
+            <!-- Quantity-Based Promotions Card -->
+            <div id="promotionsCard" class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                            <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Quantity-Based Pricing
+                        </h3>
+                        <p class="text-xs text-gray-500 mt-1">Set special prices when customers buy multiple items</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="hidden" name="has_promotions" value="0">
+                            <input 
+                                type="checkbox" 
+                                id="has_promotions" 
+                                name="has_promotions" 
+                                value="1"
+                                class="sr-only peer"
+                                onchange="togglePromotions(this.checked)"
+                            />
+                            <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-600"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="promotionsContent" class="hidden">
+                    <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-4">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div class="text-sm text-blue-300">
+                                <p class="font-semibold mb-1">How it works:</p>
+                                <ul class="list-disc list-inside space-y-1 text-xs">
+                                    <li>Set different prices based on quantity purchased</li>
+                                    <li>Example: Buy 1 for 100 MAD, Buy 2 for 90 MAD each, Buy 3+ for 80 MAD each</li>
+                                    <li>Promotions apply automatically at checkout</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-sm font-semibold text-gray-300">Pricing Tiers</h4>
+                        <button 
+                            type="button" 
+                            onclick="addPromotion()"
+                            class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded-lg transition flex items-center gap-2 text-sm"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Add Tier
+                        </button>
+                    </div>
+
+                    <div id="promotionsContainer" class="space-y-3">
+                    </div>
+                    
+                    <input type="hidden" id="promotions_json" name="promotions_json" value="[]">
+
+                    <div id="noPromotionsMessage" class="text-center py-8 border-2 border-dashed border-yellow-500/30 rounded-lg bg-yellow-500/5">
+                        <svg class="w-12 h-12 text-yellow-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <p class="text-yellow-300 font-semibold mb-1">No pricing tiers added yet!</p>
+                        <p class="text-gray-400 text-sm">Click <strong class="text-yellow-400">"Add Tier"</strong> above to create quantity-based pricing</p>
+                        <p class="text-xs mt-2 text-gray-500">Example: Buy 2+ items = Pay 90 MAD each instead of 100 MAD</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Header Marquee Items -->
+            <div class="bg-gradient-to-br from-gray-900 to-gray-800 border border-yellow-500/30 rounded-xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                            <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                            Header Scrolling Banner
+                        </h3>
+                        <p class="text-sm text-gray-400 mt-1">Customize the scrolling promotional items at the top of your landing page</p>
+                    </div>
+                    <button 
+                        type="button" 
+                        onclick="addHeaderItem()"
+                        class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded-lg transition flex items-center gap-2 text-sm"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Add Item
+                    </button>
+                </div>
+
+                <!-- Preview of header -->
+                <div class="mb-4 p-3 bg-black rounded-lg overflow-hidden">
+                    <div class="flex items-center gap-4 text-white text-xs font-bold whitespace-nowrap animate-pulse">
+                        <span class="text-yellow-400">Preview:</span>
+                        <div id="headerPreview" class="flex items-center gap-3">
+                            <span>🔥 -50% OFF TODAY</span>
+                            <span class="text-gray-500">•</span>
+                            <span>🚚 Livraison gratuite</span>
+                            <span class="text-gray-500">•</span>
+                            <span>💵 Paiement à la livraison</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="headerItemsContainer" class="space-y-3">
+                    <!-- Header Item 1 -->
+                    <div class="header-item flex gap-3 items-center bg-[#0a1628] rounded-lg p-3 border border-white/5">
+                        <div class="flex-shrink-0">
+                            <select name="theme_data[header_items][0][emoji]" class="w-16 px-2 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm text-center" onchange="updateHeaderPreview()">
+                                <option value="🔥">🔥</option>
+                                <option value="💰">💰</option>
+                                <option value="🚚">🚚</option>
+                                <option value="💵">💵</option>
+                                <option value="⚡">⚡</option>
+                                <option value="✨">✨</option>
+                                <option value="🎁">🎁</option>
+                                <option value="⭐">⭐</option>
+                                <option value="🛡️">🛡️</option>
+                                <option value="✅">✅</option>
+                                <option value="📦">📦</option>
+                                <option value="🏷️">🏷️</option>
+                            </select>
+                        </div>
+                        <input 
+                            type="text" 
+                            name="theme_data[header_items][0][text]" 
+                            value="{{ old('theme_data.header_items.0.text', '-50% OFF TODAY') }}"
+                            class="flex-1 px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 text-sm"
+                            placeholder="Enter header text (e.g., -50% OFF TODAY)"
+                            onkeyup="updateHeaderPreview()"
+                        />
+                        <button type="button" onclick="removeHeaderItem(this)" class="text-red-400 hover:text-red-300 p-1">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <!-- Header Item 2 -->
+                    <div class="header-item flex gap-3 items-center bg-[#0a1628] rounded-lg p-3 border border-white/5">
+                        <div class="flex-shrink-0">
+                            <select name="theme_data[header_items][1][emoji]" class="w-16 px-2 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm text-center" onchange="updateHeaderPreview()">
+                                <option value="🔥">🔥</option>
+                                <option value="💰">💰</option>
+                                <option value="🚚" selected>🚚</option>
+                                <option value="💵">💵</option>
+                                <option value="⚡">⚡</option>
+                                <option value="✨">✨</option>
+                                <option value="🎁">🎁</option>
+                                <option value="⭐">⭐</option>
+                                <option value="🛡️">🛡️</option>
+                                <option value="✅">✅</option>
+                                <option value="📦">📦</option>
+                                <option value="🏷️">🏷️</option>
+                            </select>
+                        </div>
+                        <input 
+                            type="text" 
+                            name="theme_data[header_items][1][text]" 
+                            value="{{ old('theme_data.header_items.1.text', 'Livraison gratuite') }}"
+                            class="flex-1 px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 text-sm"
+                            placeholder="Enter header text"
+                            onkeyup="updateHeaderPreview()"
+                        />
+                        <button type="button" onclick="removeHeaderItem(this)" class="text-red-400 hover:text-red-300 p-1">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <!-- Header Item 3 -->
+                    <div class="header-item flex gap-3 items-center bg-[#0a1628] rounded-lg p-3 border border-white/5">
+                        <div class="flex-shrink-0">
+                            <select name="theme_data[header_items][2][emoji]" class="w-16 px-2 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm text-center" onchange="updateHeaderPreview()">
+                                <option value="🔥">🔥</option>
+                                <option value="💰">💰</option>
+                                <option value="🚚">🚚</option>
+                                <option value="💵" selected>💵</option>
+                                <option value="⚡">⚡</option>
+                                <option value="✨">✨</option>
+                                <option value="🎁">🎁</option>
+                                <option value="⭐">⭐</option>
+                                <option value="🛡️">🛡️</option>
+                                <option value="✅">✅</option>
+                                <option value="📦">📦</option>
+                                <option value="🏷️">🏷️</option>
+                            </select>
+                        </div>
+                        <input 
+                            type="text" 
+                            name="theme_data[header_items][2][text]" 
+                            value="{{ old('theme_data.header_items.2.text', 'Paiement à la livraison') }}"
+                            class="flex-1 px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 text-sm"
+                            placeholder="Enter header text"
+                            onkeyup="updateHeaderPreview()"
+                        />
+                        <button type="button" onclick="removeHeaderItem(this)" class="text-red-400 hover:text-red-300 p-1">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <!-- Header Item 4 -->
+                    <div class="header-item flex gap-3 items-center bg-[#0a1628] rounded-lg p-3 border border-white/5">
+                        <div class="flex-shrink-0">
+                            <select name="theme_data[header_items][3][emoji]" class="w-16 px-2 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm text-center" onchange="updateHeaderPreview()">
+                                <option value="🔥">🔥</option>
+                                <option value="💰">💰</option>
+                                <option value="🚚">🚚</option>
+                                <option value="💵">💵</option>
+                                <option value="⚡" selected>⚡</option>
+                                <option value="✨">✨</option>
+                                <option value="🎁">🎁</option>
+                                <option value="⭐">⭐</option>
+                                <option value="🛡️">🛡️</option>
+                                <option value="✅">✅</option>
+                                <option value="📦">📦</option>
+                                <option value="🏷️">🏷️</option>
+                            </select>
+                        </div>
+                        <input 
+                            type="text" 
+                            name="theme_data[header_items][3][text]" 
+                            value="{{ old('theme_data.header_items.3.text', 'HIFADHI NDOGO') }}"
+                            class="flex-1 px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 text-sm"
+                            placeholder="Enter header text"
+                            onkeyup="updateHeaderPreview()"
+                        />
+                        <button type="button" onclick="removeHeaderItem(this)" class="text-red-400 hover:text-red-300 p-1">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <p class="text-xs text-gray-500 mt-4">
+                    <span class="text-yellow-400">Tip:</span> These items will scroll continuously at the top of your landing page. Add promotional messages, trust badges, or special offers.
+                </p>
             </div>
 
             <!-- Hero Section Customization -->
@@ -689,6 +991,70 @@
                                 <option value="red" {{ old('theme_data.cta_color') == 'red' ? 'selected' : '' }}>Red</option>
                                 <option value="blue" {{ old('theme_data.cta_color') == 'blue' ? 'selected' : '' }}>Blue</option>
                             </select>
+                        </div>
+                    </div>
+
+                    <!-- Title Styling -->
+                    <div class="border-t border-white/10 pt-4 mt-4">
+                        <h4 class="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-orange-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"/>
+                            </svg>
+                            Title Styling
+                        </h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="title_color" class="block text-sm font-medium text-gray-300 mb-2">Title Color</label>
+                                <div class="flex gap-2">
+                                    <input 
+                                        type="color" 
+                                        id="title_color_picker" 
+                                        value="{{ old('theme_data.title_color', '#ffffff') }}"
+                                        onchange="document.getElementById('title_color').value = this.value; updateTitlePreview()"
+                                        class="w-12 h-12 rounded-lg cursor-pointer border border-white/10 bg-transparent"
+                                    />
+                                    <input 
+                                        type="text" 
+                                        id="title_color" 
+                                        name="theme_data[title_color]" 
+                                        value="{{ old('theme_data.title_color', '#ffffff') }}"
+                                        onchange="document.getElementById('title_color_picker').value = this.value; updateTitlePreview()"
+                                        class="flex-1 px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent uppercase"
+                                        placeholder="#ffffff"
+                                        pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+                                    />
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Choose the color for your product title</p>
+                            </div>
+                            <div>
+                                <label for="title_font" class="block text-sm font-medium text-gray-300 mb-2">Title Font</label>
+                                <select 
+                                    id="title_font" 
+                                    name="theme_data[title_font]"
+                                    onchange="updateTitlePreview()"
+                                    class="w-full px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                >
+                                    <option value="bebas" {{ old('theme_data.title_font', 'bebas') == 'bebas' ? 'selected' : '' }}>Bebas Neue (Bold Display)</option>
+                                    <option value="inter" {{ old('theme_data.title_font') == 'inter' ? 'selected' : '' }}>Inter (Modern Sans)</option>
+                                    <option value="cairo" {{ old('theme_data.title_font') == 'cairo' ? 'selected' : '' }}>Cairo (Arabic-friendly)</option>
+                                    <option value="oswald" {{ old('theme_data.title_font') == 'oswald' ? 'selected' : '' }}>Oswald (Condensed)</option>
+                                    <option value="montserrat" {{ old('theme_data.title_font') == 'montserrat' ? 'selected' : '' }}>Montserrat (Geometric)</option>
+                                    <option value="playfair" {{ old('theme_data.title_font') == 'playfair' ? 'selected' : '' }}>Playfair Display (Elegant)</option>
+                                    <option value="roboto" {{ old('theme_data.title_font') == 'roboto' ? 'selected' : '' }}>Roboto (Clean)</option>
+                                    <option value="poppins" {{ old('theme_data.title_font') == 'poppins' ? 'selected' : '' }}>Poppins (Friendly)</option>
+                                    <option value="anton" {{ old('theme_data.title_font') == 'anton' ? 'selected' : '' }}>Anton (Impact)</option>
+                                    <option value="raleway" {{ old('theme_data.title_font') == 'raleway' ? 'selected' : '' }}>Raleway (Elegant Sans)</option>
+                                </select>
+                                <p class="text-xs text-gray-500 mt-1">Choose the font style for your title</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Title Preview -->
+                        <div class="mt-4 p-4 bg-gradient-to-r from-red-500 via-red-600 to-red-700 rounded-lg">
+                            <p class="text-xs text-white/70 mb-2">Preview:</p>
+                            <h2 id="titlePreview" class="text-3xl font-black uppercase" style="color: {{ old('theme_data.title_color', '#ffffff') }}; font-family: 'Bebas Neue', sans-serif;">
+                                YOUR PRODUCT TITLE
+                            </h2>
                         </div>
                     </div>
                 </div>
@@ -1043,6 +1409,72 @@
     <script>
         let featureCounter = 3;
         let sectionCounter = 0;
+        let headerItemCounter = 4;
+        let variationCounter = 0;
+        let promotionCounter = 0;
+        let currentCurrency = 'MAD';
+
+        function addHeaderItem() {
+            const container = document.getElementById('headerItemsContainer');
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'header-item flex gap-3 items-center bg-[#0a1628] rounded-lg p-3 border border-white/5';
+            headerDiv.innerHTML = `
+                <div class="flex-shrink-0">
+                    <select name="theme_data[header_items][${headerItemCounter}][emoji]" class="w-16 px-2 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm text-center" onchange="updateHeaderPreview()">
+                        <option value="🔥">🔥</option>
+                        <option value="💰">💰</option>
+                        <option value="🚚">🚚</option>
+                        <option value="💵">💵</option>
+                        <option value="⚡">⚡</option>
+                        <option value="✨">✨</option>
+                        <option value="🎁">🎁</option>
+                        <option value="⭐">⭐</option>
+                        <option value="🛡️">🛡️</option>
+                        <option value="✅">✅</option>
+                        <option value="📦">📦</option>
+                        <option value="🏷️">🏷️</option>
+                    </select>
+                </div>
+                <input 
+                    type="text" 
+                    name="theme_data[header_items][${headerItemCounter}][text]" 
+                    class="flex-1 px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 text-sm"
+                    placeholder="Enter header text"
+                    onkeyup="updateHeaderPreview()"
+                />
+                <button type="button" onclick="removeHeaderItem(this)" class="text-red-400 hover:text-red-300 p-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            `;
+            container.appendChild(headerDiv);
+            headerItemCounter++;
+            updateHeaderPreview();
+        }
+
+        function removeHeaderItem(btn) {
+            btn.closest('.header-item').remove();
+            updateHeaderPreview();
+        }
+
+        function updateHeaderPreview() {
+            const items = document.querySelectorAll('#headerItemsContainer .header-item');
+            const preview = document.getElementById('headerPreview');
+            let previewHtml = '';
+            
+            items.forEach((item, index) => {
+                const emoji = item.querySelector('select').value;
+                const text = item.querySelector('input[type="text"]').value || 'Enter text...';
+                
+                if (index > 0) {
+                    previewHtml += '<span class="text-gray-500">•</span>';
+                }
+                previewHtml += `<span>${emoji} ${text}</span>`;
+            });
+            
+            preview.innerHTML = previewHtml || '<span class="text-gray-500">No items added</span>';
+        }
 
         // Language name mapping for preview
         const languageNames = {
@@ -1088,12 +1520,343 @@
             const currencyCode = selectedOption.value;
             const currencyText = selectedOption.text;
             
+            currentCurrency = currencyCode;
+            
             // Update the currency display text
             document.getElementById('selectedCurrencyDisplay').textContent = currencyText;
             
             // Update price labels
             document.getElementById('priceCurrencyLabel').textContent = currencyCode;
             document.getElementById('comparePriceCurrencyLabel').textContent = currencyCode;
+            
+            // Update all variation price labels
+            document.querySelectorAll('.variation-price-label').forEach(label => {
+                label.textContent = `Price (${currencyCode}) *`;
+            });
+            document.querySelectorAll('.variation-compare-price-label').forEach(label => {
+                label.textContent = `Compare at Price (${currencyCode})`;
+            });
+            
+            // Update all promotion price labels
+            document.querySelectorAll('.promotion-price-label').forEach(label => {
+                label.textContent = `Price per Unit (${currencyCode}) *`;
+            });
+            
+            // Update promotion example text
+            document.querySelectorAll('.promotion-example-text').forEach(el => {
+                el.innerHTML = `<strong>Example:</strong> Min: 2, Max: 4, Price: 90.00 = Customers buying 2-4 items pay 90 ${currencyCode} per item`;
+            });
+        }
+
+        function toggleVariations(enabled) {
+            const variationsCard = document.getElementById('variationsCard');
+            const priceField = document.getElementById('price');
+            const comparePriceField = document.getElementById('compare_at_price');
+            const stockField = document.getElementById('stock');
+            const basicPriceFields = [priceField, comparePriceField, stockField];
+            
+            if (enabled) {
+                variationsCard.classList.remove('hidden');
+                basicPriceFields.forEach(field => {
+                    if (field) {
+                        field.disabled = true;
+                        field.value = '';
+                        field.classList.add('opacity-50', 'cursor-not-allowed');
+                        field.placeholder = 'Set in variations';
+                    }
+                });
+            } else {
+                variationsCard.classList.add('hidden');
+                basicPriceFields.forEach(field => {
+                    if (field) {
+                        field.disabled = false;
+                        field.classList.remove('opacity-50', 'cursor-not-allowed');
+                        if (field.id === 'price') field.placeholder = '299.00';
+                        else if (field.id === 'compare_at_price') field.placeholder = '599.00';
+                        else if (field.id === 'stock') field.placeholder = '0';
+                    }
+                });
+            }
+        }
+
+        function addVariation() {
+            const container = document.getElementById('variationsContainer');
+            const noVariationsMsg = document.getElementById('noVariationsMessage');
+            
+            if (noVariationsMsg) {
+                noVariationsMsg.style.display = 'none';
+            }
+            
+            const variationId = variationCounter++;
+            
+            const variationDiv = document.createElement('div');
+            variationDiv.className = 'border border-blue-500/30 rounded-lg p-4 bg-[#0a1628] relative';
+            variationDiv.id = `variation-${variationId}`;
+            variationDiv.innerHTML = `
+                <button 
+                    type="button" 
+                    onclick="removeVariation(${variationId})"
+                    class="absolute top-4 right-4 text-red-400 hover:text-red-300 transition"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+                
+                <h4 class="text-sm font-semibold text-blue-400 mb-4">Variation ${variationId + 1}</h4>
+                
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-xs font-medium text-gray-300">Attributes</label>
+                            <button 
+                                type="button" 
+                                onclick="addAttribute(${variationId})"
+                                class="text-xs px-2 py-1 bg-cyan-600 hover:bg-cyan-700 text-white rounded transition"
+                            >
+                                + Add Attribute
+                            </button>
+                        </div>
+                        <div id="attributes-container-${variationId}" class="space-y-2">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-300 mb-1 variation-price-label">Price (${currentCurrency}) *</label>
+                            <input 
+                                type="number" 
+                                name="variations[${variationId}][price]" 
+                                step="0.01"
+                                min="0"
+                                required
+                                class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="299.00"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-medium text-gray-300 mb-1 variation-compare-price-label">Compare at Price (${currentCurrency})</label>
+                            <input 
+                                type="number" 
+                                name="variations[${variationId}][compare_at_price]" 
+                                step="0.01"
+                                min="0"
+                                class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="599.00"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-medium text-gray-300 mb-1">Stock *</label>
+                            <input 
+                                type="number" 
+                                name="variations[${variationId}][stock]" 
+                                min="0"
+                                value="0"
+                                required
+                                class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="0"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-medium text-gray-300 mb-1">SKU</label>
+                            <input 
+                                type="text" 
+                                name="variations[${variationId}][sku]" 
+                                class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="SKU-${variationId + 1}"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-4 pt-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                name="variations[${variationId}][is_default]" 
+                                value="1"
+                                class="rounded bg-[#0f1c2e] border-white/10 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span class="text-xs text-gray-300">Default variation</span>
+                        </label>
+                        
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                name="variations[${variationId}][is_active]" 
+                                value="1"
+                                checked
+                                class="rounded bg-[#0f1c2e] border-white/10 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span class="text-xs text-gray-300">Active</span>
+                        </label>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(variationDiv);
+            addAttribute(variationId);
+        }
+
+        function addAttribute(variationId) {
+            const container = document.getElementById(`attributes-container-${variationId}`);
+            const attributeId = container.children.length;
+            
+            const attributeDiv = document.createElement('div');
+            attributeDiv.className = 'flex gap-2 items-center';
+            attributeDiv.innerHTML = `
+                <input 
+                    type="text" 
+                    name="variations[${variationId}][attributes][${attributeId}][name]" 
+                    placeholder="Attribute (e.g., Color)"
+                    class="flex-1 px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                />
+                <input 
+                    type="text" 
+                    name="variations[${variationId}][attributes][${attributeId}][value]" 
+                    placeholder="Value (e.g., Red)"
+                    class="flex-1 px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                />
+                <button 
+                    type="button" 
+                    onclick="this.parentElement.remove()"
+                    class="text-red-400 hover:text-red-300 p-1"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            `;
+            container.appendChild(attributeDiv);
+        }
+
+        function removeVariation(variationId) {
+            const variationDiv = document.getElementById(`variation-${variationId}`);
+            if (variationDiv) {
+                variationDiv.remove();
+            }
+            
+            const container = document.getElementById('variationsContainer');
+            if (container.children.length === 0) {
+                document.getElementById('noVariationsMessage').style.display = 'block';
+            }
+        }
+
+        function togglePromotions(enabled) {
+            const promotionsContent = document.getElementById('promotionsContent');
+            if (enabled) {
+                promotionsContent.classList.remove('hidden');
+            } else {
+                promotionsContent.classList.add('hidden');
+            }
+        }
+
+        function updatePromotionsJson() {
+            const container = document.getElementById('promotionsContainer');
+            const promotions = [];
+            const promotionDivs = container.querySelectorAll('[id^="promotion-"]');
+            
+            promotionDivs.forEach((div) => {
+                const minQty = div.querySelector('input[name*="[min_quantity]"]');
+                const maxQty = div.querySelector('input[name*="[max_quantity]"]');
+                const price = div.querySelector('input[name*="[price]"]');
+                
+                if (minQty && price) {
+                    promotions.push({
+                        min_quantity: minQty.value || '',
+                        max_quantity: maxQty ? (maxQty.value || null) : null,
+                        price: price.value || ''
+                    });
+                }
+            });
+            
+            document.getElementById('promotions_json').value = JSON.stringify(promotions);
+            console.log('Updated promotions JSON:', promotions);
+        }
+
+        function addPromotion() {
+            const container = document.getElementById('promotionsContainer');
+            const noPromotionsMsg = document.getElementById('noPromotionsMessage');
+            
+            if (noPromotionsMsg) {
+                noPromotionsMsg.style.display = 'none';
+            }
+            
+            const promotionId = promotionCounter++;
+            
+            const promotionDiv = document.createElement('div');
+            promotionDiv.className = 'border border-yellow-500/30 rounded-lg p-4 bg-[#0a1628] relative';
+            promotionDiv.id = `promotion-${promotionId}`;
+            promotionDiv.innerHTML = `
+                <button 
+                    type="button" 
+                    onclick="removePromotion(${promotionId})"
+                    class="absolute top-4 right-4 text-red-400 hover:text-red-300 transition"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+                
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Min Quantity *</label>
+                        <input 
+                            type="number" 
+                            name="promotions[${promotionId}][min_quantity]" 
+                            min="1"
+                            required
+                            class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                            placeholder="2"
+                            oninput="updatePromotionsJson()"
+                        />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Max Quantity</label>
+                        <input 
+                            type="number" 
+                            name="promotions[${promotionId}][max_quantity]" 
+                            min="1"
+                            class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                            placeholder="Leave empty for unlimited"
+                            oninput="updatePromotionsJson()"
+                        />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1 promotion-price-label">Price per Unit (${currentCurrency}) *</label>
+                        <input 
+                            type="number" 
+                            name="promotions[${promotionId}][price]" 
+                            step="0.01"
+                            min="0"
+                            required
+                            class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                            placeholder="90.00"
+                            oninput="updatePromotionsJson()"
+                        />
+                    </div>
+                </div>
+                <div class="bg-yellow-500/10 border border-yellow-500/20 rounded p-2 text-xs text-yellow-300 promotion-example-text mt-3">
+                    <strong>Example:</strong> Min: 2, Max: 4, Price: 90.00 = Customers buying 2-4 items pay 90 ${currentCurrency} per item
+                </div>
+            `;
+            container.appendChild(promotionDiv);
+            updatePromotionsJson();
+        }
+
+        function removePromotion(promotionId) {
+            const promotionDiv = document.getElementById(`promotion-${promotionId}`);
+            if (promotionDiv) {
+                promotionDiv.remove();
+            }
+            
+            const container = document.getElementById('promotionsContainer');
+            if (container.children.length === 0) {
+                document.getElementById('noPromotionsMessage').style.display = 'block';
+            }
+            updatePromotionsJson();
         }
 
         function updateLanguagePreview() {
@@ -1113,6 +1876,43 @@
                     span.textContent = `${langInfo.flag} ${langInfo.name}`;
                     preview.appendChild(span);
                 });
+            }
+        }
+
+        // Load Google Fonts for title preview
+        (function() {
+            const link = document.createElement('link');
+            link.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cairo:wght@700;900&family=Inter:wght@700;900&family=Oswald:wght@700&family=Montserrat:wght@700;900&family=Playfair+Display:wght@700;900&family=Roboto:wght@700;900&family=Poppins:wght@700;900&family=Anton&family=Raleway:wght@700;900&display=swap';
+            link.rel = 'stylesheet';
+            document.head.appendChild(link);
+        })();
+
+        // Font mappings for title preview
+        const fontFamilies = {
+            'bebas': "'Bebas Neue', sans-serif",
+            'inter': "'Inter', sans-serif",
+            'cairo': "'Cairo', sans-serif",
+            'oswald': "'Oswald', sans-serif",
+            'montserrat': "'Montserrat', sans-serif",
+            'playfair': "'Playfair Display', serif",
+            'roboto': "'Roboto', sans-serif",
+            'poppins': "'Poppins', sans-serif",
+            'anton': "'Anton', sans-serif",
+            'raleway': "'Raleway', sans-serif"
+        };
+
+        function updateTitlePreview() {
+            const titlePreview = document.getElementById('titlePreview');
+            const colorInput = document.getElementById('title_color');
+            const fontSelect = document.getElementById('title_font');
+            
+            if (titlePreview && colorInput) {
+                titlePreview.style.color = colorInput.value;
+            }
+            
+            if (titlePreview && fontSelect) {
+                const fontKey = fontSelect.value;
+                titlePreview.style.fontFamily = fontFamilies[fontKey] || fontFamilies['bebas'];
             }
         }
 
@@ -1302,8 +2102,58 @@
 
                 const form = descriptionTextarea.closest('form');
                 if (form) {
-                    form.addEventListener('submit', function() {
+                    form.addEventListener('submit', function(e) {
                         descriptionTextarea.value = quill.root.innerHTML;
+                        
+                        // Validate promotions
+                        const hasPromotionsCheckbox = document.getElementById('has_promotions');
+                        const promotionsContainer = document.getElementById('promotionsContainer');
+                        
+                        if (hasPromotionsCheckbox && hasPromotionsCheckbox.checked) {
+                            const promotions = [];
+                            const promotionDivs = promotionsContainer.querySelectorAll('[id^="promotion-"]');
+                            
+                            promotionDivs.forEach((div) => {
+                                const minQty = div.querySelector('input[name*="[min_quantity]"]');
+                                const price = div.querySelector('input[name*="[price]"]');
+                                const maxQty = div.querySelector('input[name*="[max_quantity]"]');
+                                
+                                if (minQty && price && minQty.value && price.value) {
+                                    promotions.push({
+                                        min_quantity: minQty.value,
+                                        max_quantity: maxQty ? maxQty.value : null,
+                                        price: price.value
+                                    });
+                                }
+                            });
+                            
+                            document.getElementById('promotions_json').value = JSON.stringify(promotions);
+                            
+                            if (promotions.length === 0) {
+                                e.preventDefault();
+                                
+                                const notification = document.createElement('div');
+                                notification.className = 'fixed top-4 right-4 bg-red-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3';
+                                notification.innerHTML = `
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                    <div>
+                                        <p class="font-semibold">Promotions enabled but no tiers added!</p>
+                                        <p class="text-sm">Please click "Add Tier" to add at least one pricing tier, or disable Quantity-Based Pricing.</p>
+                                    </div>
+                                `;
+                                document.body.appendChild(notification);
+                                
+                                document.getElementById('promotionsCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                
+                                setTimeout(() => {
+                                    notification.remove();
+                                }, 5000);
+                                
+                                return false;
+                            }
+                        }
                     });
                 }
 

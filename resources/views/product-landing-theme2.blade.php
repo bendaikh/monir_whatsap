@@ -20,7 +20,7 @@
     <title>{{ $product->name }}</title>
     <meta name="description" content="{{ Str::limit(strip_tags($product->description), 160) }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@400;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@400;600;700;800;900&family=Bebas+Neue&family=Oswald:wght@400;600;700&family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:wght@400;600;700;800;900&family=Roboto:wght@400;500;700;900&family=Poppins:wght@400;600;700;800;900&family=Anton&family=Raleway:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     @if($store->facebook_pixel_enabled && $store->facebook_pixel_id)
@@ -65,12 +65,28 @@
     $promoBadgeColor = $td['promo_badge_color'] ?? 'red';
     $ctaText = $td['cta_text'] ?? 'ORDER NOW';
     $ctaColor = $td['cta_color'] ?? 'orange';
+    $titleColor = $td['title_color'] ?? '#000000';
+    $titleFont = $td['title_font'] ?? 'bebas';
     $statsCustomers = $td['stats_customers'] ?? '325';
     $statsRating = $td['stats_rating'] ?? '4.8';
     $statsReviews = $td['stats_reviews'] ?? '127';
     $staticFeatures = $td['features'] ?? [];
     $badges = $td['badges'] ?? [];
     $images = $product->all_images ?? [];
+    
+    $fontFamilyMap = [
+        'bebas' => "'Bebas Neue', sans-serif",
+        'inter' => "'Inter', sans-serif",
+        'cairo' => "'Cairo', sans-serif",
+        'oswald' => "'Oswald', sans-serif",
+        'montserrat' => "'Montserrat', sans-serif",
+        'playfair' => "'Playfair Display', serif",
+        'roboto' => "'Roboto', sans-serif",
+        'poppins' => "'Poppins', sans-serif",
+        'anton' => "'Anton', sans-serif",
+        'raleway' => "'Raleway', sans-serif",
+    ];
+    $titleFontFamily = $fontFamilyMap[$titleFont] ?? $fontFamilyMap['bebas'];
     
     // Build translations from unified column or legacy columns
     $translations = $product->landing_page_translations ?? [];
@@ -249,17 +265,30 @@
 <body class="antialiased bg-[#f5f5f0]" :class="{'rtl': rtlLangs.includes(currentLang)}" x-init="i18n = @js($i18n); badgeLabels = @js($badgeLabels); testimonialsData = @js($testimonials); pageData = @js($pageData)">
 
     <!-- Top promo marquee -->
+    @php
+        $headerItems = $td['header_items'] ?? [];
+        $hasCustomHeaderItems = !empty($headerItems) && is_array($headerItems);
+    @endphp
     <div class="bg-black text-white text-xs font-bold py-2 overflow-hidden whitespace-nowrap relative">
         <div class="flex animate-marquee gap-8 w-max pl-8">
             @for($i = 0; $i < 2; $i++)
-                <span>🔥 {{ $promoBadge }}</span>
-                <span>•</span>
-                <span x-text="t('limited_stock')">{{ $i18n['fr']['limited_stock'] }}</span>
-                <span>•</span>
-                <span>🚚 {{ $badgeLabels['fr']['free_shipping'][1] }}</span>
-                <span>•</span>
-                <span>💵 {{ $badgeLabels['fr']['cod'][1] }}</span>
-                <span>•</span>
+                @if($hasCustomHeaderItems)
+                    @foreach($headerItems as $index => $item)
+                        @if(!empty($item['text']))
+                            <span>{{ $item['emoji'] ?? '🔥' }} {{ $item['text'] }}</span>
+                            <span>•</span>
+                        @endif
+                    @endforeach
+                @else
+                    <span>🔥 {{ $promoBadge }}</span>
+                    <span>•</span>
+                    <span x-text="t('limited_stock')">{{ $i18n['fr']['limited_stock'] }}</span>
+                    <span>•</span>
+                    <span>🚚 {{ $badgeLabels['fr']['free_shipping'][1] }}</span>
+                    <span>•</span>
+                    <span>💵 {{ $badgeLabels['fr']['cod'][1] }}</span>
+                    <span>•</span>
+                @endif
             @endfor
         </div>
     </div>
@@ -316,7 +345,7 @@
                     </div>
                     @endif
 
-                    <h1 class="font-display text-5xl md:text-7xl lg:text-8xl font-black uppercase leading-none drop-shadow-[0_4px_0_rgba(0,0,0,0.25)] text-white">
+                    <h1 class="text-5xl md:text-7xl lg:text-8xl font-black uppercase leading-none drop-shadow-[0_4px_0_rgba(0,0,0,0.25)]" style="color: {{ $titleColor }}; font-family: {{ $titleFontFamily }}; letter-spacing: 0.02em;">
                         {{ $product->name }}
                     </h1>
 

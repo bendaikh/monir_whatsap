@@ -639,6 +639,7 @@ class CustomerDashboardController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'theme_data' => 'nullable|array',
             'price' => $hasVariations ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
             'compare_at_price' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:categories,id',
@@ -672,6 +673,13 @@ class CustomerDashboardController extends Controller
             'landing_sections.*.title_ar' => 'nullable|string|max:255',
             'landing_sections.*.description_ar' => 'nullable|string',
         ]);
+        
+        // Handle theme_data - merge with existing data to avoid overwriting other fields
+        if ($request->has('theme_data')) {
+            $existingThemeData = $product->theme_data ?? [];
+            $newThemeData = $request->input('theme_data');
+            $validated['theme_data'] = array_merge($existingThemeData, $newThemeData);
+        }
 
         $validated['is_active'] = $request->has('is_active');
         $validated['is_featured'] = $request->has('is_featured');

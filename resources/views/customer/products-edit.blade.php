@@ -206,6 +206,266 @@
                 </div>
             </div>
 
+            @if($product->theme === 'theme2')
+            <!-- Header Marquee Items (Theme 2 Only) -->
+            @php
+                $headerItems = $product->theme_data['header_items'] ?? [];
+            @endphp
+            <div class="bg-gradient-to-br from-gray-900 to-gray-800 border border-yellow-500/30 rounded-xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                            <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                            Header Scrolling Banner
+                        </h3>
+                        <p class="text-sm text-gray-400 mt-1">Customize the scrolling promotional items at the top of your landing page</p>
+                    </div>
+                    <button 
+                        type="button" 
+                        onclick="addHeaderItem()"
+                        class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded-lg transition flex items-center gap-2 text-sm"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Add Item
+                    </button>
+                </div>
+
+                <!-- Preview of header -->
+                <div class="mb-4 p-3 bg-black rounded-lg overflow-hidden">
+                    <div class="flex items-center gap-4 text-white text-xs font-bold whitespace-nowrap animate-pulse">
+                        <span class="text-yellow-400">Preview:</span>
+                        <div id="headerPreview" class="flex items-center gap-3">
+                            @if(!empty($headerItems))
+                                @foreach($headerItems as $index => $item)
+                                    @if(!empty($item['text']))
+                                        @if($index > 0)<span class="text-gray-500">•</span>@endif
+                                        <span>{{ $item['emoji'] ?? '🔥' }} {{ $item['text'] }}</span>
+                                    @endif
+                                @endforeach
+                            @else
+                                <span>🔥 -50% OFF TODAY</span>
+                                <span class="text-gray-500">•</span>
+                                <span>🚚 Livraison gratuite</span>
+                                <span class="text-gray-500">•</span>
+                                <span>💵 Paiement à la livraison</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                <div id="headerItemsContainer" class="space-y-3">
+                    @if(!empty($headerItems))
+                        @foreach($headerItems as $index => $item)
+                        <div class="header-item flex gap-3 items-center bg-[#0a1628] rounded-lg p-3 border border-white/5">
+                            <div class="flex-shrink-0">
+                                <select name="theme_data[header_items][{{ $index }}][emoji]" class="w-16 px-2 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm text-center" onchange="updateHeaderPreview()">
+                                    <option value="🔥" {{ ($item['emoji'] ?? '') == '🔥' ? 'selected' : '' }}>🔥</option>
+                                    <option value="💰" {{ ($item['emoji'] ?? '') == '💰' ? 'selected' : '' }}>💰</option>
+                                    <option value="🚚" {{ ($item['emoji'] ?? '') == '🚚' ? 'selected' : '' }}>🚚</option>
+                                    <option value="💵" {{ ($item['emoji'] ?? '') == '💵' ? 'selected' : '' }}>💵</option>
+                                    <option value="⚡" {{ ($item['emoji'] ?? '') == '⚡' ? 'selected' : '' }}>⚡</option>
+                                    <option value="✨" {{ ($item['emoji'] ?? '') == '✨' ? 'selected' : '' }}>✨</option>
+                                    <option value="🎁" {{ ($item['emoji'] ?? '') == '🎁' ? 'selected' : '' }}>🎁</option>
+                                    <option value="⭐" {{ ($item['emoji'] ?? '') == '⭐' ? 'selected' : '' }}>⭐</option>
+                                    <option value="🛡️" {{ ($item['emoji'] ?? '') == '🛡️' ? 'selected' : '' }}>🛡️</option>
+                                    <option value="✅" {{ ($item['emoji'] ?? '') == '✅' ? 'selected' : '' }}>✅</option>
+                                    <option value="📦" {{ ($item['emoji'] ?? '') == '📦' ? 'selected' : '' }}>📦</option>
+                                    <option value="🏷️" {{ ($item['emoji'] ?? '') == '🏷️' ? 'selected' : '' }}>🏷️</option>
+                                </select>
+                            </div>
+                            <input 
+                                type="text" 
+                                name="theme_data[header_items][{{ $index }}][text]" 
+                                value="{{ $item['text'] ?? '' }}"
+                                class="flex-1 px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 text-sm"
+                                placeholder="Enter header text"
+                                onkeyup="updateHeaderPreview()"
+                            />
+                            <button type="button" onclick="removeHeaderItem(this)" class="text-red-400 hover:text-red-300 p-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        @endforeach
+                    @else
+                        <!-- Default items if none exist -->
+                        <div class="header-item flex gap-3 items-center bg-[#0a1628] rounded-lg p-3 border border-white/5">
+                            <div class="flex-shrink-0">
+                                <select name="theme_data[header_items][0][emoji]" class="w-16 px-2 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm text-center" onchange="updateHeaderPreview()">
+                                    <option value="🔥" selected>🔥</option>
+                                    <option value="💰">💰</option>
+                                    <option value="🚚">🚚</option>
+                                    <option value="💵">💵</option>
+                                    <option value="⚡">⚡</option>
+                                    <option value="✨">✨</option>
+                                    <option value="🎁">🎁</option>
+                                    <option value="⭐">⭐</option>
+                                    <option value="🛡️">🛡️</option>
+                                    <option value="✅">✅</option>
+                                    <option value="📦">📦</option>
+                                    <option value="🏷️">🏷️</option>
+                                </select>
+                            </div>
+                            <input 
+                                type="text" 
+                                name="theme_data[header_items][0][text]" 
+                                value="-50% OFF TODAY"
+                                class="flex-1 px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 text-sm"
+                                placeholder="Enter header text"
+                                onkeyup="updateHeaderPreview()"
+                            />
+                            <button type="button" onclick="removeHeaderItem(this)" class="text-red-400 hover:text-red-300 p-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="header-item flex gap-3 items-center bg-[#0a1628] rounded-lg p-3 border border-white/5">
+                            <div class="flex-shrink-0">
+                                <select name="theme_data[header_items][1][emoji]" class="w-16 px-2 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm text-center" onchange="updateHeaderPreview()">
+                                    <option value="🔥">🔥</option>
+                                    <option value="💰">💰</option>
+                                    <option value="🚚" selected>🚚</option>
+                                    <option value="💵">💵</option>
+                                    <option value="⚡">⚡</option>
+                                    <option value="✨">✨</option>
+                                    <option value="🎁">🎁</option>
+                                    <option value="⭐">⭐</option>
+                                    <option value="🛡️">🛡️</option>
+                                    <option value="✅">✅</option>
+                                    <option value="📦">📦</option>
+                                    <option value="🏷️">🏷️</option>
+                                </select>
+                            </div>
+                            <input 
+                                type="text" 
+                                name="theme_data[header_items][1][text]" 
+                                value="Livraison gratuite"
+                                class="flex-1 px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 text-sm"
+                                placeholder="Enter header text"
+                                onkeyup="updateHeaderPreview()"
+                            />
+                            <button type="button" onclick="removeHeaderItem(this)" class="text-red-400 hover:text-red-300 p-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="header-item flex gap-3 items-center bg-[#0a1628] rounded-lg p-3 border border-white/5">
+                            <div class="flex-shrink-0">
+                                <select name="theme_data[header_items][2][emoji]" class="w-16 px-2 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm text-center" onchange="updateHeaderPreview()">
+                                    <option value="🔥">🔥</option>
+                                    <option value="💰">💰</option>
+                                    <option value="🚚">🚚</option>
+                                    <option value="💵" selected>💵</option>
+                                    <option value="⚡">⚡</option>
+                                    <option value="✨">✨</option>
+                                    <option value="🎁">🎁</option>
+                                    <option value="⭐">⭐</option>
+                                    <option value="🛡️">🛡️</option>
+                                    <option value="✅">✅</option>
+                                    <option value="📦">📦</option>
+                                    <option value="🏷️">🏷️</option>
+                                </select>
+                            </div>
+                            <input 
+                                type="text" 
+                                name="theme_data[header_items][2][text]" 
+                                value="Paiement à la livraison"
+                                class="flex-1 px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 text-sm"
+                                placeholder="Enter header text"
+                                onkeyup="updateHeaderPreview()"
+                            />
+                            <button type="button" onclick="removeHeaderItem(this)" class="text-red-400 hover:text-red-300 p-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                    @endif
+                </div>
+                
+                <p class="text-xs text-gray-500 mt-4">
+                    <span class="text-yellow-400">Tip:</span> These items will scroll continuously at the top of your landing page. Add promotional messages, trust badges, or special offers.
+                </p>
+            </div>
+
+            <!-- Title Styling (Theme 2 Only) -->
+            @php
+                $titleColor = $product->theme_data['title_color'] ?? '#ffffff';
+                $titleFont = $product->theme_data['title_font'] ?? 'bebas';
+            @endphp
+            <div class="bg-gradient-to-br from-orange-900/50 to-red-900/50 border border-orange-500/30 rounded-xl p-6">
+                <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"/>
+                    </svg>
+                    Title Styling
+                </h3>
+                <p class="text-sm text-gray-400 mb-4">Customize the color and font of your product title on the landing page</p>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="title_color" class="block text-sm font-medium text-gray-300 mb-2">Title Color</label>
+                        <div class="flex gap-2">
+                            <input 
+                                type="color" 
+                                id="title_color_picker" 
+                                value="{{ $titleColor }}"
+                                onchange="document.getElementById('title_color').value = this.value; updateTitlePreview()"
+                                class="w-12 h-12 rounded-lg cursor-pointer border border-white/10 bg-transparent"
+                            />
+                            <input 
+                                type="text" 
+                                id="title_color" 
+                                name="theme_data[title_color]" 
+                                value="{{ $titleColor }}"
+                                onchange="document.getElementById('title_color_picker').value = this.value; updateTitlePreview()"
+                                class="flex-1 px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent uppercase"
+                                placeholder="#ffffff"
+                                pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+                            />
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Choose the color for your product title</p>
+                    </div>
+                    <div>
+                        <label for="title_font" class="block text-sm font-medium text-gray-300 mb-2">Title Font</label>
+                        <select 
+                            id="title_font" 
+                            name="theme_data[title_font]"
+                            onchange="updateTitlePreview()"
+                            class="w-full px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        >
+                            <option value="bebas" {{ $titleFont == 'bebas' ? 'selected' : '' }}>Bebas Neue (Bold Display)</option>
+                            <option value="inter" {{ $titleFont == 'inter' ? 'selected' : '' }}>Inter (Modern Sans)</option>
+                            <option value="cairo" {{ $titleFont == 'cairo' ? 'selected' : '' }}>Cairo (Arabic-friendly)</option>
+                            <option value="oswald" {{ $titleFont == 'oswald' ? 'selected' : '' }}>Oswald (Condensed)</option>
+                            <option value="montserrat" {{ $titleFont == 'montserrat' ? 'selected' : '' }}>Montserrat (Geometric)</option>
+                            <option value="playfair" {{ $titleFont == 'playfair' ? 'selected' : '' }}>Playfair Display (Elegant)</option>
+                            <option value="roboto" {{ $titleFont == 'roboto' ? 'selected' : '' }}>Roboto (Clean)</option>
+                            <option value="poppins" {{ $titleFont == 'poppins' ? 'selected' : '' }}>Poppins (Friendly)</option>
+                            <option value="anton" {{ $titleFont == 'anton' ? 'selected' : '' }}>Anton (Impact)</option>
+                            <option value="raleway" {{ $titleFont == 'raleway' ? 'selected' : '' }}>Raleway (Elegant Sans)</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Choose the font style for your title</p>
+                    </div>
+                </div>
+                
+                <!-- Title Preview -->
+                <div class="mt-4 p-4 bg-gradient-to-r from-red-500 via-red-600 to-red-700 rounded-lg">
+                    <p class="text-xs text-white/70 mb-2">Preview:</p>
+                    <h2 id="titlePreview" class="text-3xl font-black uppercase" style="color: {{ $titleColor }}; font-family: '{{ $titleFont == 'bebas' ? 'Bebas Neue' : ($titleFont == 'playfair' ? 'Playfair Display' : ucfirst($titleFont)) }}', sans-serif;">
+                        {{ $product->name }}
+                    </h2>
+                </div>
+            </div>
+            @endif
+
             <!-- Product Variations Card -->
             <div id="variationsCard" class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6 {{ $product->has_variations ? '' : 'hidden' }}">
                 <div class="flex items-center justify-between mb-6">
@@ -713,6 +973,110 @@
         let sectionCounter = {{ $product->landing_page_sections ? count($product->landing_page_sections) : 0 }};
         let variationCounter = {{ $product->variations ? $product->variations->count() : 0 }};
         let promotionCounter = {{ $product->promotions ? $product->promotions->count() : 0 }};
+        let headerItemCounter = {{ isset($product->theme_data['header_items']) ? count($product->theme_data['header_items']) : 3 }};
+
+        function addHeaderItem() {
+            const container = document.getElementById('headerItemsContainer');
+            if (!container) return;
+            
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'header-item flex gap-3 items-center bg-[#0a1628] rounded-lg p-3 border border-white/5';
+            headerDiv.innerHTML = `
+                <div class="flex-shrink-0">
+                    <select name="theme_data[header_items][${headerItemCounter}][emoji]" class="w-16 px-2 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white text-sm text-center" onchange="updateHeaderPreview()">
+                        <option value="🔥">🔥</option>
+                        <option value="💰">💰</option>
+                        <option value="🚚">🚚</option>
+                        <option value="💵">💵</option>
+                        <option value="⚡">⚡</option>
+                        <option value="✨">✨</option>
+                        <option value="🎁">🎁</option>
+                        <option value="⭐">⭐</option>
+                        <option value="🛡️">🛡️</option>
+                        <option value="✅">✅</option>
+                        <option value="📦">📦</option>
+                        <option value="🏷️">🏷️</option>
+                    </select>
+                </div>
+                <input 
+                    type="text" 
+                    name="theme_data[header_items][${headerItemCounter}][text]" 
+                    class="flex-1 px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 text-sm"
+                    placeholder="Enter header text"
+                    onkeyup="updateHeaderPreview()"
+                />
+                <button type="button" onclick="removeHeaderItem(this)" class="text-red-400 hover:text-red-300 p-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            `;
+            container.appendChild(headerDiv);
+            headerItemCounter++;
+            updateHeaderPreview();
+        }
+
+        function removeHeaderItem(btn) {
+            btn.closest('.header-item').remove();
+            updateHeaderPreview();
+        }
+
+        function updateHeaderPreview() {
+            const items = document.querySelectorAll('#headerItemsContainer .header-item');
+            const preview = document.getElementById('headerPreview');
+            if (!preview) return;
+            
+            let previewHtml = '';
+            
+            items.forEach((item, index) => {
+                const emoji = item.querySelector('select').value;
+                const text = item.querySelector('input[type="text"]').value || 'Enter text...';
+                
+                if (index > 0) {
+                    previewHtml += '<span class="text-gray-500">•</span>';
+                }
+                previewHtml += `<span>${emoji} ${text}</span>`;
+            });
+            
+            preview.innerHTML = previewHtml || '<span class="text-gray-500">No items added</span>';
+        }
+
+        // Load Google Fonts for title preview
+        (function() {
+            const link = document.createElement('link');
+            link.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cairo:wght@700;900&family=Inter:wght@700;900&family=Oswald:wght@700&family=Montserrat:wght@700;900&family=Playfair+Display:wght@700;900&family=Roboto:wght@700;900&family=Poppins:wght@700;900&family=Anton&family=Raleway:wght@700;900&display=swap';
+            link.rel = 'stylesheet';
+            document.head.appendChild(link);
+        })();
+
+        // Font mappings for title preview
+        const fontFamilies = {
+            'bebas': "'Bebas Neue', sans-serif",
+            'inter': "'Inter', sans-serif",
+            'cairo': "'Cairo', sans-serif",
+            'oswald': "'Oswald', sans-serif",
+            'montserrat': "'Montserrat', sans-serif",
+            'playfair': "'Playfair Display', serif",
+            'roboto': "'Roboto', sans-serif",
+            'poppins': "'Poppins', sans-serif",
+            'anton': "'Anton', sans-serif",
+            'raleway': "'Raleway', sans-serif"
+        };
+
+        function updateTitlePreview() {
+            const titlePreview = document.getElementById('titlePreview');
+            const colorInput = document.getElementById('title_color');
+            const fontSelect = document.getElementById('title_font');
+            
+            if (titlePreview && colorInput) {
+                titlePreview.style.color = colorInput.value;
+            }
+            
+            if (titlePreview && fontSelect) {
+                const fontKey = fontSelect.value;
+                titlePreview.style.fontFamily = fontFamilies[fontKey] || fontFamilies['bebas'];
+            }
+        }
 
         function togglePromotions(enabled) {
             const promotionsContent = document.getElementById('promotionsContent');
