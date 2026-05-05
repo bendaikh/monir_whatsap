@@ -317,11 +317,8 @@ class CustomerDashboardController extends Controller
 
     public function productsCreate(Request $request)
     {
-        $theme = $request->query('theme', 'theme1');
-        
-        if (!in_array($theme, ['theme1', 'theme2'])) {
-            return redirect()->route('app.products.select-theme');
-        }
+        // Theme 1 has been removed, always use theme2
+        $theme = 'theme2';
         
         $storeId = $this->getActiveStoreId();
         
@@ -375,8 +372,9 @@ class CustomerDashboardController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'nickname' => 'nullable|string|max:255',
             'description' => 'nullable|string',
-            'theme' => 'nullable|string|in:theme1,theme2',
+            'theme' => 'nullable|string|in:theme2',
             'theme_data' => 'nullable|array',
             'price' => $hasVariations ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
             'compare_at_price' => 'nullable|numeric|min:0',
@@ -399,7 +397,7 @@ class CustomerDashboardController extends Controller
             'promotions.*.min_quantity' => 'required_with:promotions|integer|min:1',
             'promotions.*.max_quantity' => 'nullable|integer|min:1',
             'promotions.*.price' => 'required_with:promotions|numeric|min:0',
-            'promotions.*.label' => 'required_with:promotions|string|max:255',
+            'promotions.*.label' => 'nullable|string|max:255',
             'landing_sections' => 'nullable|array',
             'landing_sections.*.image' => 'nullable|image|max:2048',
             'landing_sections.*.title_fr' => 'nullable|string|max:255',
@@ -411,11 +409,12 @@ class CustomerDashboardController extends Controller
             'landing_page_currency' => 'nullable|string|max:10',
             'landing_page_languages' => 'nullable|array',
             'landing_page_languages.*' => 'string|max:10',
+            'default_language' => 'nullable|string|max:10',
         ]);
 
         $validated['user_id'] = auth()->id();
         $validated['store_id'] = $this->getActiveStoreId();
-        $validated['theme'] = $validated['theme'] ?? 'theme1';
+        $validated['theme'] = $validated['theme'] ?? 'theme2';
         $validated['theme_data'] = $request->input('theme_data');
         $validated['slug'] = \Str::slug($validated['name']) . '-' . time();
         $validated['is_active'] = $request->has('is_active');
@@ -429,6 +428,9 @@ class CustomerDashboardController extends Controller
         // Set landing page languages (default to French if not provided)
         $selectedLanguages = $request->input('landing_page_languages', []);
         $validated['landing_page_languages'] = !empty($selectedLanguages) ? $selectedLanguages : ['fr'];
+        
+        // Set default language (for the landing page)
+        $validated['default_language'] = $request->input('default_language') ?: ($validated['landing_page_languages'][0] ?? 'fr');
 
         // If has variations, stock/sku/price will be managed by variations
         if ($hasVariations) {
@@ -640,6 +642,7 @@ class CustomerDashboardController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'nickname' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'theme_data' => 'nullable|array',
             'price' => $hasVariations ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
@@ -665,7 +668,7 @@ class CustomerDashboardController extends Controller
             'promotions.*.min_quantity' => 'required_with:promotions|integer|min:1',
             'promotions.*.max_quantity' => 'nullable|integer|min:1',
             'promotions.*.price' => 'required_with:promotions|numeric|min:0',
-            'promotions.*.label' => 'required_with:promotions|string|max:255',
+            'promotions.*.label' => 'nullable|string|max:255',
             'landing_sections' => 'nullable|array',
             'landing_sections.*.image' => 'nullable|image|max:2048',
             'landing_sections.*.existing_image' => 'nullable|string',
@@ -675,6 +678,10 @@ class CustomerDashboardController extends Controller
             'landing_sections.*.description_en' => 'nullable|string',
             'landing_sections.*.title_ar' => 'nullable|string|max:255',
             'landing_sections.*.description_ar' => 'nullable|string',
+            'default_language' => 'nullable|string|max:10',
+            'landing_page_currency' => 'nullable|string|max:10',
+            'landing_page_languages' => 'nullable|array',
+            'landing_page_languages.*' => 'string|max:10',
         ]);
         
         // Handle theme_data - merge with existing data to avoid overwriting other fields
@@ -740,6 +747,22 @@ class CustomerDashboardController extends Controller
             foreach ($deleteImages as $image) {
                 \Storage::disk('public')->delete($image);
             }
+        }
+        
+        // Handle landing page currency if provided
+        if ($request->has('landing_page_currency')) {
+            $validated['landing_page_currency'] = $request->input('landing_page_currency', 'MAD');
+        }
+        
+        // Handle landing page languages if provided
+        if ($request->has('landing_page_languages')) {
+            $selectedLanguages = $request->input('landing_page_languages', []);
+            $validated['landing_page_languages'] = !empty($selectedLanguages) ? $selectedLanguages : ($product->landing_page_languages ?? ['fr']);
+        }
+        
+        // Handle default language if provided
+        if ($request->has('default_language')) {
+            $validated['default_language'] = $request->input('default_language') ?: ($product->default_language ?? ($validated['landing_page_languages'][0] ?? 'fr'));
         }
         
         $product->update($validated);

@@ -73,6 +73,26 @@
                         @enderror
                     </div>
 
+                    <!-- Nickname (Internal Use Only) -->
+                    <div>
+                        <label for="nickname" class="block text-sm font-medium text-gray-300 mb-2">
+                            Nickname 
+                            <span class="text-xs text-gray-500 font-normal">(internal use only - not shown on landing page)</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="nickname" 
+                            name="nickname" 
+                            value="{{ old('nickname', $product->nickname) }}"
+                            class="w-full px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                            placeholder="e.g., Summer promo version, Test batch #1..."
+                        />
+                        <p class="mt-1 text-xs text-gray-500">Use this to identify different versions or campaigns for the same product</p>
+                        @error('nickname')
+                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <!-- Description -->
                     <div>
                         <label for="description" class="block text-sm font-medium text-gray-300 mb-2">Description</label>
@@ -886,22 +906,106 @@
             <!-- Current Images Card -->
             @if($product->images && count($product->images) > 0)
             <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6">
-                <h3 class="text-xl font-bold text-white mb-6">Current Images</h3>
-                <p class="text-sm text-gray-400 mb-4">Check the images you want to delete</p>
+                <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    Current Images
+                </h3>
+                <p class="text-sm text-gray-400 mb-4">Manage your product images - click on an image to delete or replace it</p>
                 
-                <div class="grid grid-cols-4 gap-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     @foreach($product->images as $index => $image)
-                    <div class="relative group">
-                        <img src="/storage/{{ $image }}" alt="Product image" class="w-full h-32 object-cover rounded-lg border border-white/10" />
-                        <label class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition rounded-lg flex items-center justify-center cursor-pointer">
-                            <input type="checkbox" name="delete_images[]" value="{{ $image }}" class="w-5 h-5 text-red-500 rounded focus:ring-red-500">
-                            <span class="text-white text-xs ml-2">Delete</span>
-                        </label>
+                    <div class="relative group border-2 border-transparent hover:border-cyan-500 rounded-xl transition" id="image-container-{{ $index }}">
+                        <img src="/storage/{{ $image }}" alt="Product image {{ $index + 1 }}" class="w-full h-40 object-cover rounded-lg" />
+                        
+                        <!-- Image number badge -->
+                        <div class="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+                            #{{ $index + 1 }}
+                        </div>
+                        
+                        <!-- Action buttons overlay -->
+                        <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition rounded-lg flex flex-col items-center justify-center gap-2 p-3">
+                            <!-- Delete checkbox -->
+                            <label class="flex items-center gap-2 px-3 py-2 bg-red-600/80 hover:bg-red-600 rounded-lg cursor-pointer transition w-full justify-center">
+                                <input type="checkbox" name="delete_images[]" value="{{ $image }}" class="w-4 h-4 text-red-500 rounded focus:ring-red-500">
+                                <span class="text-white text-sm font-medium">Delete</span>
+                            </label>
+                            
+                            <!-- Replace image input -->
+                            <label class="flex items-center gap-2 px-3 py-2 bg-cyan-600/80 hover:bg-cyan-600 rounded-lg cursor-pointer transition w-full justify-center">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                                <span class="text-white text-sm font-medium">Replace</span>
+                                <input type="file" name="replace_image_{{ $index }}" accept="image/*" class="hidden" onchange="previewReplaceImage(this, {{ $index }})">
+                            </label>
+                        </div>
+                        
+                        <!-- Preview of replacement image -->
+                        <div id="replace-preview-{{ $index }}" class="hidden absolute inset-0 rounded-lg overflow-hidden">
+                            <img id="replace-preview-img-{{ $index }}" src="" alt="New image preview" class="w-full h-full object-cover">
+                            <div class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">New</div>
+                        </div>
                     </div>
                     @endforeach
                 </div>
+                
+                <div class="mt-4 p-3 bg-gray-800/50 border border-gray-700 rounded-lg">
+                    <p class="text-xs text-gray-400">
+                        <span class="text-yellow-400 font-medium">Tip:</span> Hover over an image to see delete and replace options. Checked images will be deleted when you save.
+                    </p>
+                </div>
             </div>
             @endif
+            
+            <!-- Default Language Selection -->
+            <div class="bg-gradient-to-br from-indigo-900 to-purple-900 border border-indigo-500/50 rounded-xl p-6">
+                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                    </svg>
+                    Landing Page Default Language
+                </h3>
+                <p class="text-sm text-indigo-200 mb-4">Choose the language that will be displayed by default when visitors first open the landing page</p>
+                
+                <select
+                    id="default_language"
+                    name="default_language"
+                    class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                >
+                    <option value="">-- Use first enabled language --</option>
+                    @php
+                        $defaultLang = $product->default_language ?? '';
+                        $languageOptions = [
+                            'fr' => '🇫🇷 French',
+                            'en' => '🇬🇧 English',
+                            'ar' => '🇸🇦 Arabic',
+                            'es' => '🇪🇸 Spanish',
+                            'de' => '🇩🇪 German',
+                            'it' => '🇮🇹 Italian',
+                            'pt' => '🇵🇹 Portuguese',
+                            'zh' => '🇨🇳 Chinese',
+                            'ja' => '🇯🇵 Japanese',
+                            'ko' => '🇰🇷 Korean',
+                            'ru' => '🇷🇺 Russian',
+                            'hi' => '🇮🇳 Hindi',
+                            'tr' => '🇹🇷 Turkish',
+                            'nl' => '🇳🇱 Dutch',
+                            'pl' => '🇵🇱 Polish',
+                            'sw' => '🇹🇿 Swahili',
+                        ];
+                    @endphp
+                    @foreach($languageOptions as $code => $name)
+                        <option value="{{ $code }}" {{ $defaultLang === $code ? 'selected' : '' }}>{{ $name }}</option>
+                    @endforeach
+                </select>
+                
+                <p class="mt-2 text-xs text-indigo-200">
+                    <span class="font-semibold">Current enabled languages:</span> 
+                    {{ implode(', ', array_map('strtoupper', $product->landing_page_languages ?? ['fr'])) }}
+                </p>
+            </div>
 
             <!-- Quantity-Based Promotions Card -->
             <div id="promotionsCard" class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6">
@@ -977,6 +1081,26 @@
                                 </svg>
                             </button>
                             
+                            <!-- Display Label -->
+                            <div class="mb-3">
+                                <label class="block text-xs font-medium text-yellow-400 mb-1">
+                                    <span class="flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
+                                        </svg>
+                                        Display Label <span class="text-gray-500 font-normal">(shown to customers)</span>
+                                    </span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    name="promotions[{{ $loop->index }}][label]" 
+                                    value="{{ $promotion->label }}"
+                                    class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-yellow-500/50 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                                    placeholder="e.g., Buy 2 Get 10% Off, Pack of 3, Family Bundle..."
+                                />
+                                <p class="text-xs text-gray-500 mt-1">This label will be displayed on the landing page instead of quantity/price details</p>
+                            </div>
+                            
                             <div class="grid grid-cols-3 gap-3 mb-3">
                                 <div>
                                     <label class="block text-xs font-medium text-gray-300 mb-1">Min Quantity *</label>
@@ -1017,7 +1141,7 @@
                             </div>
                             
                             <div class="bg-yellow-500/10 border border-yellow-500/20 rounded p-2 text-xs text-yellow-300">
-                                <strong>Current:</strong> Min: {{ $promotion->min_quantity }}, Max: {{ $promotion->max_quantity ?? 'unlimited' }}, Price: {{ number_format($promotion->price, 2) }} MAD
+                                <strong>Current:</strong> {{ $promotion->label ?: 'No label' }} | Min: {{ $promotion->min_quantity }}, Max: {{ $promotion->max_quantity ?? 'unlimited' }}, Price: {{ number_format($promotion->price, 2) }} MAD
                             </div>
                         </div>
                         @endforeach
@@ -1226,6 +1350,45 @@
         let headerItemCounter = {{ isset($product->theme_data['header_items']) ? count($product->theme_data['header_items']) : 3 }};
         let trustBadgeCounter = {{ isset($product->theme_data['trust_badges']) ? count($product->theme_data['trust_badges']) : 4 }};
 
+        // Preview for image replacement
+        function previewReplaceImage(input, index) {
+            const previewContainer = document.getElementById(`replace-preview-${index}`);
+            const previewImg = document.getElementById(`replace-preview-img-${index}`);
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewContainer.classList.remove('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                previewContainer.classList.add('hidden');
+            }
+        }
+        
+        // Preview for newly uploaded images
+        function previewImages(event) {
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = '';
+            
+            if (event.target.files) {
+                Array.from(event.target.files).forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const div = document.createElement('div');
+                        div.className = 'relative';
+                        div.innerHTML = `
+                            <img src="${e.target.result}" class="w-full h-32 object-cover rounded-lg border border-white/10" />
+                            <div class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">New</div>
+                        `;
+                        preview.appendChild(div);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        }
+
         function addHeaderItem() {
             const container = document.getElementById('headerItemsContainer');
             if (!container) return;
@@ -1432,6 +1595,25 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
+                
+                <!-- Display Label -->
+                <div class="mb-3">
+                    <label class="block text-xs font-medium text-yellow-400 mb-1">
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
+                            </svg>
+                            Display Label <span class="text-gray-500 font-normal">(shown to customers)</span>
+                        </span>
+                    </label>
+                    <input 
+                        type="text" 
+                        name="promotions[${promotionId}][label]" 
+                        class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-yellow-500/50 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        placeholder="e.g., Buy 2 Get 10% Off, Pack of 3, Family Bundle..."
+                    />
+                    <p class="text-xs text-gray-500 mt-1">This label will be displayed on the landing page instead of quantity/price details</p>
+                </div>
                 
                 <div class="grid grid-cols-3 gap-3 mb-3">
                     <div>

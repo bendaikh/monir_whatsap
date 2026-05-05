@@ -12,54 +12,35 @@
                 </h2>
                 <p class="text-sm text-gray-400 mt-1">Add a new product to your catalog</p>
             </div>
-            <div class="flex items-center gap-3">
-                <a href="{{ route('app.products.select-theme') }}" class="px-4 py-2 bg-gray-700/50 hover:bg-gray-700 text-white font-medium rounded-lg transition flex items-center gap-2 text-sm border border-white/10">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
-                    </svg>
-                    Change Theme
-                </a>
-                <a href="{{ route('app.products') }}" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                    </svg>
-                    Back to Products
-                </a>
-            </div>
+            <a href="{{ route('app.products') }}" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to Products
+            </a>
         </div>
     </div>
 
     <!-- Selected Theme Badge -->
-    <div class="mb-6 bg-[#0f1c2e] border border-white/10 rounded-xl p-4 flex items-center justify-between">
+    <div class="mb-6 bg-[#0f1c2e] border border-cyan-500/30 rounded-xl p-4 flex items-center justify-between">
         <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-lg flex items-center justify-center {{ $theme === 'theme2' ? 'bg-cyan-500/20' : 'bg-emerald-500/20' }}">
-                <svg class="w-6 h-6 {{ $theme === 'theme2' ? 'text-cyan-400' : 'text-emerald-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-12 h-12 rounded-lg flex items-center justify-center bg-cyan-500/20">
+                <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
                 </svg>
             </div>
             <div>
                 <h3 class="text-white font-semibold flex items-center gap-2">
-                    @if($theme === 'theme2')
-                        Theme 2 - E-Commerce Style
-                        <span class="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded">Selected</span>
-                    @else
-                        Theme 1 - Classic Layout
-                        <span class="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded">Selected</span>
-                    @endif
+                    E-Commerce Style Landing Page
+                    <span class="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded">Active</span>
                 </h3>
                 <p class="text-sm text-gray-400">
-                    @if($theme === 'theme2')
-                        High-converting sales page with trust badges and social proof
-                    @else
-                        Clean, professional product page with AI-generated sections
-                    @endif
+                    High-converting sales page with trust badges, social proof, and multiple CTAs
                 </p>
             </div>
         </div>
-        <a href="{{ route('app.products.select-theme') }}" class="text-sm text-gray-400 hover:text-white transition">
-            Change &rarr;
-        </a>
     </div>
+    <input type="hidden" name="theme" value="theme2">
 
     @if(session('success'))
     <div class="mb-6 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 px-4 py-3 rounded-lg flex items-center gap-2">
@@ -115,7 +96,6 @@
     <div class="max-w-4xl">
         <form action="{{ route('app.products.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6" id="productForm">
             @csrf
-            <input type="hidden" name="theme" value="{{ $theme }}">
             
             <!-- Landing Page Configuration (FIRST - Currency & Languages) -->
             <div class="bg-gradient-to-br from-indigo-900 to-purple-900 border border-indigo-500/50 rounded-xl p-6 shadow-xl">
@@ -490,6 +470,48 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Default Language Selection -->
+                    <div>
+                        <label for="default_language" class="block text-sm font-semibold text-white mb-3">
+                            <span class="flex items-center gap-2">
+                                <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                                </svg>
+                                Default Language
+                            </span>
+                            <span class="block text-xs text-indigo-300 font-normal mt-1">The landing page will display in this language by default when visitors first open it</span>
+                        </label>
+                        <select
+                            id="default_language"
+                            name="default_language"
+                            class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                        >
+                            <option value="">-- Use first selected language --</option>
+                            <option value="fr" selected>🇫🇷 French</option>
+                            <option value="en">🇬🇧 English</option>
+                            <option value="ar">🇸🇦 Arabic</option>
+                            <option value="es">🇪🇸 Spanish</option>
+                            <option value="de">🇩🇪 German</option>
+                            <option value="it">🇮🇹 Italian</option>
+                            <option value="pt">🇵🇹 Portuguese</option>
+                            <option value="zh">🇨🇳 Chinese</option>
+                            <option value="ja">🇯🇵 Japanese</option>
+                            <option value="ko">🇰🇷 Korean</option>
+                            <option value="ru">🇷🇺 Russian</option>
+                            <option value="hi">🇮🇳 Hindi</option>
+                            <option value="tr">🇹🇷 Turkish</option>
+                            <option value="nl">🇳🇱 Dutch</option>
+                            <option value="pl">🇵🇱 Polish</option>
+                            <option value="sw">🇹🇿 Swahili</option>
+                        </select>
+                        <p class="mt-2 text-xs text-indigo-200">
+                            <span class="font-semibold">Note:</span> Make sure this language is also selected above in the enabled languages list
+                        </p>
+                        @error('default_language')
+                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
             </div>
             
@@ -533,6 +555,26 @@
                             placeholder="Enter product name"
                         />
                         @error('name')
+                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Nickname (Internal Use Only) -->
+                    <div>
+                        <label for="nickname" class="block text-sm font-medium text-gray-300 mb-2">
+                            Nickname 
+                            <span class="text-xs text-gray-500 font-normal">(internal use only - not shown on landing page)</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="nickname" 
+                            name="nickname" 
+                            value="{{ old('nickname') }}"
+                            class="w-full px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                            placeholder="e.g., Summer promo version, Test batch #1..."
+                        />
+                        <p class="mt-1 text-xs text-gray-500">Use this to identify different versions or campaigns for the same product</p>
+                        @error('nickname')
                             <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
                         @enderror
                     </div>

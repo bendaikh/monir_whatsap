@@ -68,17 +68,21 @@ class ProductController extends Controller
             ->limit(4)
             ->get();
 
-        if ($product->theme === 'theme2') {
-            return view('product-landing-theme2', compact('product', 'relatedProducts', 'store'));
-        }
-
-        $hasLandingPageContent = !empty($product->landing_page_translations) 
+        // Get the WhatsApp profile for the store
+        $whatsappProfile = \App\Models\WhatsappProfile::where('store_id', $store->id)
+            ->where('is_active', true)
+            ->first();
+        
+        // All products now use Theme 2 (Theme 1 has been removed)
+        // If the product has a theme or landing page content, use Theme 2 landing page
+        $hasLandingPageContent = $product->theme === 'theme2' 
+            || !empty($product->landing_page_translations) 
             || $product->landing_page_fr 
             || $product->landing_page_en 
             || $product->landing_page_ar;
         
         if ($hasLandingPageContent) {
-            return view('product-landing', compact('product', 'relatedProducts', 'store'));
+            return view('product-landing-theme2', compact('product', 'relatedProducts', 'store', 'whatsappProfile'));
         }
 
         return view('product-detail', compact('product', 'relatedProducts', 'store'));

@@ -14,6 +14,7 @@ class Product extends Model
         'theme_data',
         'category_id',
         'name',
+        'nickname',
         'slug',
         'description',
         'price',
@@ -43,6 +44,7 @@ class Product extends Model
         'landing_page_ar',
         'landing_page_currency',
         'landing_page_languages',
+        'default_language',
         'landing_page_translations',
         'landing_page_status',
         'landing_page_sections'
@@ -72,7 +74,7 @@ class Product extends Model
      * Get landing page content for a specific language.
      * Supports both new (landing_page_translations) and legacy (landing_page_fr/en/ar) formats.
      *
-     * @param string|null $language Language code. If null, uses first available language.
+     * @param string|null $language Language code. If null, uses default_language or first available language.
      * @return array|null
      */
     public function getLandingPageContent(?string $language = null): ?array
@@ -100,6 +102,11 @@ class Product extends Model
             return $translations[$language];
         }
 
+        // Try default_language first if set
+        if ($this->default_language && isset($translations[$this->default_language])) {
+            return $translations[$this->default_language];
+        }
+
         $enabledLanguages = $this->landing_page_languages ?? ['fr'];
         foreach ($enabledLanguages as $lang) {
             if (isset($translations[$lang])) {
@@ -108,6 +115,22 @@ class Product extends Model
         }
 
         return reset($translations) ?: null;
+    }
+
+    /**
+     * Get the default language for this product's landing page.
+     * Falls back to first enabled language or 'fr' if not set.
+     *
+     * @return string
+     */
+    public function getDefaultLanguageCode(): string
+    {
+        if ($this->default_language) {
+            return $this->default_language;
+        }
+        
+        $enabledLanguages = $this->landing_page_languages ?? ['fr'];
+        return $enabledLanguages[0] ?? 'fr';
     }
 
     /**
