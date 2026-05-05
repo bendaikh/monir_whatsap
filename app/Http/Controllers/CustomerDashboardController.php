@@ -1144,7 +1144,11 @@ class CustomerDashboardController extends Controller
         $user = auth()->user();
         $storeId = $this->getActiveStoreId();
         
-        $leads = \App\Models\ProductLead::with('product')
+        $leads = \App\Models\ProductLead::with([
+                'product.activeVariations',
+                'product.activePromotions',
+                'selectedPromotion'
+            ])
             ->where('user_id', $user->id)
             ->when($storeId, function($q) use ($storeId) {
                 $q->whereHas('product', function($q) use ($storeId) {

@@ -188,7 +188,7 @@
     $i18n = [
         'fr' => [
             'order_now' => 'COMMANDEZ MAINTENANT', 'name' => 'Nom complet', 'phone' => 'Téléphone',
-            'city' => 'Ville', 'address' => 'Adresse', 'note' => 'Note',
+            'email' => 'Email', 'city' => 'Ville', 'address' => 'Adresse', 'note' => 'Note',
             'send_order' => 'Envoyer la commande', 'cod' => 'PAIEMENT À LA LIVRAISON',
             'limited_stock' => 'STOCK LIMITÉ', 'only_today' => 'Offre valable aujourd\'hui seulement !',
             'customers' => 'Clients', 'rating' => 'Note', 'reviews' => 'Avis',
@@ -202,7 +202,7 @@
         ],
         'en' => [
             'order_now' => 'ORDER NOW', 'name' => 'Full Name', 'phone' => 'Phone',
-            'city' => 'City', 'address' => 'Address', 'note' => 'Note',
+            'email' => 'Email', 'city' => 'City', 'address' => 'Address', 'note' => 'Note',
             'send_order' => 'Send Order', 'cod' => 'CASH ON DELIVERY',
             'limited_stock' => 'LIMITED STOCK', 'only_today' => 'Offer only valid today!',
             'customers' => 'Customers', 'rating' => 'Rating', 'reviews' => 'Reviews',
@@ -216,7 +216,7 @@
         ],
         'ar' => [
             'order_now' => 'اطلب الآن', 'name' => 'الاسم الكامل', 'phone' => 'رقم الهاتف',
-            'city' => 'المدينة', 'address' => 'العنوان', 'note' => 'ملاحظة',
+            'email' => 'البريد الإلكتروني', 'city' => 'المدينة', 'address' => 'العنوان', 'note' => 'ملاحظة',
             'send_order' => 'أرسل طلبك', 'cod' => 'الدفع عند الاستلام',
             'limited_stock' => 'الكمية محدودة', 'only_today' => 'العرض ساري اليوم فقط !',
             'customers' => 'عميل', 'rating' => 'التقييم', 'reviews' => 'مراجعة',
@@ -524,24 +524,58 @@
                     </div>
                     @endif
 
+                    @php
+                        $formFields = $td['form_fields'] ?? [
+                            'name' => ['enabled' => true, 'required' => true],
+                            'phone' => ['enabled' => true, 'required' => true],
+                            'email' => ['enabled' => false, 'required' => false],
+                            'city' => ['enabled' => false, 'required' => false],
+                            'address' => ['enabled' => false, 'required' => false],
+                            'note' => ['enabled' => true, 'required' => false],
+                        ];
+                    @endphp
                     <form action="{{ route('store.product.submit-lead', [$store->subdomain, $product->slug]) }}" method="POST" class="space-y-3">
                         @csrf
                         <input type="hidden" name="language" :value="currentLang">
 
-                        <input type="text" name="name" required
+                        @if($formFields['name']['enabled'] ?? true)
+                        <input type="text" name="name" {{ ($formFields['name']['required'] ?? true) ? 'required' : '' }}
                             :placeholder="t('name')"
                             class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-yellow-400 text-gray-900 font-semibold">
+                        @endif
 
-                        <input type="tel" name="phone" required
+                        @if($formFields['phone']['enabled'] ?? true)
+                        <input type="tel" name="phone" {{ ($formFields['phone']['required'] ?? true) ? 'required' : '' }}
                             :placeholder="t('phone')"
                             pattern="[0-9]+"
                             inputmode="numeric"
                             oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                             class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-yellow-400 text-gray-900 font-semibold">
+                        @endif
 
-                        <textarea name="note" rows="2"
+                        @if($formFields['email']['enabled'] ?? false)
+                        <input type="email" name="email" {{ ($formFields['email']['required'] ?? false) ? 'required' : '' }}
+                            :placeholder="t('email')"
+                            class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-yellow-400 text-gray-900 font-semibold">
+                        @endif
+
+                        @if($formFields['city']['enabled'] ?? false)
+                        <input type="text" name="city" {{ ($formFields['city']['required'] ?? false) ? 'required' : '' }}
+                            :placeholder="t('city')"
+                            class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-yellow-400 text-gray-900 font-semibold">
+                        @endif
+
+                        @if($formFields['address']['enabled'] ?? false)
+                        <input type="text" name="address" {{ ($formFields['address']['required'] ?? false) ? 'required' : '' }}
+                            :placeholder="t('address')"
+                            class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-yellow-400 text-gray-900 font-semibold">
+                        @endif
+
+                        @if($formFields['note']['enabled'] ?? true)
+                        <textarea name="note" rows="2" {{ ($formFields['note']['required'] ?? false) ? 'required' : '' }}
                             :placeholder="t('note')"
                             class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-yellow-400 text-gray-900 font-semibold"></textarea>
+                        @endif
 
                         <button type="submit" class="w-full bg-gradient-to-r {{ $ctaBg }} text-white font-display text-2xl md:text-3xl uppercase py-4 rounded-xl shadow-xl hover:shadow-2xl transition-all hover:-translate-y-0.5 animate-pulse-scale">
                             ✓ <span x-text="t('send_order')">{{ $ctaText }}</span>

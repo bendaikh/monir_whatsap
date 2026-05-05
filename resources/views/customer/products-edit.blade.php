@@ -1285,11 +1285,284 @@
                 </div>
             </div>
 
+            <!-- Form Fields Configuration Card -->
+            <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6">
+                <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Landing Page Form Fields
+                </h3>
+                <p class="text-sm text-gray-400 mb-6">Configure which fields appear on the landing page order form</p>
+                
+                @php
+                    $formFields = $product->theme_data['form_fields'] ?? [
+                        'name' => ['enabled' => true, 'required' => true],
+                        'phone' => ['enabled' => true, 'required' => true],
+                        'email' => ['enabled' => false, 'required' => false],
+                        'city' => ['enabled' => false, 'required' => false],
+                        'address' => ['enabled' => false, 'required' => false],
+                        'note' => ['enabled' => true, 'required' => false],
+                    ];
+                @endphp
+
+                <div class="space-y-3">
+                    <!-- Name Field -->
+                    <div class="flex items-center justify-between p-3 bg-[#0a1628] rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                            <span class="text-white font-medium">Name</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" 
+                                       name="theme_data[form_fields][name][enabled]" 
+                                       value="1"
+                                       {{ ($formFields['name']['enabled'] ?? true) ? 'checked' : '' }}
+                                       class="rounded bg-[#0f1c2e] border-white/10 text-cyan-600">
+                                <span class="text-gray-300">Show</span>
+                            </label>
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" 
+                                       name="theme_data[form_fields][name][required]" 
+                                       value="1"
+                                       {{ ($formFields['name']['required'] ?? true) ? 'checked' : '' }}
+                                       class="rounded bg-[#0f1c2e] border-white/10 text-orange-600">
+                                <span class="text-gray-300">Required</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Phone Field -->
+                    <div class="flex items-center justify-between p-3 bg-[#0a1628] rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                            </svg>
+                            <span class="text-white font-medium">Phone</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" 
+                                       name="theme_data[form_fields][phone][enabled]" 
+                                       value="1"
+                                       {{ ($formFields['phone']['enabled'] ?? true) ? 'checked' : '' }}
+                                       class="rounded bg-[#0f1c2e] border-white/10 text-cyan-600">
+                                <span class="text-gray-300">Show</span>
+                            </label>
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" 
+                                       name="theme_data[form_fields][phone][required]" 
+                                       value="1"
+                                       {{ ($formFields['phone']['required'] ?? true) ? 'checked' : '' }}
+                                       class="rounded bg-[#0f1c2e] border-white/10 text-orange-600">
+                                <span class="text-gray-300">Required</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Email Field -->
+                    <div class="flex items-center justify-between p-3 bg-[#0a1628] rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            <span class="text-white font-medium">Email</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" 
+                                       name="theme_data[form_fields][email][enabled]" 
+                                       value="1"
+                                       {{ ($formFields['email']['enabled'] ?? false) ? 'checked' : '' }}
+                                       class="rounded bg-[#0f1c2e] border-white/10 text-cyan-600">
+                                <span class="text-gray-300">Show</span>
+                            </label>
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" 
+                                       name="theme_data[form_fields][email][required]" 
+                                       value="1"
+                                       {{ ($formFields['email']['required'] ?? false) ? 'checked' : '' }}
+                                       class="rounded bg-[#0f1c2e] border-white/10 text-orange-600">
+                                <span class="text-gray-300">Required</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- City Field -->
+                    <div class="flex items-center justify-between p-3 bg-[#0a1628] rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <span class="text-white font-medium">City</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" 
+                                       name="theme_data[form_fields][city][enabled]" 
+                                       value="1"
+                                       {{ ($formFields['city']['enabled'] ?? false) ? 'checked' : '' }}
+                                       class="rounded bg-[#0f1c2e] border-white/10 text-cyan-600">
+                                <span class="text-gray-300">Show</span>
+                            </label>
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" 
+                                       name="theme_data[form_fields][city][required]" 
+                                       value="1"
+                                       {{ ($formFields['city']['required'] ?? false) ? 'checked' : '' }}
+                                       class="rounded bg-[#0f1c2e] border-white/10 text-orange-600">
+                                <span class="text-gray-300">Required</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Address Field -->
+                    <div class="flex items-center justify-between p-3 bg-[#0a1628] rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                            </svg>
+                            <span class="text-white font-medium">Address</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" 
+                                       name="theme_data[form_fields][address][enabled]" 
+                                       value="1"
+                                       {{ ($formFields['address']['enabled'] ?? false) ? 'checked' : '' }}
+                                       class="rounded bg-[#0f1c2e] border-white/10 text-cyan-600">
+                                <span class="text-gray-300">Show</span>
+                            </label>
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" 
+                                       name="theme_data[form_fields][address][required]" 
+                                       value="1"
+                                       {{ ($formFields['address']['required'] ?? false) ? 'checked' : '' }}
+                                       class="rounded bg-[#0f1c2e] border-white/10 text-orange-600">
+                                <span class="text-gray-300">Required</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Note Field -->
+                    <div class="flex items-center justify-between p-3 bg-[#0a1628] rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                            <span class="text-white font-medium">Note / Message</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" 
+                                       name="theme_data[form_fields][note][enabled]" 
+                                       value="1"
+                                       {{ ($formFields['note']['enabled'] ?? true) ? 'checked' : '' }}
+                                       class="rounded bg-[#0f1c2e] border-white/10 text-cyan-600">
+                                <span class="text-gray-300">Show</span>
+                            </label>
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" 
+                                       name="theme_data[form_fields][note][required]" 
+                                       value="1"
+                                       {{ ($formFields['note']['required'] ?? false) ? 'checked' : '' }}
+                                       class="rounded bg-[#0f1c2e] border-white/10 text-orange-600">
+                                <span class="text-gray-300">Required</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Settings Card -->
             <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6">
                 <h3 class="text-xl font-bold text-white mb-6">Settings</h3>
                 
                 <div class="space-y-4">
+                    <!-- AI Landing Page Regeneration -->
+                    <div class="flex items-center justify-between pb-4 border-b border-white/10">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300">AI Landing Page</label>
+                            <p class="text-xs text-gray-500 mt-1">
+                                @if($product->landing_page_status === 'completed')
+                                    <span class="text-emerald-400">Landing page generated</span> - Click to regenerate
+                                @elseif($product->landing_page_status === 'processing')
+                                    <span class="text-yellow-400">Generation in progress...</span>
+                                @elseif($product->landing_page_status === 'failed')
+                                    <span class="text-red-400">Generation failed</span> - Click to retry
+                                @else
+                                    Generate a professional landing page using AI
+                                @endif
+                            </p>
+                        </div>
+                        <button 
+                            type="button"
+                            id="regenerate-landing-page-btn"
+                            onclick="regenerateLandingPage({{ $product->id }})"
+                            class="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-sm font-medium rounded-lg transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            {{ $product->landing_page_status === 'processing' ? 'disabled' : '' }}
+                        >
+                            <svg class="w-4 h-4 {{ $product->landing_page_status === 'processing' ? 'animate-spin' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                @if($product->landing_page_status === 'processing')
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                @else
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                @endif
+                            </svg>
+                            @if($product->landing_page_status === 'processing')
+                                Generating...
+                            @elseif($product->landing_page_status === 'completed')
+                                Regenerate
+                            @else
+                                Generate AI
+                            @endif
+                        </button>
+                    </div>
+
+                    <!-- AI Product Images Generation -->
+                    <div class="flex items-center justify-between pb-4 border-b border-white/10">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300">AI Product Images</label>
+                            <p class="text-xs text-gray-500 mt-1">
+                                @if($product->ai_images_status === 'completed')
+                                    <span class="text-emerald-400">{{ count($product->ai_generated_images ?? []) }} images generated</span> - Click to generate more
+                                @elseif($product->ai_images_status === 'processing')
+                                    <span class="text-yellow-400">Generation in progress ({{ $product->ai_images_progress ?? 0 }}%)...</span>
+                                @elseif($product->ai_images_status === 'failed')
+                                    <span class="text-red-400">Generation failed</span> - Click to retry
+                                @else
+                                    Generate realistic product images using AI
+                                @endif
+                            </p>
+                        </div>
+                        <button 
+                            type="button"
+                            id="regenerate-images-btn"
+                            onclick="regenerateProductImages({{ $product->id }})"
+                            class="px-4 py-2 bg-gradient-to-r from-orange-600 to-yellow-600 hover:from-orange-700 hover:to-yellow-700 text-white text-sm font-medium rounded-lg transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            {{ $product->ai_images_status === 'processing' ? 'disabled' : '' }}
+                        >
+                            <svg class="w-4 h-4 {{ $product->ai_images_status === 'processing' ? 'animate-spin' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                @if($product->ai_images_status === 'processing')
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                @else
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                @endif
+                            </svg>
+                            @if($product->ai_images_status === 'processing')
+                                Generating...
+                            @elseif($product->ai_images_status === 'completed')
+                                Generate More
+                            @else
+                                Generate Images
+                            @endif
+                        </button>
+                    </div>
+
                     <!-- Active Status -->
                     <div class="flex items-center justify-between">
                         <div>
@@ -2232,5 +2505,117 @@
                 });
             }
         });
+
+        // AI Landing Page Regeneration
+        function regenerateLandingPage(productId) {
+            const btn = document.getElementById('regenerate-landing-page-btn');
+            const originalContent = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = `
+                <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Generating...
+            `;
+            
+            fetch(`/app/products/${productId}/generate-landing-page`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('success', data.message);
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    showNotification('error', data.message || 'An error occurred');
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                }
+            })
+            .catch(error => {
+                showNotification('error', 'An error occurred while generating the landing page');
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            });
+        }
+
+        // AI Product Images Regeneration
+        function regenerateProductImages(productId) {
+            const btn = document.getElementById('regenerate-images-btn');
+            const originalContent = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = `
+                <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Generating...
+            `;
+            
+            fetch(`/app/products/${productId}/generate-images`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('success', data.message);
+                    pollImageProgress(productId);
+                } else {
+                    showNotification('error', data.message || 'An error occurred');
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                }
+            })
+            .catch(error => {
+                showNotification('error', 'An error occurred while generating images');
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            });
+        }
+
+        function pollImageProgress(productId) {
+            const interval = setInterval(() => {
+                fetch(`/app/products/${productId}/check-image-progress`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'completed' || data.status === 'failed') {
+                            clearInterval(interval);
+                            setTimeout(() => window.location.reload(), 1000);
+                        }
+                    });
+            }, 3000);
+        }
+
+        function showNotification(type, message) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 ${
+                type === 'success' ? 'bg-emerald-500' : 'bg-red-500'
+            } text-white`;
+            notification.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        ${type === 'success' 
+                            ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>'
+                            : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>'
+                        }
+                    </svg>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
     </script>
 @endsection

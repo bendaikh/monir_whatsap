@@ -1465,7 +1465,7 @@
                         <svg class="w-8 h-8 text-purple-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                         </svg>
-                        <p class="text-xs text-purple-300">AI will generate titles and descriptions in French, English, and Arabic for this image when you enable AI Landing Page Generation</p>
+                        <p class="text-xs text-purple-300">AI will generate titles and descriptions in your selected languages for this image when you enable AI Landing Page Generation</p>
                     </div>
                 </div>
             `;

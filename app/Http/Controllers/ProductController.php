@@ -101,8 +101,11 @@ class ProductController extends Controller
             ->firstOrFail();
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
+            'name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'city' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:1000',
             'note' => 'nullable|string|max:1000',
             'language' => 'required|string|max:10',
             'selected_promotion_form' => 'nullable|exists:product_promotions,id',
@@ -118,9 +121,12 @@ class ProductController extends Controller
         $lead = \App\Models\ProductLead::create([
             'product_id' => $product->id,
             'user_id' => $product->user_id,
-            'name' => $validated['name'],
-            'phone' => $validated['phone'],
-            'note' => $validated['note'],
+            'name' => $validated['name'] ?? null,
+            'phone' => $validated['phone'] ?? null,
+            'email' => $validated['email'] ?? null,
+            'city' => $validated['city'] ?? null,
+            'address' => $validated['address'] ?? null,
+            'note' => $validated['note'] ?? null,
             'language' => $validated['language'],
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),

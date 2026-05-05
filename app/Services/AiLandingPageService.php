@@ -442,8 +442,9 @@ Other requirements:
 
     /**
      * Generate image section descriptions using AI
+     * Uses product's selected languages instead of hardcoded values
      */
-    public function generateImageSections(Product $product, array $languages = ['fr', 'en', 'ar']): array
+    public function generateImageSections(Product $product, ?array $languages = null): array
     {
         if (!$this->aiSetting) {
             throw new \Exception('AI API settings not configured.');
@@ -456,17 +457,34 @@ Other requirements:
             return [];
         }
 
+        // Use product's selected languages if not provided
+        if ($languages === null) {
+            $languages = $product->landing_page_languages ?? ['fr'];
+        }
+        
+        if (empty($languages)) {
+            $languages = ['fr'];
+        }
+        
+        Log::info('Generating image sections for product ' . $product->id . ' in languages: ' . implode(', ', $languages));
+
         $imageCount = count($images) - 1; // Exclude first/main image
         $categoryName = $product->category ? $product->category->name : 'General';
 
         $results = [];
         foreach ($languages as $language) {
-            $prompt = $this->buildImageSectionsPrompt($product, $categoryName, $imageCount, $language);
+            try {
+                $prompt = $this->buildImageSectionsPrompt($product, $categoryName, $imageCount, $language);
 
-            if (!empty($this->aiSetting->openai_api_key_encrypted)) {
-                $results[$language] = $this->generateWithOpenAI($prompt);
-            } elseif (!empty($this->aiSetting->anthropic_api_key_encrypted)) {
-                $results[$language] = $this->generateWithAnthropic($prompt);
+                if (!empty($this->aiSetting->openai_api_key_encrypted)) {
+                    $results[$language] = $this->generateWithOpenAI($prompt);
+                } elseif (!empty($this->aiSetting->anthropic_api_key_encrypted)) {
+                    $results[$language] = $this->generateWithAnthropic($prompt);
+                }
+                
+                Log::info("Successfully generated image sections for language: {$language}");
+            } catch (\Exception $e) {
+                Log::error("Failed to generate image sections for language {$language}: " . $e->getMessage());
             }
         }
 
