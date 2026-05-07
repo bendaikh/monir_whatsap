@@ -12,6 +12,7 @@ class ProductPromotion extends Model
         'min_quantity',
         'max_quantity',
         'price',
+        'original_price',
         'label',
         'promotion_type',
         'is_active',
@@ -20,6 +21,7 @@ class ProductPromotion extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'original_price' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 

@@ -1027,6 +1027,23 @@
                                 <p class="text-xs text-gray-500 mt-1">Choose the color for your product title</p>
                             </div>
                             <div>
+                                <label for="title_size" class="block text-sm font-medium text-gray-300 mb-2">Title Size</label>
+                                <select 
+                                    id="title_size" 
+                                    name="theme_data[title_size]"
+                                    onchange="updateTitlePreview()"
+                                    class="w-full px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                >
+                                    <option value="small" {{ old('theme_data.title_size') == 'small' ? 'selected' : '' }}>Small</option>
+                                    <option value="medium" {{ old('theme_data.title_size') == 'medium' ? 'selected' : '' }}>Medium</option>
+                                    <option value="large" {{ old('theme_data.title_size', 'large') == 'large' ? 'selected' : '' }}>Large (Default)</option>
+                                    <option value="xlarge" {{ old('theme_data.title_size') == 'xlarge' ? 'selected' : '' }}>Extra Large</option>
+                                </select>
+                                <p class="text-xs text-gray-500 mt-1">Choose the size of your product title</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mt-4">
+                            <div>
                                 <label for="title_font" class="block text-sm font-medium text-gray-300 mb-2">Title Font</label>
                                 <select 
                                     id="title_font" 
@@ -1095,6 +1112,46 @@
                                 YOUR PRODUCT TITLE
                             </h2>
                         </div>
+                    </div>
+
+                    <!-- Reviewer Names -->
+                    <div class="border-t border-white/10 pt-4 mt-4">
+                        <h4 class="text-sm font-semibold text-white flex items-center gap-2 mb-3">
+                            <svg class="w-4 h-4 text-pink-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                            Reviewer Names
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-3">Customize the names and cities of reviewers shown in testimonials</p>
+
+                        <div class="space-y-2">
+                            @for($i = 0; $i < 3; $i++)
+                            <div class="grid grid-cols-2 gap-2 p-2 bg-[#0a1628] rounded-lg border border-white/5">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-400 mb-1">Reviewer {{ $i + 1 }} Name</label>
+                                    <input 
+                                        type="text" 
+                                        name="theme_data[reviewer_names][{{ $i }}][name]" 
+                                        value="{{ old('theme_data.reviewer_names.' . $i . '.name', $i == 0 ? 'Karim' : ($i == 1 ? 'Fatima' : 'Youssef')) }}"
+                                        class="w-full px-2 py-1.5 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500"
+                                        placeholder="Enter name"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-400 mb-1">City</label>
+                                    <input 
+                                        type="text" 
+                                        name="theme_data[reviewer_names][{{ $i }}][city]" 
+                                        value="{{ old('theme_data.reviewer_names.' . $i . '.city', $i == 0 ? 'Casablanca' : ($i == 1 ? 'Rabat' : 'Marrakech')) }}"
+                                        class="w-full px-2 py-1.5 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500"
+                                        placeholder="Enter city"
+                                    />
+                                </div>
+                            </div>
+                            @endfor
+                        </div>
+
+                        <p class="text-xs text-pink-300/70 mt-2">These names will appear in the testimonials section on your landing page.</p>
                     </div>
 
                     <!-- Trust Badges -->
@@ -2066,6 +2123,7 @@
                 const minQty = div.querySelector('input[name*="[min_quantity]"]');
                 const maxQty = div.querySelector('input[name*="[max_quantity]"]');
                 const price = div.querySelector('input[name*="[price]"]');
+                const originalPrice = div.querySelector('input[name*="[original_price]"]');
                 const label = div.querySelector('input[name*="[label]"]');
                 
                 if (minQty && price) {
@@ -2073,6 +2131,7 @@
                         min_quantity: minQty.value || '',
                         max_quantity: maxQty ? (maxQty.value || null) : null,
                         price: price.value || '',
+                        original_price: originalPrice ? (originalPrice.value || null) : null,
                         label: label ? (label.value || '') : ''
                     });
                 }
@@ -2127,7 +2186,7 @@
                     <p class="text-xs text-gray-500 mt-1">This label will be displayed on the landing page instead of quantity/price details</p>
                 </div>
                 
-                <div class="grid grid-cols-3 gap-3">
+                <div class="grid grid-cols-4 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-gray-300 mb-1">Min Quantity *</label>
                         <input 
@@ -2152,7 +2211,7 @@
                         />
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-300 mb-1 promotion-price-label">Price per Unit (${currentCurrency}) *</label>
+                        <label class="block text-xs font-medium text-gray-300 mb-1 promotion-price-label">Price (${currentCurrency}) *</label>
                         <input 
                             type="number" 
                             name="promotions[${promotionId}][price]" 
@@ -2164,9 +2223,21 @@
                             oninput="updatePromotionsJson()"
                         />
                     </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Original Price <span class="text-gray-500">(crossed out)</span></label>
+                        <input 
+                            type="number" 
+                            name="promotions[${promotionId}][original_price]" 
+                            step="0.01"
+                            min="0"
+                            class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                            placeholder="Optional"
+                            oninput="updatePromotionsJson()"
+                        />
+                    </div>
                 </div>
                 <div class="bg-yellow-500/10 border border-yellow-500/20 rounded p-2 text-xs text-yellow-300 promotion-example-text mt-3">
-                    <strong>Example:</strong> Min: 2, Max: 4, Price: 90.00 = Customers buying 2-4 items pay 90 ${currentCurrency} per item
+                    <strong>Example:</strong> Min: 2, Max: 4, Price: 90.00, Original: 120.00 → Shows 90 ${currentCurrency} with 120 ${currentCurrency} crossed out
                 </div>
             `;
             container.appendChild(promotionDiv);

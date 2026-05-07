@@ -418,6 +418,8 @@
             <!-- Title Styling (Theme 2 Only) -->
             @php
                 $titleColor = $product->theme_data['title_color'] ?? '#ffffff';
+                $titleBackgroundColor = $product->theme_data['title_background_color'] ?? '';
+                $titleSize = $product->theme_data['title_size'] ?? 'large';
                 $titleFont = $product->theme_data['title_font'] ?? 'bebas';
             @endphp
             <div class="bg-gradient-to-br from-orange-900/50 to-red-900/50 border border-orange-500/30 rounded-xl p-6">
@@ -427,7 +429,7 @@
                     </svg>
                     Title Styling
                 </h3>
-                <p class="text-sm text-gray-400 mb-4">Customize the color and font of your product title on the landing page</p>
+                <p class="text-sm text-gray-400 mb-4">Customize the color, size, font and background of your product title on the landing page</p>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -452,6 +454,46 @@
                             />
                         </div>
                         <p class="text-xs text-gray-500 mt-1">Choose the color for your product title</p>
+                    </div>
+                    <div>
+                        <label for="title_background_color" class="block text-sm font-medium text-gray-300 mb-2">Title Background Color</label>
+                        <div class="flex gap-2">
+                            <input 
+                                type="color" 
+                                id="title_background_color_picker" 
+                                value="{{ $titleBackgroundColor ?: '#000000' }}"
+                                onchange="document.getElementById('title_background_color').value = this.value; updateTitlePreview()"
+                                class="w-12 h-12 rounded-lg cursor-pointer border border-white/10 bg-transparent"
+                            />
+                            <input 
+                                type="text" 
+                                id="title_background_color" 
+                                name="theme_data[title_background_color]" 
+                                value="{{ $titleBackgroundColor }}"
+                                onchange="if(this.value) document.getElementById('title_background_color_picker').value = this.value; updateTitlePreview()"
+                                class="flex-1 px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent uppercase"
+                                placeholder="Leave empty for no background"
+                            />
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Optional: Add a background color behind the title</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <label for="title_size" class="block text-sm font-medium text-gray-300 mb-2">Title Size</label>
+                        <select 
+                            id="title_size" 
+                            name="theme_data[title_size]"
+                            onchange="updateTitlePreview()"
+                            class="w-full px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        >
+                            <option value="small" {{ $titleSize == 'small' ? 'selected' : '' }}>Small</option>
+                            <option value="medium" {{ $titleSize == 'medium' ? 'selected' : '' }}>Medium</option>
+                            <option value="large" {{ $titleSize == 'large' ? 'selected' : '' }}>Large (Default)</option>
+                            <option value="xlarge" {{ $titleSize == 'xlarge' ? 'selected' : '' }}>Extra Large</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Choose the size of your product title</p>
                     </div>
                     <div>
                         <label for="title_font" class="block text-sm font-medium text-gray-300 mb-2">Title Font</label>
@@ -479,9 +521,62 @@
                 <!-- Title Preview -->
                 <div class="mt-4 p-4 bg-gradient-to-r from-red-500 via-red-600 to-red-700 rounded-lg">
                     <p class="text-xs text-white/70 mb-2">Preview:</p>
-                    <h2 id="titlePreview" class="text-3xl font-black uppercase" style="color: {{ $titleColor }}; font-family: '{{ $titleFont == 'bebas' ? 'Bebas Neue' : ($titleFont == 'playfair' ? 'Playfair Display' : ucfirst($titleFont)) }}', sans-serif;">
+                    <h2 id="titlePreview" class="font-black uppercase {{ $titleBackgroundColor ? 'inline-block px-4 py-2 rounded-lg' : '' }}" style="color: {{ $titleColor }}; font-family: '{{ $titleFont == 'bebas' ? 'Bebas Neue' : ($titleFont == 'playfair' ? 'Playfair Display' : ucfirst($titleFont)) }}', sans-serif;{{ $titleBackgroundColor ? ' background-color: ' . $titleBackgroundColor . ';' : '' }} font-size: {{ $titleSize == 'small' ? '1.5rem' : ($titleSize == 'medium' ? '2rem' : ($titleSize == 'xlarge' ? '3.5rem' : '2.5rem')) }};">
                         {{ $product->name }}
                     </h2>
+                </div>
+            </div>
+
+            <!-- Reviewer Names (Theme 2 Only) -->
+            @php
+                $reviewerNames = $product->theme_data['reviewer_names'] ?? [
+                    ['name' => 'Karim', 'city' => 'Casablanca'],
+                    ['name' => 'Fatima', 'city' => 'Rabat'],
+                    ['name' => 'Youssef', 'city' => 'Marrakech'],
+                ];
+            @endphp
+            <div class="bg-gradient-to-br from-pink-900/50 to-rose-900/50 border border-pink-500/30 rounded-xl p-6">
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <svg class="w-6 h-6 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        Reviewer Names
+                    </h3>
+                    <p class="text-sm text-gray-400 mt-1">Customize the names and cities of reviewers shown in testimonials</p>
+                </div>
+
+                <div class="space-y-4">
+                    @foreach($reviewerNames as $index => $reviewer)
+                    <div class="grid grid-cols-2 gap-4 p-3 bg-[#0a1628] rounded-lg border border-white/10">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-300 mb-1">Reviewer {{ $index + 1 }} Name</label>
+                            <input 
+                                type="text" 
+                                name="theme_data[reviewer_names][{{ $index }}][name]" 
+                                value="{{ $reviewer['name'] ?? '' }}"
+                                class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500"
+                                placeholder="Enter name"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-300 mb-1">City</label>
+                            <input 
+                                type="text" 
+                                name="theme_data[reviewer_names][{{ $index }}][city]" 
+                                value="{{ $reviewer['city'] ?? '' }}"
+                                class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500"
+                                placeholder="Enter city"
+                            />
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+
+                <div class="mt-4 p-3 bg-pink-500/10 border border-pink-500/20 rounded-lg">
+                    <p class="text-xs text-pink-300">
+                        <strong>Note:</strong> These names will appear in the customer testimonials section on your landing page.
+                    </p>
                 </div>
             </div>
 
@@ -1101,7 +1196,7 @@
                                 <p class="text-xs text-gray-500 mt-1">This label will be displayed on the landing page instead of quantity/price details</p>
                             </div>
                             
-                            <div class="grid grid-cols-3 gap-3 mb-3">
+                            <div class="grid grid-cols-4 gap-3 mb-3">
                                 <div>
                                     <label class="block text-xs font-medium text-gray-300 mb-1">Min Quantity *</label>
                                     <input 
@@ -1127,7 +1222,7 @@
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-300 mb-1">Price per Unit (MAD) *</label>
+                                    <label class="block text-xs font-medium text-gray-300 mb-1">Price (MAD) *</label>
                                     <input 
                                         type="number" 
                                         name="promotions[{{ $loop->index }}][price]" 
@@ -1138,10 +1233,28 @@
                                         class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white"
                                     />
                                 </div>
+                                
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-300 mb-1">
+                                        Original Price <span class="text-gray-500">(crossed out)</span>
+                                    </label>
+                                    <input 
+                                        type="number" 
+                                        name="promotions[{{ $loop->index }}][original_price]" 
+                                        value="{{ $promotion->original_price ?? '' }}"
+                                        step="0.01"
+                                        min="0"
+                                        placeholder="Optional"
+                                        class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white"
+                                    />
+                                </div>
                             </div>
                             
                             <div class="bg-yellow-500/10 border border-yellow-500/20 rounded p-2 text-xs text-yellow-300">
                                 <strong>Current:</strong> {{ $promotion->label ?: 'No label' }} | Min: {{ $promotion->min_quantity }}, Max: {{ $promotion->max_quantity ?? 'unlimited' }}, Price: {{ number_format($promotion->price, 2) }} MAD
+                                @if($promotion->original_price)
+                                <span class="line-through text-gray-400 ml-2">{{ number_format($promotion->original_price, 2) }} MAD</span>
+                                @endif
                             </div>
                         </div>
                         @endforeach
@@ -1888,7 +2001,7 @@
                     <p class="text-xs text-gray-500 mt-1">This label will be displayed on the landing page instead of quantity/price details</p>
                 </div>
                 
-                <div class="grid grid-cols-3 gap-3 mb-3">
+                <div class="grid grid-cols-4 gap-3 mb-3">
                     <div>
                         <label class="block text-xs font-medium text-gray-300 mb-1">Min Quantity *</label>
                         <input 
@@ -1913,7 +2026,7 @@
                     </div>
                     
                     <div>
-                        <label class="block text-xs font-medium text-gray-300 mb-1">Price per Unit (MAD) *</label>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Price (MAD) *</label>
                         <input 
                             type="number" 
                             name="promotions[${promotionId}][price]" 
@@ -1924,10 +2037,22 @@
                             class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500"
                         />
                     </div>
+                    
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300 mb-1">Original Price <span class="text-gray-500">(crossed out)</span></label>
+                        <input 
+                            type="number" 
+                            name="promotions[${promotionId}][original_price]" 
+                            step="0.01"
+                            min="0"
+                            placeholder="Optional"
+                            class="w-full px-3 py-2 text-sm bg-[#0f1c2e] border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        />
+                    </div>
                 </div>
                 
                 <div class="bg-yellow-500/10 border border-yellow-500/20 rounded p-2 text-xs text-yellow-300">
-                    <strong>Example:</strong> Min: 2, Max: 4, Price: 90.00 → Customers buying 2-4 items pay 90 MAD per item
+                    <strong>Example:</strong> Min: 2, Max: 4, Price: 90.00, Original: 120.00 → Shows 90 MAD with 120 MAD crossed out
                 </div>
             `;
             

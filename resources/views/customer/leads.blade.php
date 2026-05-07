@@ -40,7 +40,12 @@
                                         @if($lead->product && $lead->product->first_image)
                                             <img src="{{ $lead->product->first_image }}" alt="{{ $lead->product->name }}" class="w-10 h-10 rounded object-cover">
                                         @endif
-                                        <span class="text-white font-medium">{{ $lead->product->name ?? 'N/A' }}</span>
+                                        <div>
+                                            <span class="text-white font-medium">{{ $lead->product->nickname ?? $lead->product->name ?? 'N/A' }}</span>
+                                            @if($lead->product && $lead->product->sku)
+                                                <div class="text-xs text-gray-400 mt-0.5">SKU: {{ $lead->product->sku }}</div>
+                                            @endif
+                                        </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -139,7 +144,6 @@
         </div>
     </div>
 
-    @push('scripts')
     <script>
         const leadsData = @json($leads->load(['product.activeVariations', 'product.activePromotions', 'selectedPromotion'])->keyBy('id'));
         
@@ -178,18 +182,18 @@
                                 <span class="text-xs text-gray-500">Téléphone</span>
                                 <p class="text-emerald-400 font-medium">${lead.phone || '-'}</p>
                             </div>
-                            ${lead.email ? \`
+                            ${lead.email ? `
                             <div>
                                 <span class="text-xs text-gray-500">Email</span>
                                 <p class="text-cyan-400 font-medium">${lead.email}</p>
                             </div>
-                            \` : ''}
-                            ${lead.city ? \`
+                            ` : ''}
+                            ${lead.city ? `
                             <div>
                                 <span class="text-xs text-gray-500">Ville</span>
                                 <p class="text-white">${lead.city}</p>
                             </div>
-                            \` : ''}
+                            ` : ''}
                             <div>
                                 <span class="text-xs text-gray-500">Langue</span>
                                 <p class="text-white">${(lead.language || 'N/A').toUpperCase()}</p>
@@ -199,18 +203,18 @@
                                 <p class="text-white">${new Date(lead.created_at).toLocaleString('fr-FR')}</p>
                             </div>
                         </div>
-                        ${lead.address ? \`
+                        ${lead.address ? `
                             <div class="mt-4 pt-4 border-t border-white/10">
                                 <span class="text-xs text-gray-500">Adresse</span>
                                 <p class="text-gray-300 mt-1">${lead.address}</p>
                             </div>
-                        \` : ''}
-                        ${lead.note ? \`
+                        ` : ''}
+                        ${lead.note ? `
                             <div class="mt-4 pt-4 border-t border-white/10">
                                 <span class="text-xs text-gray-500">Note</span>
                                 <p class="text-gray-300 mt-1">${lead.note}</p>
                             </div>
-                        \` : ''}
+                        ` : ''}
                     </div>
                     
                     <!-- Product Info -->
@@ -361,5 +365,4 @@
             if (e.key === 'Escape') closeLeadDetails();
         });
     </script>
-    @endpush
 </x-customer-layout>

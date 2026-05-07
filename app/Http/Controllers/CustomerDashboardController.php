@@ -550,6 +550,7 @@ class CustomerDashboardController extends Controller
                     'min_quantity' => $promotionData['min_quantity'],
                     'max_quantity' => $promotionData['max_quantity'] ?? null,
                     'price' => $promotionData['price'],
+                    'original_price' => !empty($promotionData['original_price']) ? $promotionData['original_price'] : null,
                     'label' => $promotionData['label'] ?? null,
                     'is_active' => true,
                 ]);
@@ -688,6 +689,35 @@ class CustomerDashboardController extends Controller
         if ($request->has('theme_data')) {
             $existingThemeData = $product->theme_data ?? [];
             $newThemeData = $request->input('theme_data');
+            
+            // Special handling for form_fields - unchecked checkboxes don't get sent
+            // So we need to explicitly set all fields to false first, then apply the submitted values
+            if (isset($newThemeData['form_fields']) || isset($existingThemeData['form_fields'])) {
+                $defaultFormFields = [
+                    'name' => ['enabled' => false, 'required' => false],
+                    'phone' => ['enabled' => false, 'required' => false],
+                    'email' => ['enabled' => false, 'required' => false],
+                    'city' => ['enabled' => false, 'required' => false],
+                    'address' => ['enabled' => false, 'required' => false],
+                    'note' => ['enabled' => false, 'required' => false],
+                ];
+                
+                // Start with all fields disabled
+                $formFields = $defaultFormFields;
+                
+                // If form_fields was submitted, only the checked boxes will be present
+                if (isset($newThemeData['form_fields'])) {
+                    foreach ($newThemeData['form_fields'] as $fieldName => $fieldSettings) {
+                        if (isset($formFields[$fieldName])) {
+                            $formFields[$fieldName]['enabled'] = isset($fieldSettings['enabled']) && $fieldSettings['enabled'];
+                            $formFields[$fieldName]['required'] = isset($fieldSettings['required']) && $fieldSettings['required'];
+                        }
+                    }
+                }
+                
+                $newThemeData['form_fields'] = $formFields;
+            }
+            
             $validated['theme_data'] = array_merge($existingThemeData, $newThemeData);
         }
 
@@ -705,13 +735,28 @@ class CustomerDashboardController extends Controller
             $validated['stock'] = $validated['stock'] ?? 0;
         }
         
+        // Handle image replacement
+        $imagePaths = $product->images ?? [];
+        
+        // Check for replace_image_X inputs (replacing specific images by index)
+        foreach ($imagePaths as $index => $existingImage) {
+            if ($request->hasFile("replace_image_{$index}")) {
+                // Delete the old image
+                \Storage::disk('public')->delete($existingImage);
+                // Store the new image in its place
+                $imagePaths[$index] = $request->file("replace_image_{$index}")->store('products', 'public');
+                \Log::info("Replaced image at index {$index}: {$existingImage} -> {$imagePaths[$index]}");
+            }
+        }
+        
+        // Handle new images (append to existing)
         if ($request->hasFile('images')) {
-            $imagePaths = $product->images ?? [];
             foreach ($request->file('images') as $image) {
                 $imagePaths[] = $image->store('products', 'public');
             }
-            $validated['images'] = $imagePaths;
         }
+        
+        $validated['images'] = $imagePaths;
         
         if ($request->has('landing_sections')) {
             $landingSections = [];
@@ -842,6 +887,7 @@ class CustomerDashboardController extends Controller
                         'min_quantity' => $promotionData['min_quantity'],
                         'max_quantity' => $promotionData['max_quantity'] ?? null,
                         'price' => $promotionData['price'],
+                        'original_price' => !empty($promotionData['original_price']) ? $promotionData['original_price'] : null,
                         'label' => $promotionData['label'] ?? null,
                         'is_active' => true,
                     ];

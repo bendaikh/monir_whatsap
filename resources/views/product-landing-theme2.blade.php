@@ -15,7 +15,10 @@
           testimonial(t) { return t[this.currentLang] || t['en'] || t['fr'] || ''; },
           getFeatures() { return this.pageData[this.currentLang]?.features || this.pageData['en']?.features || this.pageData['fr']?.features || []; },
           getTestimonials() { return this.pageData[this.currentLang]?.testimonials || this.pageData['en']?.testimonials || this.pageData['fr']?.testimonials || []; },
-          getSteps() { return this.pageData[this.currentLang]?.steps || this.pageData['en']?.steps || this.pageData['fr']?.steps || []; }
+          getSteps() { return this.pageData[this.currentLang]?.steps || this.pageData['en']?.steps || this.pageData['fr']?.steps || []; },
+          getFullDescription() { return this.pageData[this.currentLang]?.full_description || this.pageData['en']?.full_description || this.pageData['fr']?.full_description || ''; },
+          getHeroTitle() { return this.pageData[this.currentLang]?.hero_title || this.pageData['en']?.hero_title || this.pageData['fr']?.hero_title || ''; },
+          getHeroDescription() { return this.pageData[this.currentLang]?.hero_description || this.pageData['en']?.hero_description || this.pageData['fr']?.hero_description || ''; }
       }">
 <head>
     <meta charset="utf-8">
@@ -71,6 +74,7 @@
     $titleColor = $td['title_color'] ?? '#000000';
     $titleBackgroundColor = $td['title_background_color'] ?? '';
     $titleFont = $td['title_font'] ?? 'bebas';
+    $titleSize = $td['title_size'] ?? 'large';
     $statsCustomers = $td['stats_customers'] ?? '325';
     $statsRating = $td['stats_rating'] ?? '4.8';
     $statsReviews = $td['stats_reviews'] ?? '127';
@@ -92,6 +96,20 @@
         'raleway' => "'Raleway', sans-serif",
     ];
     $titleFontFamily = $fontFamilyMap[$titleFont] ?? $fontFamilyMap['bebas'];
+    
+    $titleSizeClasses = match($titleSize) {
+        'small' => 'text-xl md:text-2xl lg:text-3xl',
+        'medium' => 'text-2xl md:text-3xl lg:text-4xl',
+        'xlarge' => 'text-4xl md:text-5xl lg:text-6xl',
+        default => 'text-3xl md:text-4xl lg:text-5xl', // large
+    };
+    
+    $ctaTitleSizeClasses = match($titleSize) {
+        'small' => 'text-2xl md:text-4xl',
+        'medium' => 'text-3xl md:text-5xl',
+        'xlarge' => 'text-5xl md:text-7xl',
+        default => 'text-4xl md:text-6xl', // large
+    };
     
     // Build translations from unified column or legacy columns
     $translations = $product->landing_page_translations ?? [];
@@ -269,10 +287,17 @@
         }
     }
 
+    // Configurable reviewer names from theme_data
+    $reviewerNames = $td['reviewer_names'] ?? [
+        ['name' => 'Karim', 'city' => 'Casablanca'],
+        ['name' => 'Fatima', 'city' => 'Rabat'],
+        ['name' => 'Youssef', 'city' => 'Marrakech'],
+    ];
+    
     $testimonials = [
-        ['name' => 'Karim', 'city' => 'Casablanca', 'fr' => "Produit de qualité, livraison rapide. Je recommande vivement !", 'en' => 'Great product, fast delivery. Highly recommend!', 'ar' => 'منتج ممتاز والتوصيل سريع جدا. أنصح به بشدة !'],
-        ['name' => 'Fatima', 'city' => 'Rabat', 'fr' => "Exactement comme décrit. Service client au top.", 'en' => 'Exactly as described. Great customer service.', 'ar' => 'تماما كما هو موضح. خدمة العملاء ممتازة.'],
-        ['name' => 'Youssef', 'city' => 'Marrakech', 'fr' => "J'étais hésitant mais au final très satisfait. Merci !", 'en' => 'I was hesitant but in the end very satisfied. Thank you!', 'ar' => 'كنت مترددا لكن في النهاية راض جدا. شكرا !'],
+        ['name' => $reviewerNames[0]['name'] ?? 'Karim', 'city' => $reviewerNames[0]['city'] ?? 'Casablanca', 'fr' => "Produit de qualité, livraison rapide. Je recommande vivement !", 'en' => 'Great product, fast delivery. Highly recommend!', 'ar' => 'منتج ممتاز والتوصيل سريع جدا. أنصح به بشدة !'],
+        ['name' => $reviewerNames[1]['name'] ?? 'Fatima', 'city' => $reviewerNames[1]['city'] ?? 'Rabat', 'fr' => "Exactement comme décrit. Service client au top.", 'en' => 'Exactly as described. Great customer service.', 'ar' => 'تماما كما هو موضح. خدمة العملاء ممتازة.'],
+        ['name' => $reviewerNames[2]['name'] ?? 'Youssef', 'city' => $reviewerNames[2]['city'] ?? 'Marrakech', 'fr' => "J'étais hésitant mais au final très satisfait. Merci !", 'en' => 'I was hesitant but in the end very satisfied. Thank you!', 'ar' => 'كنت مترددا لكن في النهاية راض جدا. شكرا !'],
     ];
 @endphp
 <body class="antialiased bg-[#f5f5f0]" :class="{'rtl': rtlLangs.includes(currentLang)}" x-init="i18n = @js($i18n); badgeLabels = @js($badgeLabels); testimonialsData = @js($testimonials); pageData = @js($pageData)">
@@ -306,7 +331,7 @@
         </div>
     </div>
 
-    <!-- Language Switcher -->
+    <!-- Language Switcher & More Options Dropdown -->
     @php
         $enabledLanguages = $product->landing_page_languages ?? ['fr'];
         $currencySymbol = match($product->landing_page_currency ?? 'MAD') {
@@ -331,21 +356,10 @@
             'fi' => 'FI', 'hu' => 'HU', 'ro' => 'RO', 'uk' => 'UK', 'sw' => 'SW',
             'bn' => 'BN', 'fa' => 'FA', 'ur' => 'UR',
         ];
+        
+        $hasWhatsApp = isset($whatsappProfile) && $whatsappProfile && $whatsappProfile->phone_number;
     @endphp
     <div class="fixed top-2 right-2 z-50 flex items-center gap-2">
-        {{-- WhatsApp Contact Button --}}
-        @if(isset($whatsappProfile) && $whatsappProfile && $whatsappProfile->phone_number)
-        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $whatsappProfile->phone_number) }}" 
-           target="_blank"
-           rel="noopener noreferrer"
-           class="bg-green-500 hover:bg-green-600 text-white shadow-lg rounded-full p-2 flex items-center justify-center transition-all hover:scale-110"
-           title="Contact us on WhatsApp">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-            </svg>
-        </a>
-        @endif
-        
         {{-- Language Switcher --}}
         @if(count($enabledLanguages) > 1)
         <div class="bg-white shadow-lg rounded-full p-0.5 flex gap-0.5 border border-gray-200 max-w-[calc(100vw-1rem)] overflow-x-auto flex-nowrap">
@@ -358,6 +372,45 @@
                 </button>
                 @endif
             @endforeach
+        </div>
+        @endif
+        
+        {{-- More Options Dropdown (with WhatsApp) --}}
+        @if($hasWhatsApp)
+        <div x-data="{ dropdownOpen: false }" class="relative">
+            <button @click="dropdownOpen = !dropdownOpen" 
+                    class="bg-white shadow-lg rounded-full p-2 flex items-center justify-center border border-gray-200 hover:bg-gray-50 transition">
+                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                </svg>
+            </button>
+            
+            <div x-show="dropdownOpen" 
+                 @click.away="dropdownOpen = false"
+                 x-transition:enter="transition ease-out duration-100"
+                 x-transition:enter-start="transform opacity-0 scale-95"
+                 x-transition:enter-end="transform opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-75"
+                 x-transition:leave-start="transform opacity-100 scale-100"
+                 x-transition:leave-end="transform opacity-0 scale-95"
+                 class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50"
+                 x-cloak>
+                {{-- WhatsApp Contact --}}
+                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $whatsappProfile->phone_number) }}" 
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition">
+                    <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-900 text-sm" x-text="currentLang === 'ar' ? 'تواصل معنا' : (currentLang === 'fr' ? 'Contactez-nous' : 'Contact Us')">Contact Us</div>
+                        <div class="text-xs text-gray-500" x-text="currentLang === 'ar' ? 'عبر واتساب' : (currentLang === 'fr' ? 'via WhatsApp' : 'via WhatsApp')">via WhatsApp</div>
+                    </div>
+                </a>
+            </div>
         </div>
         @endif
     </div>
@@ -374,9 +427,15 @@
                     </div>
                     @endif
 
-                    <h1 class="text-3xl md:text-4xl lg:text-5xl font-black uppercase leading-tight drop-shadow-[0_4px_0_rgba(0,0,0,0.25)] {{ $titleBackgroundColor ? 'inline-block px-4 py-2 rounded-lg' : '' }}" style="color: {{ $titleColor }}; font-family: {{ $titleFontFamily }}; letter-spacing: 0.02em;{{ $titleBackgroundColor ? ' background-color: ' . $titleBackgroundColor . ';' : '' }}">
+                    <h1 class="{{ $titleSizeClasses }} font-black uppercase leading-tight drop-shadow-[0_4px_0_rgba(0,0,0,0.25)] {{ $titleBackgroundColor ? 'inline-block px-4 py-2 rounded-lg' : '' }}" style="color: {{ $titleColor }}; font-family: {{ $titleFontFamily }}; letter-spacing: 0.02em;{{ $titleBackgroundColor ? ' background-color: ' . $titleBackgroundColor . ';' : '' }}">
                         {{ $product->name }}
                     </h1>
+
+                    <!-- AI-generated hero description (translated) -->
+                    <p class="text-base md:text-lg text-white/90 max-w-lg mx-auto lg:mx-0 mt-2" 
+                       x-show="getHeroDescription()" 
+                       x-text="getHeroDescription()">
+                    </p>
 
                     @if(!empty($images))
                     <div class="relative mx-auto max-w-md lg:max-w-none">
@@ -442,6 +501,7 @@
                                    data-min-quantity="{{ $promotion->min_quantity }}"
                                    data-max-quantity="{{ $promotion->max_quantity ?? '' }}"
                                    data-price="{{ $promotion->price }}"
+                                   data-original-price="{{ $promotion->original_price ?? '' }}"
                                    data-label="{{ $promotion->label ?? '' }}"
                                    data-discount="{{ $promotion->discount_percentage }}">
                                 <div class="flex items-center gap-3">
@@ -451,7 +511,7 @@
                                            class="w-5 h-5 text-yellow-500 focus:ring-yellow-400"
                                            {{ $index === 0 ? 'checked' : '' }}
                                            onchange="updatePromotionDisplayForm(this)">
-                                    <div class="flex-1">
+                                    <div class="flex-1 flex items-center justify-between">
                                         <div class="font-semibold text-gray-700 text-sm">
                                             @if($promotion->label)
                                                 {{ $promotion->label }}
@@ -460,7 +520,12 @@
                                                 {{ $promotion->quantity_range }}
                                             @endif
                                         </div>
-                                        {{-- Price hidden in promotions as per request --}}
+                                        <div class="text-right">
+                                            <span class="font-bold text-gray-900">{{ number_format($promotion->price, 0) }} {{ $currencyCode }}</span>
+                                            @if($promotion->original_price && $promotion->original_price > $promotion->price)
+                                            <span class="text-xs text-gray-400 line-through ml-2">{{ number_format($promotion->original_price, 0) }} {{ $currencyCode }}</span>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             </label>
@@ -701,9 +766,17 @@
         @endforeach
     @endif
 
-    <!-- Product description -->
+    <!-- Product description (AI-translated based on current language) -->
+    <section class="py-6 md:py-10 bg-[#f5f5f0]" x-show="getFullDescription()">
+        <div class="container mx-auto px-4 max-w-3xl">
+            <div class="prose prose-lg max-w-none text-gray-800 font-medium text-center" x-html="getFullDescription()">
+            </div>
+        </div>
+    </section>
+    
+    <!-- Fallback: Original product description (if no AI description) -->
     @if($product->description)
-    <section class="py-6 md:py-10 bg-[#f5f5f0]">
+    <section class="py-6 md:py-10 bg-[#f5f5f0]" x-show="!getFullDescription()">
         <div class="container mx-auto px-4 max-w-3xl">
             <div class="prose prose-lg max-w-none text-gray-800 font-medium text-center">
                 {!! $product->description !!}
@@ -765,7 +838,7 @@
             <div class="inline-block bg-yellow-300 text-gray-900 px-4 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider mb-4">
                 🔥 {{ $promoBadge }}
             </div>
-            <h2 class="font-display text-4xl md:text-6xl font-black uppercase mb-3 drop-shadow-lg {{ $titleBackgroundColor ? 'inline-block px-4 py-2 rounded-lg' : '' }}" style="color: {{ $titleColor }};{{ $titleBackgroundColor ? ' background-color: ' . $titleBackgroundColor . ';' : '' }}">
+            <h2 class="font-display {{ $ctaTitleSizeClasses }} font-black uppercase mb-3 drop-shadow-lg {{ $titleBackgroundColor ? 'inline-block px-4 py-2 rounded-lg' : '' }}" style="color: {{ $titleColor }};{{ $titleBackgroundColor ? ' background-color: ' . $titleBackgroundColor . ';' : '' }}">
                 {{ $product->name }}
             </h2>
             <p class="text-lg md:text-xl font-bold mb-6 opacity-95"
