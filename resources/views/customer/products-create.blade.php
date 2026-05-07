@@ -545,16 +545,36 @@
                     <!-- Product Name -->
                     <div>
                         <label for="name" class="block text-sm font-medium text-gray-300 mb-2">Product Name *</label>
-                        <input 
-                            type="text" 
-                            id="name" 
-                            name="name" 
+                        <input
+                            type="text"
+                            id="name"
+                            name="name"
                             required
                             value="{{ old('name') }}"
                             class="w-full px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                             placeholder="Enter product name"
                         />
                         @error('name')
+                            <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Nickname (Internal Use Only) -->
+                    <div>
+                        <label for="nickname" class="block text-sm font-medium text-gray-300 mb-2">
+                            Nickname
+                            <span class="text-xs text-gray-500 font-normal">(internal use only - not shown on landing page)</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="nickname"
+                            name="nickname"
+                            value="{{ old('nickname') }}"
+                            class="w-full px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                            placeholder="e.g., Summer promo version, Test batch #1..."
+                        />
+                        <p class="mt-1 text-xs text-gray-500">Use this to identify different versions or campaigns for the same product</p>
+                        @error('nickname')
                             <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
                         @enderror
                     </div>
