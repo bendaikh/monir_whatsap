@@ -583,6 +583,7 @@
                     <form action="{{ route('store.product.submit-lead', [$store->subdomain, $product->slug]) }}" method="POST" class="space-y-3">
                         @csrf
                         <input type="hidden" name="language" :value="currentLang">
+                        <input type="hidden" name="selected_promotion_id" id="selected_promotion_id" value="{{ $product->activePromotions->first()?->id ?? '' }}">
 
                         @if($formFields['name']['enabled'] ?? true)
                         <input type="text" name="name" {{ ($formFields['name']['required'] ?? true) ? 'required' : '' }}
@@ -694,43 +695,78 @@
                 }
                 
                 $sectionTranslations = $section['translations'] ?? [];
-                if (empty($sectionTranslations)) {
-                    foreach (['fr', 'en', 'ar'] as $legacyLang) {
-                        if (!empty($section["title_{$legacyLang}"])) {
-                            $sectionTranslations[$legacyLang] = [
-                                'title' => $section["title_{$legacyLang}"] ?? '',
-                                'description' => $section["description_{$legacyLang}"] ?? '',
-                            ];
+
+                // Also check legacy fields and add them to translations if not present
+                foreach (['fr', 'en', 'ar'] as $legacyLang) {
+                    if (empty($sectionTranslations[$legacyLang]) && (!empty($section["title_{$legacyLang}"]) || !empty($section["description_{$legacyLang}"]))) {
+                        $sectionTranslations[$legacyLang] = [
+                            'title' => $section["title_{$legacyLang}"] ?? '',
+                            'description' => $section["description_{$legacyLang}"] ?? '',
+                        ];
+                    }
+                }
+
+                // Pull translations from product's landing_page_translations[lang].image_sections[i]
+                // This is the source of truth for AI-generated translations across all languages
+                $allTranslations = $product->landing_page_translations ?? [];
+                foreach ($allTranslations as $tLang => $tData) {
+                    if (isset($tData['image_sections'][$i]) && is_array($tData['image_sections'][$i])) {
+                        $aiTitle = $tData['image_sections'][$i]['title'] ?? '';
+                        $aiDesc = $tData['image_sections'][$i]['description'] ?? '';
+                        if (!empty($aiTitle) || !empty($aiDesc)) {
+                            // Override only if the per-section translations don't have proper content for this language
+                            // OR if it's a new language not yet in section translations
+                            if (empty($sectionTranslations[$tLang]['title']) && empty($sectionTranslations[$tLang]['description'])) {
+                                $sectionTranslations[$tLang] = [
+                                    'title' => $aiTitle,
+                                    'description' => $aiDesc,
+                                ];
+                            }
                         }
                     }
                 }
-                
+
+                // Prefer the default language for fallback, then English, then any available
                 $fallbackTitle = '';
                 $fallbackDesc = '';
-                foreach ($sectionTranslations as $data) {
-                    if (!empty($data['title'])) {
-                        $fallbackTitle = $data['title'];
-                        $fallbackDesc = $data['description'] ?? '';
+                $preferredLangs = array_unique(array_filter([$defaultLang, 'en', 'fr', 'ar']));
+                foreach ($preferredLangs as $tryLang) {
+                    if (!empty($sectionTranslations[$tryLang]['title']) || !empty($sectionTranslations[$tryLang]['description'])) {
+                        $fallbackTitle = $sectionTranslations[$tryLang]['title'] ?? '';
+                        $fallbackDesc = $sectionTranslations[$tryLang]['description'] ?? '';
                         break;
+                    }
+                }
+                // If still empty, take any available translation
+                if (empty($fallbackTitle) && empty($fallbackDesc)) {
+                    foreach ($sectionTranslations as $data) {
+                        if (!empty($data['title']) || !empty($data['description'])) {
+                            $fallbackTitle = $data['title'] ?? '';
+                            $fallbackDesc = $data['description'] ?? '';
+                            break;
+                        }
                     }
                 }
                 
                 $bandClass = $sectionColors[$i % count($sectionColors)];
             @endphp
 
+            @php
+                $sectionId = 'section_' . $i;
+                $sectionTransJson = json_encode($sectionTranslations);
+            @endphp
+
             @if($fallbackTitle)
-            <div class="{{ $bandClass }} py-4 md:py-6 relative stripe-bg"
-                 x-data="{ sectionTranslations: @js($sectionTranslations), fallbackTitle: @js($fallbackTitle), fallbackDesc: @js($fallbackDesc) }">
+            <div class="{{ $bandClass }} py-4 md:py-6 relative stripe-bg">
                 <div class="container mx-auto px-4 max-w-4xl text-center">
                     <h2 class="font-display text-3xl md:text-5xl font-black uppercase tracking-wide"
-                        x-text="sectionTranslations[currentLang]?.title || fallbackTitle">{{ $fallbackTitle }}</h2>
+                        x-text="({{ $sectionTransJson }})[currentLang]?.title || @js($fallbackTitle)">{{ $fallbackTitle }}</h2>
                 </div>
             </div>
             @endif
 
             @if($sectionImg || $fallbackDesc)
-            <section class="py-6 md:py-10 bg-white"
-                     x-data="{ sectionTranslations: @js($sectionTranslations), fallbackDesc: @js($fallbackDesc) }">
+            <section class="py-6 md:py-10 bg-white">
                 <div class="container mx-auto px-4 max-w-4xl space-y-5">
                     @if($sectionImg)
                     <div class="rounded-2xl overflow-hidden shadow-xl border-4 border-white ring-1 ring-gray-200">
@@ -739,7 +775,7 @@
                     @endif
                     @if($fallbackDesc)
                     <p class="text-gray-700 text-base md:text-lg leading-relaxed text-center font-medium"
-                       x-text="sectionTranslations[currentLang]?.description || fallbackDesc">{{ $fallbackDesc }}</p>
+                       x-text="({{ $sectionTransJson }})[currentLang]?.description || @js($fallbackDesc)">{{ $fallbackDesc }}</p>
                     @endif
                 </div>
             </section>
@@ -956,12 +992,19 @@
         // Promotion selection handler for form
         function updatePromotionDisplayForm(radio) {
             const option = radio.closest('.promotion-option-form');
+            const promotionId = option.dataset.promotionId;
             const minQuantity = parseInt(option.dataset.minQuantity);
             const maxQuantity = option.dataset.maxQuantity ? parseInt(option.dataset.maxQuantity) : null;
             const price = parseFloat(option.dataset.price);
             const originalPrice = option.dataset.originalPrice ? parseFloat(option.dataset.originalPrice) : null;
             const discount = option.dataset.discount;
             const currencyCode = '{{ $currencyCode }}';
+
+            // Update the hidden field in the form so selected promotion gets submitted
+            const hiddenPromoInput = document.getElementById('selected_promotion_id');
+            if (hiddenPromoInput && promotionId) {
+                hiddenPromoInput.value = promotionId;
+            }
             
             // Remove active state from all options
             document.querySelectorAll('.promotion-option-form').forEach(opt => {

@@ -108,11 +108,11 @@ class ProductController extends Controller
             'address' => 'nullable|string|max:1000',
             'note' => 'nullable|string|max:1000',
             'language' => 'required|string|max:10',
-            'selected_promotion_form' => 'nullable|exists:product_promotions,id',
+            'selected_promotion_id' => 'nullable|exists:product_promotions,id',
         ]);
 
         // Get selected promotion if any
-        $selectedPromotionId = $request->input('selected_promotion_form');
+        $selectedPromotionId = $request->input('selected_promotion_id');
         $selectedPromotion = null;
         if ($selectedPromotionId) {
             $selectedPromotion = \App\Models\ProductPromotion::find($selectedPromotionId);
