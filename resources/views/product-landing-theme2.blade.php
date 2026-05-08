@@ -320,11 +320,11 @@
                 @else
                     <span>🔥 {{ $promoBadge }}</span>
                     <span>•</span>
-                    <span x-text="t('limited_stock')">{{ $i18n['fr']['limited_stock'] }}</span>
+                    <span x-text="t('limited_stock')">{{ $i18n[$defaultLang]['limited_stock'] ?? $i18n['en']['limited_stock'] }}</span>
                     <span>•</span>
-                    <span>🚚 {{ $badgeLabels['fr']['free_shipping'][1] }}</span>
+                    <span>🚚 {{ $badgeLabels[$defaultLang]['free_shipping'][1] ?? $badgeLabels['en']['free_shipping'][1] }}</span>
                     <span>•</span>
-                    <span>💵 {{ $badgeLabels['fr']['cod'][1] }}</span>
+                    <span>💵 {{ $badgeLabels[$defaultLang]['cod'][1] ?? $badgeLabels['en']['cod'][1] }}</span>
                     <span>•</span>
                 @endif
             @endfor
@@ -432,11 +432,8 @@
                     </h1>
 
                     @if(!empty($images))
-                    <div class="relative mx-auto max-w-md lg:max-w-none">
-                        <div class="absolute -inset-4 bg-white/20 rounded-[40px] blur-xl"></div>
-                        <div class="relative bg-white rounded-3xl p-3 shadow-2xl border-4 border-white">
-                            <img src="{{ $images[0] }}" alt="{{ $product->name }}" class="w-full h-auto object-contain rounded-2xl" style="max-height: 420px;">
-                        </div>
+                    <div class="relative mx-auto lg:max-w-none">
+                        <img src="{{ $images[0] }}" alt="{{ $product->name }}" class="w-full h-auto object-contain rounded-xl shadow-lg" style="max-height: 550px;">
                     </div>
                     @endif
 
@@ -447,15 +444,11 @@
                                 <span id="mainSalePrice" class="font-display text-5xl md:text-6xl font-black" data-base-price="{{ $product->price }}">{{ number_format($product->price, 0) }}</span>
                                 <span class="text-xl font-bold text-gray-600">{{ $currencyCode }}</span>
                             </div>
-                            @if($product->compare_at_price && $product->compare_at_price > $product->price)
-                            <div id="mainComparePrice" class="text-sm line-through text-red-500 text-center font-semibold">{{ number_format($product->compare_at_price, 0) }} {{ $currencyCode }}</div>
-                            @endif
+                            <div id="mainComparePrice" class="text-sm line-through text-red-500 text-center font-semibold" {!! (!$product->compare_at_price || $product->compare_at_price <= $product->price) ? 'style="display:none"' : '' !!}>{{ $product->compare_at_price ? number_format($product->compare_at_price, 0) : 0 }} {{ $currencyCode }}</div>
                         </div>
-                        @if($product->compare_at_price && $product->compare_at_price > $product->price)
-                        <div class="bg-yellow-300 text-red-700 font-black text-2xl md:text-3xl px-4 py-2 rounded-xl rotate-[-8deg] shadow-lg animate-pulse-scale">
-                            -{{ round((($product->compare_at_price - $product->price) / $product->compare_at_price) * 100) }}%
+                        <div class="bg-yellow-300 text-red-700 font-black text-2xl md:text-3xl px-4 py-2 rounded-xl rotate-[-8deg] shadow-lg animate-pulse-scale" id="discountBadgeContainer" {!! (!$product->compare_at_price || $product->compare_at_price <= $product->price) ? 'style="display:none"' : '' !!}>
+                            <span id="discountBadge">-{{ $product->compare_at_price && $product->compare_at_price > $product->price ? round((($product->compare_at_price - $product->price) / $product->compare_at_price) * 100) : 0 }}%</span>
                         </div>
-                        @endif
                     </div>
                 </div>
 
@@ -463,15 +456,15 @@
                 <div class="bg-white rounded-3xl shadow-2xl p-5 md:p-7 text-gray-900 border-4 border-yellow-300" id="order-form">
                     <div class="text-center mb-4">
                         <div class="inline-block bg-red-500 text-white px-4 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider mb-2">
-                            <span x-text="t('cod')">{{ $i18n['fr']['cod'] }}</span>
+                            <span x-text="t('cod')">{{ $i18n[$defaultLang]['cod'] ?? $i18n['en']['cod'] }}</span>
                         </div>
                         <h2 class="font-display text-3xl md:text-4xl font-black uppercase text-gray-900"
                             x-text="t('order_now')">
-                            {{ $i18n['fr']['order_now'] }}
+                            {{ $i18n[$defaultLang]['order_now'] ?? $i18n['en']['order_now'] }}
                         </h2>
                         <p class="text-xs text-gray-500 mt-1 font-semibold"
                             x-text="t('only_today')">
-                            {{ $i18n['fr']['only_today'] }}
+                            {{ $i18n[$defaultLang]['only_today'] ?? $i18n['en']['only_today'] }}
                         </p>
                     </div>
 
@@ -650,7 +643,7 @@
                         @else
                             {{-- Fallback to predefined badges --}}
                             @foreach(array_slice(empty($badges) ? ['free_shipping','money_back','secure_payment','warranty'] : $badges, 0, 4) as $badgeKey)
-                                @php $b = $badgeLabels['fr'][$badgeKey] ?? null; @endphp
+                                @php $b = $badgeLabels[$defaultLang][$badgeKey] ?? $badgeLabels['en'][$badgeKey] ?? null; @endphp
                                 @if($b)
                                 <div class="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold text-gray-700">
                                     <span>{{ $b[0] }}</span>
@@ -672,17 +665,17 @@
                 <div>
                     <div class="font-display text-3xl md:text-5xl font-black text-yellow-300">{{ $statsCustomers }}+</div>
                     <div class="text-xs md:text-sm font-bold uppercase tracking-wider mt-1"
-                        x-text="t('customers')">{{ $i18n['fr']['customers'] }}</div>
+                        x-text="t('customers')">{{ $i18n[$defaultLang]['customers'] ?? $i18n['en']['customers'] }}</div>
                 </div>
                 <div class="border-x-2 border-red-500/70">
                     <div class="font-display text-3xl md:text-5xl font-black text-yellow-300">⭐ {{ $statsRating }}</div>
                     <div class="text-xs md:text-sm font-bold uppercase tracking-wider mt-1"
-                        x-text="t('rating')">{{ $i18n['fr']['rating'] }}</div>
+                        x-text="t('rating')">{{ $i18n[$defaultLang]['rating'] ?? $i18n['en']['rating'] }}</div>
                 </div>
                 <div>
                     <div class="font-display text-3xl md:text-5xl font-black text-yellow-300">{{ $statsReviews }}</div>
                     <div class="text-xs md:text-sm font-bold uppercase tracking-wider mt-1"
-                        x-text="t('reviews')">{{ $i18n['fr']['reviews'] }}</div>
+                        x-text="t('reviews')">{{ $i18n[$defaultLang]['reviews'] ?? $i18n['en']['reviews'] }}</div>
                 </div>
             </div>
         </div>
@@ -754,24 +747,6 @@
         @endforeach
     @endif
 
-    <!-- Product description (AI-translated based on current language) -->
-    <section class="py-6 md:py-10 bg-[#f5f5f0]" x-show="getFullDescription()">
-        <div class="container mx-auto px-4 max-w-3xl">
-            <div class="prose prose-lg max-w-none text-gray-800 font-medium text-center" x-html="getFullDescription()">
-            </div>
-        </div>
-    </section>
-    
-    <!-- Fallback: Original product description (if no AI description) -->
-    @if($product->description)
-    <section class="py-6 md:py-10 bg-[#f5f5f0]" x-show="!getFullDescription()">
-        <div class="container mx-auto px-4 max-w-3xl">
-            <div class="prose prose-lg max-w-none text-gray-800 font-medium text-center">
-                {!! $product->description !!}
-            </div>
-        </div>
-    </section>
-    @endif
 
     <!-- Why choose / Features (Dynamic from AI) -->
     <section class="py-10 md:py-14 bg-gray-900 text-white relative overflow-hidden" x-show="getFeatures().length > 0">
@@ -779,7 +754,7 @@
         <div class="container mx-auto px-4 max-w-5xl relative z-10">
             <h2 class="font-display text-3xl md:text-5xl font-black text-center uppercase mb-8 text-yellow-300"
                 x-text="t('why_choose')">
-                {{ $i18n['fr']['why_choose'] ?? 'Why Choose This Product?' }}
+                {{ $i18n[$defaultLang]['why_choose'] ?? $i18n['en']['why_choose'] ?? 'Why Choose This Product?' }}
             </h2>
             <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <template x-for="(feature, index) in getFeatures()" :key="index">
@@ -802,7 +777,7 @@
         <div class="container mx-auto px-4 max-w-5xl relative z-10">
             <h2 class="font-display text-3xl md:text-5xl font-black text-center uppercase mb-8 text-yellow-300"
                 x-text="t('why_choose')">
-                {{ $i18n['fr']['why_choose'] ?? 'Why Choose This Product?' }}
+                {{ $i18n[$defaultLang]['why_choose'] ?? $i18n['en']['why_choose'] ?? 'Why Choose This Product?' }}
             </h2>
             <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
                 @foreach($staticFeatures as $feature)
@@ -831,7 +806,7 @@
             </h2>
             <p class="text-lg md:text-xl font-bold mb-6 text-gray-900"
                 x-text="t('guarantee')">
-                {{ $i18n['fr']['guarantee'] }}
+                {{ $i18n[$defaultLang]['guarantee'] ?? $i18n['en']['guarantee'] }}
             </p>
             <a href="#order-form" class="inline-block bg-white text-gray-900 font-display text-2xl md:text-3xl uppercase px-8 py-4 rounded-2xl shadow-2xl hover:scale-105 transition-transform animate-pulse-scale">
                 ➤ <span x-text="t('order_now')">{{ $ctaText }}</span>
@@ -844,7 +819,7 @@
         <div class="container mx-auto px-4 max-w-5xl">
             <h2 class="font-display text-3xl md:text-5xl font-black text-center uppercase mb-10 text-gray-900"
                 x-text="t('how_to_order')">
-                {{ $i18n['fr']['how_to_order'] ?? 'How To Order' }}
+                {{ $i18n[$defaultLang]['how_to_order'] ?? $i18n['en']['how_to_order'] ?? 'How To Order' }}
             </h2>
             
             <!-- Dynamic steps from AI -->
@@ -880,9 +855,9 @@
                         <div class="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-gray-900 text-yellow-300 flex items-center justify-center font-black text-lg shadow-md">{{ $n }}</div>
                     </div>
                     <h3 class="font-black text-lg text-gray-900 mb-1"
-                        x-text="t('step{{ $n }}_t')">{{ $i18n['fr']["step{$n}_t"] ?? 'Step '.$n }}</h3>
+                        x-text="t('step{{ $n }}_t')">{{ $i18n[$defaultLang]["step{$n}_t"] ?? $i18n['en']["step{$n}_t"] ?? 'Step '.$n }}</h3>
                     <p class="text-sm text-gray-600 font-medium"
-                        x-text="t('step{{ $n }}_d')">{{ $i18n['fr']["step{$n}_d"] ?? '' }}</p>
+                        x-text="t('step{{ $n }}_d')">{{ $i18n[$defaultLang]["step{$n}_d"] ?? $i18n['en']["step{$n}_d"] ?? '' }}</p>
                 </div>
                 @endforeach
             </div>
@@ -894,7 +869,7 @@
         <div class="container mx-auto px-4 max-w-6xl">
             <h2 class="font-display text-3xl md:text-5xl font-black text-center uppercase mb-8 text-gray-900"
                 x-text="t('testimonials')">
-                {{ $i18n['fr']['testimonials'] ?? 'What Our Customers Say' }}
+                {{ $i18n[$defaultLang]['testimonials'] ?? $i18n['en']['testimonials'] ?? 'What Our Customers Say' }}
             </h2>
             <div class="grid md:grid-cols-3 gap-5">
                 <template x-for="(tst, index) in getTestimonials()" :key="index">
@@ -940,7 +915,7 @@
                 @else
                     {{-- Fallback to predefined badges --}}
                     @foreach($badges as $badgeKey)
-                        @php $b = $badgeLabels['fr'][$badgeKey] ?? null; @endphp
+                        @php $b = $badgeLabels[$defaultLang][$badgeKey] ?? $badgeLabels['en'][$badgeKey] ?? null; @endphp
                         @if($b)
                         <div class="flex items-center gap-2 bg-gray-50 border-l-4 border-emerald-500 px-3 py-2.5 rounded-lg">
                             <span class="text-2xl">{{ $b[0] }}</span>
@@ -984,7 +959,9 @@
             const minQuantity = parseInt(option.dataset.minQuantity);
             const maxQuantity = option.dataset.maxQuantity ? parseInt(option.dataset.maxQuantity) : null;
             const price = parseFloat(option.dataset.price);
+            const originalPrice = option.dataset.originalPrice ? parseFloat(option.dataset.originalPrice) : null;
             const discount = option.dataset.discount;
+            const currencyCode = '{{ $currencyCode }}';
             
             // Remove active state from all options
             document.querySelectorAll('.promotion-option-form').forEach(opt => {
@@ -1002,10 +979,33 @@
                 mainSalePrice.textContent = formatPrice(price);
             }
             
+            // Update the original/compare price display
+            const mainComparePrice = document.getElementById('mainComparePrice');
+            if (mainComparePrice) {
+                if (originalPrice && originalPrice > price) {
+                    mainComparePrice.textContent = formatPrice(originalPrice) + ' ' + currencyCode;
+                    mainComparePrice.style.display = '';
+                } else {
+                    mainComparePrice.style.display = 'none';
+                }
+            }
+            
+            // Update the discount percentage badge
+            const discountBadge = document.getElementById('discountBadge');
+            const discountBadgeContainer = document.getElementById('discountBadgeContainer');
+            if (discountBadge && discountBadgeContainer) {
+                if (originalPrice && originalPrice > price) {
+                    const discountPercent = Math.round(((originalPrice - price) / originalPrice) * 100);
+                    discountBadge.textContent = '-' + discountPercent + '%';
+                    discountBadgeContainer.style.display = '';
+                } else {
+                    discountBadgeContainer.style.display = 'none';
+                }
+            }
+            
             // Update the sticky mobile bar price if it exists
             const stickyBar = document.querySelector('a[href="#order-form"].fixed.bottom-0');
             if (stickyBar) {
-                const currencyCode = '{{ $currencyCode }}';
                 stickyBar.innerHTML = stickyBar.innerHTML.replace(/- [\d\s,.]+ [A-Z]+/, '- ' + formatPrice(price) + ' ' + currencyCode);
             }
         }
