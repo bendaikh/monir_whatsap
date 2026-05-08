@@ -431,12 +431,6 @@
                         {{ $product->name }}
                     </h1>
 
-                    <!-- AI-generated hero description (translated) -->
-                    <p class="text-base md:text-lg text-white/90 max-w-lg mx-auto lg:mx-0 mt-2" 
-                       x-show="getHeroDescription()" 
-                       x-text="getHeroDescription()">
-                    </p>
-
                     @if(!empty($images))
                     <div class="relative mx-auto max-w-md lg:max-w-none">
                         <div class="absolute -inset-4 bg-white/20 rounded-[40px] blur-xl"></div>
@@ -511,19 +505,13 @@
                                            class="w-5 h-5 text-yellow-500 focus:ring-yellow-400"
                                            {{ $index === 0 ? 'checked' : '' }}
                                            onchange="updatePromotionDisplayForm(this)">
-                                    <div class="flex-1 flex items-center justify-between">
+                                    <div class="flex-1">
                                         <div class="font-semibold text-gray-700 text-sm">
                                             @if($promotion->label)
                                                 {{ $promotion->label }}
                                             @else
                                                 <span x-text="currentLang === 'ar' ? 'اشتري' : (currentLang === 'sw' ? 'Nunua' : (currentLang === 'en' ? 'Buy' : 'Achetez'))">Achetez</span>
                                                 {{ $promotion->quantity_range }}
-                                            @endif
-                                        </div>
-                                        <div class="text-right">
-                                            <span class="font-bold text-gray-900">{{ number_format($promotion->price, 0) }} {{ $currencyCode }}</span>
-                                            @if($promotion->original_price && $promotion->original_price > $promotion->price)
-                                            <span class="text-xs text-gray-400 line-through ml-2">{{ number_format($promotion->original_price, 0) }} {{ $currencyCode }}</span>
                                             @endif
                                         </div>
                                     </div>
@@ -841,7 +829,7 @@
             <h2 class="font-display {{ $ctaTitleSizeClasses }} font-black uppercase mb-3 drop-shadow-lg {{ $titleBackgroundColor ? 'inline-block px-4 py-2 rounded-lg' : '' }}" style="color: {{ $titleColor }};{{ $titleBackgroundColor ? ' background-color: ' . $titleBackgroundColor . ';' : '' }}">
                 {{ $product->name }}
             </h2>
-            <p class="text-lg md:text-xl font-bold mb-6 opacity-95"
+            <p class="text-lg md:text-xl font-bold mb-6 text-gray-900"
                 x-text="t('guarantee')">
                 {{ $i18n['fr']['guarantee'] }}
             </p>
