@@ -150,6 +150,31 @@ class WhatsAppController extends Controller
         ]);
     }
     
+    /**
+     * Update main languages for a WhatsApp profile
+     */
+    public function updateLanguages(Request $request, $profileId)
+    {
+        $request->validate([
+            'languages' => 'required|array|min:1',
+            'languages.*' => 'string|max:10'
+        ]);
+        
+        $profile = WhatsappProfile::where('id', $profileId)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+        
+        $profile->update([
+            'main_languages' => $request->languages
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Languages updated successfully.',
+            'profile' => $profile
+        ]);
+    }
+    
     public function getConversations(Request $request, $profileId)
     {
         $conversations = Conversation::where('whatsapp_profile_id', $profileId)
@@ -413,7 +438,8 @@ class WhatsAppController extends Controller
             $conversation->update(['last_message_at' => now()]);
             
             // Check if AI auto-reply is enabled
-            $aiService = new AiChatService($profile->user, $profile->store_id);
+            // Pass the profile's main languages to help AI respond in the right language faster
+            $aiService = new AiChatService($profile->user, $profile->store_id, $profile->main_languages);
             $autoReplyEnabled = $aiService->isAutoReplyEnabled();
             
             \Log::info('AI auto-reply check', [

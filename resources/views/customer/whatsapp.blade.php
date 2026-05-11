@@ -72,6 +72,16 @@
                                     @endif
                                 </span>
                             </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-400">Main Languages</span>
+                                <span class="text-white">
+                                    @if($profile->main_languages && count($profile->main_languages) > 0)
+                                        {{ implode(', ', array_map(fn($l) => strtoupper($l), $profile->main_languages)) }}
+                                    @else
+                                        <span class="text-gray-500">Not set</span>
+                                    @endif
+                                </span>
+                            </div>
                         </div>
 
                         <div class="flex gap-2">
@@ -84,6 +94,11 @@
                                     Reconnect
                                 </button>
                             @endif
+                            <button @click="openLanguageModal({{ $profile->id }}, {{ json_encode($profile->main_languages ?? []) }})" class="py-2 px-4 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-sm font-medium rounded-lg transition" title="Set Languages">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                                </svg>
+                            </button>
                             <button @click="disconnectProfile({{ $profile->id }})" class="py-2 px-4 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm font-medium rounded-lg transition">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -223,6 +238,85 @@
                 </div>
             </div>
         </div>
+
+        <!-- Language Settings Modal -->
+        <div x-show="showLanguageModal" x-cloak class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div @click.away="closeLanguageModal()" class="bg-[#0f1c2e] border border-white/10 rounded-xl max-w-md w-full p-8">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2">Main Languages</h3>
+                    <p class="text-gray-400 text-sm">Select the main languages for this profile. This helps AI respond faster in the right language.</p>
+                </div>
+                
+                <div class="space-y-3 mb-6 max-h-64 overflow-y-auto">
+                    @php
+                        $availableLanguages = [
+                            'en' => 'English',
+                            'fr' => 'French / Français',
+                            'ar' => 'Arabic / العربية',
+                            'sw' => 'Swahili / Kiswahili',
+                            'es' => 'Spanish / Español',
+                            'de' => 'German / Deutsch',
+                            'pt' => 'Portuguese / Português',
+                            'it' => 'Italian / Italiano',
+                            'tr' => 'Turkish / Türkçe',
+                            'ru' => 'Russian / Русский',
+                            'zh' => 'Chinese / 中文',
+                            'ja' => 'Japanese / 日本語',
+                            'ko' => 'Korean / 한국어',
+                            'hi' => 'Hindi / हिन्दी',
+                            'bn' => 'Bengali / বাংলা',
+                            'nl' => 'Dutch / Nederlands',
+                            'pl' => 'Polish / Polski',
+                            'vi' => 'Vietnamese / Tiếng Việt',
+                            'th' => 'Thai / ไทย',
+                            'id' => 'Indonesian / Bahasa Indonesia',
+                            'ms' => 'Malay / Bahasa Melayu',
+                            'fa' => 'Persian / فارسی',
+                            'ur' => 'Urdu / اردو',
+                            'he' => 'Hebrew / עברית',
+                        ];
+                    @endphp
+                    
+                    @foreach($availableLanguages as $code => $name)
+                        <label class="flex items-center gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 cursor-pointer transition">
+                            <input type="checkbox" 
+                                   :checked="selectedLanguages.includes('{{ $code }}')"
+                                   @change="toggleLanguage('{{ $code }}')"
+                                   class="w-5 h-5 text-emerald-500 bg-gray-700 border-gray-600 rounded focus:ring-emerald-500 focus:ring-2">
+                            <span class="text-white font-medium">{{ $name }}</span>
+                            <span class="text-gray-500 text-sm ml-auto">{{ strtoupper($code) }}</span>
+                        </label>
+                    @endforeach
+                </div>
+                
+                <div class="flex gap-3">
+                    <button @click="closeLanguageModal()" class="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg transition">
+                        Cancel
+                    </button>
+                    <button @click="saveLanguages()" 
+                            :disabled="savingLanguages || selectedLanguages.length === 0"
+                            class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition">
+                        <span x-show="!savingLanguages">Save Languages</span>
+                        <span x-show="savingLanguages" class="flex items-center justify-center gap-2">
+                            <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Saving...
+                        </span>
+                    </button>
+                </div>
+                
+                <p x-show="selectedLanguages.length === 0" class="text-red-400 text-sm text-center mt-3">
+                    Please select at least one language
+                </p>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
@@ -231,10 +325,16 @@
             return {
                 showQrModal: false,
                 showChatModal: false,
+                showLanguageModal: false,
                 qrCodeUrl: '',
                 qrConnected: false,
                 socket: null,
                 sessionId: null,
+                
+                // Language settings
+                currentProfileId: null,
+                selectedLanguages: [],
+                savingLanguages: false,
                 
                 conversations: [],
                 messages: [],
@@ -476,6 +576,63 @@
                     if (!timestamp) return '';
                     const date = new Date(timestamp * 1000);
                     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                },
+                
+                // Language settings methods
+                openLanguageModal(profileId, currentLanguages) {
+                    this.currentProfileId = profileId;
+                    this.selectedLanguages = currentLanguages || [];
+                    this.showLanguageModal = true;
+                },
+                
+                closeLanguageModal() {
+                    this.showLanguageModal = false;
+                    this.currentProfileId = null;
+                    this.selectedLanguages = [];
+                },
+                
+                toggleLanguage(langCode) {
+                    const index = this.selectedLanguages.indexOf(langCode);
+                    if (index === -1) {
+                        this.selectedLanguages.push(langCode);
+                    } else {
+                        this.selectedLanguages.splice(index, 1);
+                    }
+                },
+                
+                async saveLanguages() {
+                    if (this.selectedLanguages.length === 0) {
+                        return;
+                    }
+                    
+                    this.savingLanguages = true;
+                    
+                    try {
+                        const response = await fetch(`/app/whatsapp/${this.currentProfileId}/languages`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({
+                                languages: this.selectedLanguages
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            this.closeLanguageModal();
+                            window.location.reload();
+                        } else {
+                            alert('Failed to save languages: ' + (data.message || 'Unknown error'));
+                        }
+                    } catch (error) {
+                        console.error('Error saving languages:', error);
+                        alert('Failed to save languages. Please try again.');
+                    } finally {
+                        this.savingLanguages = false;
+                    }
                 }
             }
         }

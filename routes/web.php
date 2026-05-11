@@ -157,6 +157,7 @@ Route::middleware(['auth', 'require.workspace', 'require.store'])->prefix('app')
     Route::get('/whatsapp/check-connection', [WhatsAppController::class, 'checkConnection'])->name('whatsapp.check-connection');
     Route::post('/whatsapp/save-connection', [WhatsAppController::class, 'saveConnection'])->name('whatsapp.save-connection');
     Route::post('/whatsapp/disconnect/{profile}', [WhatsAppController::class, 'disconnect'])->name('whatsapp.disconnect');
+    Route::post('/whatsapp/{profile}/languages', [WhatsAppController::class, 'updateLanguages'])->name('whatsapp.update-languages');
     Route::get('/whatsapp/{profile}/conversations', [WhatsAppController::class, 'getConversations'])->name('whatsapp.conversations');
     Route::get('/whatsapp/conversations/{conversation}/messages', [WhatsAppController::class, 'getMessages'])->name('whatsapp.messages');
     Route::post('/whatsapp/conversations/{conversation}/send', [WhatsAppController::class, 'sendMessage'])->name('whatsapp.send');

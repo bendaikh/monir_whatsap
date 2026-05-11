@@ -359,9 +359,10 @@
         
         $hasWhatsApp = isset($whatsappProfile) && $whatsappProfile && $whatsappProfile->phone_number;
     @endphp
-    <div class="fixed top-2 right-2 z-50 flex items-center gap-2">
-        {{-- Language Switcher --}}
-        @if(count($enabledLanguages) > 1)
+    
+    {{-- Language Switcher - Top Right --}}
+    @if(count($enabledLanguages) > 1)
+    <div class="fixed top-2 right-2 z-50">
         <div class="bg-white shadow-lg rounded-full p-0.5 flex gap-0.5 border border-gray-200 max-w-[calc(100vw-1rem)] overflow-x-auto flex-nowrap">
             @foreach($enabledLanguages as $lang)
                 @if(isset($languageCodes[$lang]))
@@ -373,47 +374,20 @@
                 @endif
             @endforeach
         </div>
-        @endif
-        
-        {{-- More Options Dropdown (with WhatsApp) --}}
-        @if($hasWhatsApp)
-        <div x-data="{ dropdownOpen: false }" class="relative">
-            <button @click="dropdownOpen = !dropdownOpen" 
-                    class="bg-white shadow-lg rounded-full p-2 flex items-center justify-center border border-gray-200 hover:bg-gray-50 transition">
-                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
-                </svg>
-            </button>
-            
-            <div x-show="dropdownOpen" 
-                 @click.away="dropdownOpen = false"
-                 x-transition:enter="transition ease-out duration-100"
-                 x-transition:enter-start="transform opacity-0 scale-95"
-                 x-transition:enter-end="transform opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-75"
-                 x-transition:leave-start="transform opacity-100 scale-100"
-                 x-transition:leave-end="transform opacity-0 scale-95"
-                 class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50"
-                 x-cloak>
-                {{-- WhatsApp Contact --}}
-                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $whatsappProfile->phone_number) }}" 
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition">
-                    <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="font-semibold text-gray-900 text-sm" x-text="currentLang === 'ar' ? 'تواصل معنا' : (currentLang === 'fr' ? 'Contactez-nous' : 'Contact Us')">Contact Us</div>
-                        <div class="text-xs text-gray-500" x-text="currentLang === 'ar' ? 'عبر واتساب' : (currentLang === 'fr' ? 'via WhatsApp' : 'via WhatsApp')">via WhatsApp</div>
-                    </div>
-                </a>
-            </div>
-        </div>
-        @endif
     </div>
+    @endif
+    
+    {{-- WhatsApp Floating Button - Bottom Right --}}
+    @if($hasWhatsApp)
+    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $whatsappProfile->phone_number) }}" 
+       target="_blank"
+       rel="noopener noreferrer"
+       class="fixed bottom-20 md:bottom-6 right-4 z-50 bg-green-500 hover:bg-green-600 shadow-lg rounded-full p-3 flex items-center justify-center border-2 border-white transition-all hover:scale-110">
+        <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+    </a>
+    @endif
 
     <!-- HERO: Big bold product title + image + order form + price -->
     <section class="relative bg-gradient-to-br {{ $heroBg }} stripe-bg text-white overflow-hidden">

@@ -18,11 +18,13 @@ class WhatsappProfile extends Model
         'session_id',
         'session_data',
         'is_active',
+        'main_languages',
         'last_connected_at',
     ];
 
     protected $casts = [
         'session_data' => 'array',
+        'main_languages' => 'array',
         'is_active' => 'boolean',
         'last_connected_at' => 'datetime',
     ];

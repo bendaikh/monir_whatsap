@@ -14,11 +14,13 @@ class AiChatService
     protected $apiSetting;
     protected $user;
     protected $storeId;
+    protected $mainLanguages;
 
-    public function __construct(User $user, ?int $storeId = null)
+    public function __construct(User $user, ?int $storeId = null, ?array $mainLanguages = null)
     {
         $this->user = $user;
         $this->storeId = $storeId;
+        $this->mainLanguages = $mainLanguages;
         $this->apiSetting = $user->aiApiSetting;
     }
 
@@ -163,6 +165,13 @@ class AiChatService
             }
         }
         
+        // Build main languages hint for AI
+        $languageHint = '';
+        if (!empty($this->mainLanguages)) {
+            $langNames = $this->getLanguageNames($this->mainLanguages);
+            $languageHint = "\n\nPRIORITY LANGUAGES FOR THIS PROFILE:\nThe main languages expected for this WhatsApp profile are: " . implode(', ', $langNames) . ".\nWhen detecting the customer's language, prioritize these languages first. If the message could be interpreted as any of these languages, assume it's one of them. This helps you respond faster and more accurately.";
+        }
+        
         return <<<PROMPT
 You are a friendly and helpful AI assistant for {$businessName}'s{$storeName} WhatsApp customer service.
 
@@ -220,9 +229,45 @@ PRODUCT IMAGES — HOW TO SEND THEM (READ CAREFULLY):
   * "[SEND_IMAGE:999]" when product 999 isn't in the list
 
 {$productsContext}
+{$languageHint}
 
 Remember: You're chatting on WhatsApp, so keep it casual, friendly, and helpful!
 PROMPT;
+    }
+    
+    /**
+     * Get human-readable language names from codes
+     */
+    protected function getLanguageNames(array $codes): array
+    {
+        $languageMap = [
+            'en' => 'English',
+            'fr' => 'French',
+            'ar' => 'Arabic (including Darija/Moroccan Arabic)',
+            'sw' => 'Swahili',
+            'es' => 'Spanish',
+            'de' => 'German',
+            'pt' => 'Portuguese',
+            'it' => 'Italian',
+            'tr' => 'Turkish',
+            'ru' => 'Russian',
+            'zh' => 'Chinese',
+            'ja' => 'Japanese',
+            'ko' => 'Korean',
+            'hi' => 'Hindi',
+            'bn' => 'Bengali',
+            'nl' => 'Dutch',
+            'pl' => 'Polish',
+            'vi' => 'Vietnamese',
+            'th' => 'Thai',
+            'id' => 'Indonesian',
+            'ms' => 'Malay',
+            'fa' => 'Persian',
+            'ur' => 'Urdu',
+            'he' => 'Hebrew',
+        ];
+        
+        return array_map(fn($code) => $languageMap[$code] ?? strtoupper($code), $codes);
     }
 
     /**
