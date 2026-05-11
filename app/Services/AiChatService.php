@@ -88,7 +88,7 @@ class AiChatService
             $query->where('store_id', $this->storeId);
         }
         
-        $products = $query->with('category')->get(['id', 'name', 'description', 'price', 'category_id', 'stock', 'has_variations', 'main_image', 'images', 'ai_generated_images', 'landing_page_currency']);
+        $products = $query->with('category')->get(['id', 'name', 'description', 'price', 'category_id', 'has_variations', 'has_promotions', 'main_image', 'images', 'ai_generated_images', 'landing_page_currency']);
 
         if ($products->isEmpty()) {
             return "No products available at the moment.";
@@ -108,32 +108,24 @@ class AiChatService
             $context .= "  Currency: {$currency}\n";
             
             if ($product->has_variations) {
-                // Get variations with pricing
+                // Get variations with pricing (don't show stock to customers)
                 $variations = $product->variations()->where('is_active', true)->get();
                 if ($variations->isNotEmpty()) {
                     $context .= "  Variations:\n";
                     foreach ($variations as $variation) {
                         $attrs = collect($variation->attributes)->map(fn($v, $k) => "$k: $v")->join(', ');
-                        $context .= "    - {$attrs} - Price: {$variation->price} {$currency}";
-                        if ($variation->stock > 0) {
-                            $context .= " (Stock: {$variation->stock})";
-                        }
-                        $context .= "\n";
+                        $context .= "    - {$attrs} - Price: {$variation->price} {$currency}\n";
                     }
                 }
             } else {
-                $context .= "  Price: {$product->price} {$currency}";
-                if ($product->stock > 0) {
-                    $context .= " (Stock: {$product->stock})";
-                }
-                $context .= "\n";
+                $context .= "  Price: {$product->price} {$currency}\n";
             }
             
             // Add promotions if available
             if ($product->has_promotions) {
                 $promotions = $product->promotions()->where('is_active', true)->get();
                 if ($promotions->isNotEmpty()) {
-                    $context .= "  Promotions:\n";
+                    $context .= "  🎁 PROMOTIONS/OFFERS AVAILABLE:\n";
                     foreach ($promotions as $promo) {
                         $qty = "Buy {$promo->min_quantity}";
                         if ($promo->max_quantity) {
@@ -141,7 +133,9 @@ class AiChatService
                         } else {
                             $qty .= "+";
                         }
-                        $context .= "    - {$qty} for {$promo->price} {$currency} each\n";
+                        $label = $promo->label ? " ({$promo->label})" : "";
+                        $originalPrice = $promo->original_price ? " (was {$promo->original_price} {$currency})" : "";
+                        $context .= "    - Promotion ID: {$promo->id} - {$qty} units{$label} for {$promo->price} {$currency} each{$originalPrice}\n";
                     }
                 }
             }
@@ -202,7 +196,9 @@ Important guidelines:
 - When customers ask about products, provide specific details from the product list
 - If a product has variations, explain the available options
 - Mention stock availability when relevant
-- If there are promotions, highlight them to encourage sales
+- PROMOTIONS ARE IMPORTANT: If a product has promotions/offers, ALWAYS mention them proactively!
+- When customers ask for "offers", "promotions", "deals", "discounts", "عروض", "offres", "prix spécial", etc., IMMEDIATELY show them all available promotions with prices
+- Highlight savings and value when presenting promotions (e.g., "Buy 2 for only X MAD each - you save Y%!")
 
 LANGUAGE DETECTION & RESPONSE (CRITICAL — APPLIES TO BOTH TEXT AND VOICE MESSAGES):
 - Your FIRST step before answering is to silently detect the language/dialect of the customer's message.
@@ -246,15 +242,21 @@ ORDER CAPTURE — HOW TO SAVE CUSTOMER ORDERS (READ CAREFULLY):
 When a customer provides their order information (name, phone number, city, address, product they want to order, etc.), you MUST capture this as a lead/order by including a special tag in your response.
 
 - When you have enough information to create an order (at minimum: customer name AND phone number AND which product they want), include this tag in your response:
-  [CREATE_LEAD:{"name":"Customer Name","phone":"0612345678","product_id":123,"city":"City Name","address":"Full Address","note":"Any notes"}]
+  [CREATE_LEAD:{"name":"Customer Name","phone":"0612345678","product_id":123,"promotion_id":456,"quantity":2,"city":"City Name","address":"Full Address","note":"Any notes"}]
   
 - The tag will be processed automatically and removed from the visible message.
 - Required fields: name, phone, product_id (the ID of the product they want)
-- Optional fields: city, address, note, email
+- Optional fields: city, address, note, email, promotion_id (if customer selected a specific promotion/offer), quantity
+- IMPORTANT: If the customer chose a specific promotion/offer, include the "promotion_id" field with the Promotion ID from the product's promotions list
 - If the customer doesn't specify a product but you know which product this WhatsApp is for, use that product.
 - ALWAYS ask for the customer's name and phone if they haven't provided it.
 - After capturing the order, confirm to the customer that their order has been received and they will be contacted soon.
-- Example conversation flow:
+- Example conversation flow WITH promotion:
+  Customer: "I want the offer for 2 units"
+  You: "Great choice! 😊 You've selected our 2-pack offer. To complete your order, I need your name and phone number please."
+  Customer: "Ahmed, 0612345678, Casablanca"
+  You: "Perfect Ahmed! Your order for the 2-pack promotion has been received ✅ We'll contact you shortly at 0612345678 to confirm delivery to Casablanca. Thank you! [CREATE_LEAD:{"name":"Ahmed","phone":"0612345678","product_id":5,"promotion_id":12,"quantity":2,"city":"Casablanca"}]"
+- Example conversation flow WITHOUT promotion:
   Customer: "I want to order this product"
   You: "Great choice! 😊 To complete your order, I need your name and phone number please."
   Customer: "Ahmed, 0612345678, Casablanca"
@@ -558,6 +560,25 @@ PROMPT;
                 $language = $this->mainLanguages[0];
             }
             
+            // Get selected promotion if specified
+            $selectedPromotionId = null;
+            if (!empty($data['promotion_id'])) {
+                // Verify the promotion exists and belongs to this product
+                $promotion = \App\Models\ProductPromotion::where('id', $data['promotion_id'])
+                    ->where('product_id', $product->id)
+                    ->where('is_active', true)
+                    ->first();
+                if ($promotion) {
+                    $selectedPromotionId = $promotion->id;
+                }
+            }
+            
+            // Build the note with quantity info if provided
+            $note = $data['note'] ?? 'Order received via WhatsApp';
+            if (!empty($data['quantity'])) {
+                $note .= ' | Quantity: ' . $data['quantity'];
+            }
+            
             // Create the lead
             $lead = \App\Models\ProductLead::create([
                 'product_id' => $product->id,
@@ -567,8 +588,9 @@ PROMPT;
                 'email' => $data['email'] ?? null,
                 'city' => $data['city'] ?? null,
                 'address' => $data['address'] ?? null,
-                'note' => $data['note'] ?? 'Order received via WhatsApp',
+                'note' => $note,
                 'language' => $language,
+                'selected_promotion_id' => $selectedPromotionId,
                 'source' => 'whatsapp',
                 'conversation_id' => $this->conversationId,
                 'whatsapp_profile_id' => $this->whatsappProfileId,
@@ -578,7 +600,9 @@ PROMPT;
                 'lead_id' => $lead->id,
                 'product_id' => $product->id,
                 'customer_name' => $data['name'],
-                'customer_phone' => $data['phone']
+                'customer_phone' => $data['phone'],
+                'selected_promotion_id' => $selectedPromotionId,
+                'quantity' => $data['quantity'] ?? null
             ]);
             
             // Dispatch the job to push to external API if configured
