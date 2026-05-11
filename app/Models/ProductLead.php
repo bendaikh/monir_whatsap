@@ -19,6 +19,9 @@ class ProductLead extends Model
         'ip_address',
         'user_agent',
         'selected_promotion_id',
+        'source',
+        'conversation_id',
+        'whatsapp_profile_id',
     ];
 
     public function product()
@@ -34,5 +37,15 @@ class ProductLead extends Model
     public function selectedPromotion()
     {
         return $this->belongsTo(ProductPromotion::class, 'selected_promotion_id');
+    }
+    
+    public function conversation()
+    {
+        return $this->belongsTo(Conversation::class);
+    }
+    
+    public function whatsappProfile()
+    {
+        return $this->belongsTo(WhatsappProfile::class);
     }
 }

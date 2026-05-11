@@ -438,8 +438,15 @@ class WhatsAppController extends Controller
             $conversation->update(['last_message_at' => now()]);
             
             // Check if AI auto-reply is enabled
-            // Pass the profile's main languages to help AI respond in the right language faster
-            $aiService = new AiChatService($profile->user, $profile->store_id, $profile->main_languages);
+            // Pass the profile's main languages, conversation ID, and profile ID to help AI respond and capture leads
+            $aiService = new AiChatService(
+                $profile->user, 
+                $profile->store_id, 
+                $profile->main_languages,
+                $conversation->id,
+                $profile->id,
+                $from
+            );
             $autoReplyEnabled = $aiService->isAutoReplyEnabled();
             
             \Log::info('AI auto-reply check', [

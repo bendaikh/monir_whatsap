@@ -15,12 +15,18 @@ class AiChatService
     protected $user;
     protected $storeId;
     protected $mainLanguages;
+    protected $conversationId;
+    protected $whatsappProfileId;
+    protected $customerPhone;
 
-    public function __construct(User $user, ?int $storeId = null, ?array $mainLanguages = null)
+    public function __construct(User $user, ?int $storeId = null, ?array $mainLanguages = null, ?int $conversationId = null, ?int $whatsappProfileId = null, ?string $customerPhone = null)
     {
         $this->user = $user;
         $this->storeId = $storeId;
         $this->mainLanguages = $mainLanguages;
+        $this->conversationId = $conversationId;
+        $this->whatsappProfileId = $whatsappProfileId;
+        $this->customerPhone = $customerPhone;
         $this->apiSetting = $user->aiApiSetting;
     }
 
@@ -82,7 +88,7 @@ class AiChatService
             $query->where('store_id', $this->storeId);
         }
         
-        $products = $query->with('category')->get(['id', 'name', 'description', 'price', 'category_id', 'stock', 'has_variations', 'main_image', 'images', 'ai_generated_images']);
+        $products = $query->with('category')->get(['id', 'name', 'description', 'price', 'category_id', 'stock', 'has_variations', 'main_image', 'images', 'ai_generated_images', 'landing_page_currency']);
 
         if ($products->isEmpty()) {
             return "No products available at the moment.";
@@ -90,11 +96,16 @@ class AiChatService
 
         $context = "Available Products:\n\n";
         foreach ($products as $product) {
+            // Get the currency for this product (default to MAD if not set)
+            $currency = $product->landing_page_currency ?? 'MAD';
+            
             $context .= "- **{$product->name}** (ID: {$product->id})\n";
             
             if ($product->description) {
                 $context .= "  Description: {$product->description}\n";
             }
+            
+            $context .= "  Currency: {$currency}\n";
             
             if ($product->has_variations) {
                 // Get variations with pricing
@@ -103,7 +114,7 @@ class AiChatService
                     $context .= "  Variations:\n";
                     foreach ($variations as $variation) {
                         $attrs = collect($variation->attributes)->map(fn($v, $k) => "$k: $v")->join(', ');
-                        $context .= "    - {$attrs} - Price: \${$variation->price}";
+                        $context .= "    - {$attrs} - Price: {$variation->price} {$currency}";
                         if ($variation->stock > 0) {
                             $context .= " (Stock: {$variation->stock})";
                         }
@@ -111,7 +122,7 @@ class AiChatService
                     }
                 }
             } else {
-                $context .= "  Price: \${$product->price}";
+                $context .= "  Price: {$product->price} {$currency}";
                 if ($product->stock > 0) {
                     $context .= " (Stock: {$product->stock})";
                 }
@@ -130,7 +141,7 @@ class AiChatService
                         } else {
                             $qty .= "+";
                         }
-                        $context .= "    - {$qty} for \${$promo->price} each\n";
+                        $context .= "    - {$qty} for {$promo->price} {$currency} each\n";
                     }
                 }
             }
@@ -230,6 +241,24 @@ PRODUCT IMAGES — HOW TO SEND THEM (READ CAREFULLY):
 
 {$productsContext}
 {$languageHint}
+
+ORDER CAPTURE — HOW TO SAVE CUSTOMER ORDERS (READ CAREFULLY):
+When a customer provides their order information (name, phone number, city, address, product they want to order, etc.), you MUST capture this as a lead/order by including a special tag in your response.
+
+- When you have enough information to create an order (at minimum: customer name AND phone number AND which product they want), include this tag in your response:
+  [CREATE_LEAD:{"name":"Customer Name","phone":"0612345678","product_id":123,"city":"City Name","address":"Full Address","note":"Any notes"}]
+  
+- The tag will be processed automatically and removed from the visible message.
+- Required fields: name, phone, product_id (the ID of the product they want)
+- Optional fields: city, address, note, email
+- If the customer doesn't specify a product but you know which product this WhatsApp is for, use that product.
+- ALWAYS ask for the customer's name and phone if they haven't provided it.
+- After capturing the order, confirm to the customer that their order has been received and they will be contacted soon.
+- Example conversation flow:
+  Customer: "I want to order this product"
+  You: "Great choice! 😊 To complete your order, I need your name and phone number please."
+  Customer: "Ahmed, 0612345678, Casablanca"
+  You: "Perfect Ahmed! Your order has been received ✅ We'll contact you shortly at 0612345678 to confirm delivery to Casablanca. Thank you! [CREATE_LEAD:{"name":"Ahmed","phone":"0612345678","product_id":5,"city":"Casablanca"}]"
 
 Remember: You're chatting on WhatsApp, so keep it casual, friendly, and helpful!
 PROMPT;
@@ -412,18 +441,43 @@ PROMPT;
     }
     
     /**
-     * Extract product image from AI response
-     * Looks for pattern: [SEND_IMAGE:product_id]
+     * Extract product image and lead data from AI response
+     * Looks for patterns: [SEND_IMAGE:product_id] and [CREATE_LEAD:{json}]
      */
     protected function extractProductImage(string $aiText): array
     {
-        // Look for [SEND_IMAGE:product_id] pattern
-        if (preg_match('/\[SEND_IMAGE:(\d+)\]/', $aiText, $matches)) {
+        $cleanText = $aiText;
+        $mediaUrl = null;
+        $leadCreated = false;
+        
+        // First, handle CREATE_LEAD tag
+        if (preg_match('/\[CREATE_LEAD:(\{[^}]+\})\]/', $cleanText, $leadMatches)) {
+            $leadJson = $leadMatches[1];
+            $cleanText = preg_replace('/\s*\[CREATE_LEAD:\{[^}]+\}\]\s*/', ' ', $cleanText);
+            
+            try {
+                $leadData = json_decode($leadJson, true);
+                if ($leadData && isset($leadData['name']) && isset($leadData['phone'])) {
+                    $leadCreated = $this->createLeadFromWhatsApp($leadData);
+                    Log::info('Lead creation attempted from WhatsApp', [
+                        'success' => $leadCreated,
+                        'data' => $leadData
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to parse lead data from AI response', [
+                    'json' => $leadJson,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
+        // Then, handle SEND_IMAGE tag
+        if (preg_match('/\[SEND_IMAGE:(\d+)\]/', $cleanText, $matches)) {
             $productId = (int) $matches[1];
 
             // Strip the tag (and any all-tag-only line/whitespace) from the visible text
-            $cleanText = preg_replace('/\s*\[SEND_IMAGE:\d+\]\s*/', ' ', $aiText);
-            $cleanText = trim(preg_replace('/[ \t]+/', ' ', $cleanText));
+            $cleanText = preg_replace('/\s*\[SEND_IMAGE:\d+\]\s*/', ' ', $cleanText);
 
             $product = Product::where('id', $productId)
                 ->where('user_id', $this->user->id)
@@ -434,35 +488,111 @@ PROMPT;
                 $imagePath = $this->resolveProductImagePath($product);
 
                 if ($imagePath) {
-                    $imageUrl = $this->buildAbsoluteImageUrl($imagePath);
+                    $mediaUrl = $this->buildAbsoluteImageUrl($imagePath);
 
                     Log::info('Product image extracted', [
                         'product_id' => $productId,
                         'image_path' => $imagePath,
-                        'image_url' => $imageUrl,
+                        'image_url' => $mediaUrl,
                     ]);
-
-                    return [
-                        'text' => $cleanText !== '' ? $cleanText : null,
-                        'media_url' => $imageUrl,
-                    ];
+                } else {
+                    Log::warning('Product has no usable image', ['product_id' => $productId]);
                 }
-
-                Log::warning('Product has no usable image', ['product_id' => $productId]);
             } else {
                 Log::warning('Product not found for image tag', ['product_id' => $productId]);
             }
-
-            return [
-                'text' => $cleanText,
-                'media_url' => null,
-            ];
         }
 
+        $cleanText = trim(preg_replace('/[ \t]+/', ' ', $cleanText));
+
         return [
-            'text' => $aiText,
-            'media_url' => null,
+            'text' => $cleanText !== '' ? $cleanText : null,
+            'media_url' => $mediaUrl,
+            'lead_created' => $leadCreated,
         ];
+    }
+    
+    /**
+     * Create a lead from WhatsApp conversation
+     */
+    protected function createLeadFromWhatsApp(array $data): bool
+    {
+        try {
+            // Find the product - either from the data or get the first active product for this store
+            $productId = $data['product_id'] ?? null;
+            $product = null;
+            
+            if ($productId) {
+                $product = Product::where('id', $productId)
+                    ->where('user_id', $this->user->id)
+                    ->where('is_active', true)
+                    ->first();
+            }
+            
+            // If no specific product, try to find one for this store
+            if (!$product && $this->storeId) {
+                $product = Product::where('store_id', $this->storeId)
+                    ->where('user_id', $this->user->id)
+                    ->where('is_active', true)
+                    ->first();
+            }
+            
+            // If still no product, get any active product for this user
+            if (!$product) {
+                $product = Product::where('user_id', $this->user->id)
+                    ->where('is_active', true)
+                    ->first();
+            }
+            
+            if (!$product) {
+                Log::warning('No product found for WhatsApp lead', [
+                    'user_id' => $this->user->id,
+                    'store_id' => $this->storeId
+                ]);
+                return false;
+            }
+            
+            // Detect language from conversation or use first main language
+            $language = 'en';
+            if (!empty($this->mainLanguages)) {
+                $language = $this->mainLanguages[0];
+            }
+            
+            // Create the lead
+            $lead = \App\Models\ProductLead::create([
+                'product_id' => $product->id,
+                'user_id' => $this->user->id,
+                'name' => $data['name'] ?? null,
+                'phone' => $data['phone'] ?? $this->customerPhone,
+                'email' => $data['email'] ?? null,
+                'city' => $data['city'] ?? null,
+                'address' => $data['address'] ?? null,
+                'note' => $data['note'] ?? 'Order received via WhatsApp',
+                'language' => $language,
+                'source' => 'whatsapp',
+                'conversation_id' => $this->conversationId,
+                'whatsapp_profile_id' => $this->whatsappProfileId,
+            ]);
+            
+            Log::info('Lead created from WhatsApp', [
+                'lead_id' => $lead->id,
+                'product_id' => $product->id,
+                'customer_name' => $data['name'],
+                'customer_phone' => $data['phone']
+            ]);
+            
+            // Dispatch the job to push to external API if configured
+            \App\Jobs\PushOrderToExternalApi::dispatch($lead);
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to create lead from WhatsApp', [
+                'error' => $e->getMessage(),
+                'data' => $data
+            ]);
+            return false;
+        }
     }
 
     /**
