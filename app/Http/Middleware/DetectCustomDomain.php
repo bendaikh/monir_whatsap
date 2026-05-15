@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use App\Models\Store;
+use App\Http\Controllers\ProductController;
 
 class DetectCustomDomain
 {
@@ -33,13 +34,36 @@ class DetectCustomDomain
         if ($store) {
             // Store the custom domain store in the request
             $request->attributes->set('custom_domain_store', $store);
+            $request->attributes->set('custom_domain_subdomain', $store->subdomain);
             
             // Share the store with views
             view()->share('customDomainStore', $store);
             
-            // If accessing root, redirect to store home
-            if ($request->path() === '/') {
-                return redirect()->route('store.home', ['subdomain' => $store->subdomain]);
+            // Handle custom domain routes without /store/{subdomain} prefix
+            $path = $request->path();
+            
+            // Root path - show store home
+            if ($path === '/') {
+                $request->merge(['is_custom_domain' => true]);
+                return app(ProductController::class)->index($store->subdomain, $request);
+            }
+            
+            // Product detail page: /product/{slug}
+            if (preg_match('#^product/([^/]+)$#', $path, $matches)) {
+                $request->merge(['is_custom_domain' => true]);
+                return app(ProductController::class)->show($store->subdomain, $matches[1], $request);
+            }
+            
+            // Product submission: /product/{slug}/submit-lead
+            if (preg_match('#^product/([^/]+)/submit-lead$#', $path, $matches)) {
+                $request->merge(['is_custom_domain' => true]);
+                return app(ProductController::class)->submitLead($request, $store->subdomain, $matches[1]);
+            }
+            
+            // Thank you page: /product/{slug}/thank-you/{lead}
+            if (preg_match('#^product/([^/]+)/thank-you/([0-9]+)$#', $path, $matches)) {
+                $request->merge(['is_custom_domain' => true]);
+                return app(ProductController::class)->thankYou($store->subdomain, $matches[1], $matches[2], $request);
             }
         }
         
