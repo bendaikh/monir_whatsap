@@ -105,21 +105,6 @@
                         <span class="hidden md:inline">WhatsApp</span>
                     </a>
                     @endif
-                    @if (Route::has('login'))
-                        @auth
-                            <a href="{{ url('/dashboard') }}" class="text-gray-700 hover:text-emerald-600 font-medium transition">
-                                <span class="material-icons align-middle">dashboard</span>
-                            </a>
-                        @else
-                            <a href="{{ route('login') }}" class="text-gray-700 hover:text-emerald-600 font-medium transition">Login</a>
-                            @if (Route::has('register'))
-                                <a href="{{ route('register') }}" class="px-6 py-3 text-white rounded-lg font-medium transition shadow-lg hover:shadow-xl" style="background-color: {{ $settings->primary_color }}">
-                                    <span class="material-icons align-middle text-sm mr-1">person_add</span>
-                                    Register
-                                </a>
-                            @endif
-                        @endauth
-                    @endif
                 </div>
             </div>
         </div>
