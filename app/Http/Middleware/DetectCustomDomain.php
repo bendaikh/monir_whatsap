@@ -45,13 +45,15 @@ class DetectCustomDomain
             // Root path - show store home
             if ($path === '/') {
                 $request->merge(['is_custom_domain' => true]);
-                return app(ProductController::class)->index($store->subdomain, $request);
+                $response = app(ProductController::class)->index($store->subdomain, $request);
+                return response($response);
             }
             
             // Product detail page: /product/{slug}
             if (preg_match('#^product/([^/]+)$#', $path, $matches)) {
                 $request->merge(['is_custom_domain' => true]);
-                return app(ProductController::class)->show($store->subdomain, $matches[1], $request);
+                $response = app(ProductController::class)->show($store->subdomain, $matches[1], $request);
+                return response($response);
             }
             
             // Product submission: /product/{slug}/submit-lead
@@ -63,7 +65,8 @@ class DetectCustomDomain
             // Thank you page: /product/{slug}/thank-you/{lead}
             if (preg_match('#^product/([^/]+)/thank-you/([0-9]+)$#', $path, $matches)) {
                 $request->merge(['is_custom_domain' => true]);
-                return app(ProductController::class)->thankYou($store->subdomain, $matches[1], $matches[2], $request);
+                $response = app(ProductController::class)->thankYou($store->subdomain, $matches[1], $matches[2], $request);
+                return response($response);
             }
         }
         
