@@ -11,9 +11,15 @@ class ProductController extends Controller
 {
     public function index($subdomain, Request $request)
     {
-        $store = Store::where('subdomain', $subdomain)
-            ->where('is_active', true)
-            ->firstOrFail();
+        // Check if accessing via custom domain
+        $store = $request->attributes->get('custom_domain_store');
+        
+        // If not custom domain, use subdomain
+        if (!$store) {
+            $store = Store::where('subdomain', $subdomain)
+                ->where('is_active', true)
+                ->firstOrFail();
+        }
         
         $settings = \App\Models\WebsiteSettings::getSettings($store->user_id, $store->id);
         
@@ -49,11 +55,17 @@ class ProductController extends Controller
         return view('welcome', compact('products', 'categories', 'featuredProducts', 'settings', 'store'));
     }
 
-    public function show($subdomain, $slug)
+    public function show($subdomain, $slug, Request $request)
     {
-        $store = Store::where('subdomain', $subdomain)
-            ->where('is_active', true)
-            ->firstOrFail();
+        // Check if accessing via custom domain
+        $store = $request->attributes->get('custom_domain_store');
+        
+        // If not custom domain, use subdomain
+        if (!$store) {
+            $store = Store::where('subdomain', $subdomain)
+                ->where('is_active', true)
+                ->firstOrFail();
+        }
 
         $product = Product::with(['activeVariations', 'activePromotions'])
             ->where('slug', $slug)
@@ -90,9 +102,15 @@ class ProductController extends Controller
 
     public function submitLead(Request $request, $subdomain, $slug)
     {
-        $store = Store::where('subdomain', $subdomain)
-            ->where('is_active', true)
-            ->firstOrFail();
+        // Check if accessing via custom domain
+        $store = $request->attributes->get('custom_domain_store');
+        
+        // If not custom domain, use subdomain
+        if (!$store) {
+            $store = Store::where('subdomain', $subdomain)
+                ->where('is_active', true)
+                ->firstOrFail();
+        }
         
         $product = Product::with(['activePromotions'])
             ->where('slug', $slug)
@@ -143,11 +161,17 @@ class ProductController extends Controller
         ]);
     }
 
-    public function thankYou($subdomain, $slug, $leadId)
+    public function thankYou($subdomain, $slug, $leadId, Request $request)
     {
-        $store = Store::where('subdomain', $subdomain)
-            ->where('is_active', true)
-            ->firstOrFail();
+        // Check if accessing via custom domain
+        $store = $request->attributes->get('custom_domain_store');
+        
+        // If not custom domain, use subdomain
+        if (!$store) {
+            $store = Store::where('subdomain', $subdomain)
+                ->where('is_active', true)
+                ->firstOrFail();
+        }
         
         $product = Product::with(['activePromotions'])
             ->where('slug', $slug)
