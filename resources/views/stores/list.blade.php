@@ -280,50 +280,210 @@
                         <p class="mt-2 text-sm text-gray-500">Enter your custom domain without http:// or https://</p>
                     </div>
 
-                    <!-- DNS Instructions -->
-                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <h4 class="text-sm font-semibold text-yellow-900 mb-2">DNS Configuration Required</h4>
-                        <p class="text-sm text-yellow-800 mb-3">After adding your domain, configure these DNS records at your domain registrar:</p>
+                    <!-- Complete Setup Guide -->
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-5 max-h-[500px] overflow-y-auto">
+                        <div class="flex items-center gap-2 mb-4">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <h4 class="text-lg font-bold text-gray-900">Complete Setup Guide</h4>
+                        </div>
                         
-                        <div class="space-y-2">
-                            <div class="bg-white rounded border border-yellow-300 p-3">
-                                <div class="grid grid-cols-3 gap-2 text-xs">
-                                    <div>
-                                        <span class="font-semibold text-gray-700">Type:</span>
-                                        <p class="text-gray-900 font-mono">CNAME</p>
+                        <!-- Step 1: DNS Configuration -->
+                        <div class="mb-5">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="flex items-center justify-center w-7 h-7 bg-blue-600 text-white rounded-full text-sm font-bold">1</div>
+                                <h5 class="font-bold text-gray-900">Configure DNS Records</h5>
+                            </div>
+                            <div class="ml-9 space-y-3">
+                                <p class="text-sm text-gray-700">In your domain registrar (Hostinger, GoDaddy, etc.), add these DNS records:</p>
+                                
+                                <!-- Delete existing CNAME warning -->
+                                <div class="bg-red-50 border border-red-300 rounded p-3">
+                                    <p class="text-xs font-semibold text-red-800 mb-1">⚠️ Important: Delete Any Existing CNAME Records First!</p>
+                                    <p class="text-xs text-red-700">If you have a CNAME record for "www", delete it before adding A records (you can't have both).</p>
+                                </div>
+                                
+                                <div class="space-y-2">
+                                    <div class="bg-white rounded border border-blue-300 p-3">
+                                        <p class="text-xs font-semibold text-gray-700 mb-2">Record 1:</p>
+                                        <div class="grid grid-cols-4 gap-2 text-xs">
+                                            <div>
+                                                <span class="font-semibold text-gray-600">Type:</span>
+                                                <p class="text-gray-900 font-mono font-bold">A</p>
+                                            </div>
+                                            <div>
+                                                <span class="font-semibold text-gray-600">Name:</span>
+                                                <p class="text-gray-900 font-mono font-bold">@</p>
+                                            </div>
+                                            <div class="col-span-2">
+                                                <span class="font-semibold text-gray-600">Points to:</span>
+                                                <p class="text-blue-600 font-mono font-bold">178.16.128.28</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <span class="font-semibold text-gray-700">Name:</span>
-                                        <p class="text-gray-900 font-mono">www</p>
-                                    </div>
-                                    <div>
-                                        <span class="font-semibold text-gray-700">Value:</span>
-                                        <p class="text-gray-900 font-mono" id="cnameValue"></p>
+                                    
+                                    <div class="bg-white rounded border border-blue-300 p-3">
+                                        <p class="text-xs font-semibold text-gray-700 mb-2">Record 2:</p>
+                                        <div class="grid grid-cols-4 gap-2 text-xs">
+                                            <div>
+                                                <span class="font-semibold text-gray-600">Type:</span>
+                                                <p class="text-gray-900 font-mono font-bold">A</p>
+                                            </div>
+                                            <div>
+                                                <span class="font-semibold text-gray-600">Name:</span>
+                                                <p class="text-gray-900 font-mono font-bold">www</p>
+                                            </div>
+                                            <div class="col-span-2">
+                                                <span class="font-semibold text-gray-600">Points to:</span>
+                                                <p class="text-blue-600 font-mono font-bold">178.16.128.28</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
+                                
+                                <div class="bg-yellow-50 border border-yellow-300 rounded p-2">
+                                    <p class="text-xs text-yellow-800">⏳ <strong>Wait 1-24 hours</strong> for DNS propagation (usually 1-6 hours)</p>
+                                </div>
                             </div>
-                            
-                            <div class="bg-white rounded border border-yellow-300 p-3">
-                                <div class="grid grid-cols-3 gap-2 text-xs">
-                                    <div>
-                                        <span class="font-semibold text-gray-700">Type:</span>
-                                        <p class="text-gray-900 font-mono">A</p>
+                        </div>
+
+                        <!-- Step 2: Save Domain Here -->
+                        <div class="mb-5">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="flex items-center justify-center w-7 h-7 bg-blue-600 text-white rounded-full text-sm font-bold">2</div>
+                                <h5 class="font-bold text-gray-900">Save Your Domain</h5>
+                            </div>
+                            <div class="ml-9">
+                                <p class="text-sm text-gray-700">Enter your domain above and click "Save Domain" below. ✓</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Configure Web Server -->
+                        <div class="mb-5">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="flex items-center justify-center w-7 h-7 bg-orange-600 text-white rounded-full text-sm font-bold">3</div>
+                                <h5 class="font-bold text-gray-900">Configure Web Server</h5>
+                            </div>
+                            <div class="ml-9 space-y-3">
+                                <p class="text-sm font-semibold text-gray-800">Choose ONE method:</p>
+                                
+                                <!-- Method A: Hostinger Parked Domains -->
+                                <div class="bg-green-50 border-2 border-green-400 rounded-lg p-3">
+                                    <div class="flex items-start gap-2 mb-2">
+                                        <span class="flex-shrink-0 text-lg">✅</span>
+                                        <div>
+                                            <p class="text-sm font-bold text-green-900">Method A: Hostinger Parked Domains (EASIEST)</p>
+                                            <p class="text-xs text-green-800 mt-1">If your domain is in Hostinger:</p>
+                                            <ol class="text-xs text-green-900 mt-2 space-y-1 list-decimal list-inside">
+                                                <li>Log into <a href="https://hpanel.hostinger.com" target="_blank" class="underline font-semibold">Hostinger hPanel</a></li>
+                                                <li>Go to <strong>Websites</strong> → Your hosting account</li>
+                                                <li>Click <strong>Add Domain</strong> or <strong>Point Domain</strong></li>
+                                                <li>Select: <strong>Point existing domain</strong></li>
+                                                <li>Enter your domain and point to same hosting</li>
+                                                <li>Save and wait 5-30 minutes ✓</li>
+                                            </ol>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <span class="font-semibold text-gray-700">Name:</span>
-                                        <p class="text-gray-900 font-mono">@</p>
+                                </div>
+                                
+                                <!-- Method B: Contact Hosting Provider -->
+                                <div class="bg-blue-50 border border-blue-300 rounded-lg p-3">
+                                    <div class="flex items-start gap-2">
+                                        <span class="flex-shrink-0 text-lg">💬</span>
+                                        <div>
+                                            <p class="text-sm font-bold text-blue-900">Method B: Contact Your Hosting Provider</p>
+                                            <p class="text-xs text-blue-800 mt-1">Send them this message:</p>
+                                            <div class="bg-white border border-blue-200 rounded p-2 mt-2">
+                                                <p class="text-xs font-mono text-gray-800">
+                                                    "Please add <span class="font-bold text-blue-600">[YOUR-DOMAIN]</span> as an alias/parked domain to my hosting account. Point it to the same location as my main domain."
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <span class="font-semibold text-gray-700">Value:</span>
-                                        <p class="text-gray-900 font-mono">Your server IP</p>
+                                </div>
+                                
+                                <!-- Method C: SSH (Advanced) -->
+                                <div class="bg-gray-50 border border-gray-300 rounded-lg p-3">
+                                    <div class="flex items-start gap-2">
+                                        <span class="flex-shrink-0 text-lg">⚙️</span>
+                                        <div class="w-full">
+                                            <p class="text-sm font-bold text-gray-900">Method C: SSH Configuration (Advanced)</p>
+                                            <details class="mt-2">
+                                                <summary class="text-xs text-blue-600 hover:text-blue-800 cursor-pointer font-semibold">Show SSH Instructions</summary>
+                                                <div class="mt-2 space-y-2">
+                                                    <p class="text-xs font-semibold text-gray-700">For Apache:</p>
+                                                    <div class="bg-gray-900 text-green-400 rounded p-2 text-xs font-mono overflow-x-auto">
+sudo nano /etc/apache2/sites-available/000-default.conf<br>
+# Add: ServerAlias yourdomain.com www.yourdomain.com<br>
+sudo systemctl restart apache2
+                                                    </div>
+                                                    <p class="text-xs font-semibold text-gray-700 mt-2">For Nginx:</p>
+                                                    <div class="bg-gray-900 text-green-400 rounded p-2 text-xs font-mono overflow-x-auto">
+sudo nano /etc/nginx/sites-available/default<br>
+# Add to server_name: yourdomain.com www.yourdomain.com<br>
+sudo nginx -t && sudo systemctl restart nginx
+                                                    </div>
+                                                </div>
+                                            </details>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <p class="mt-3 text-xs text-yellow-700">
-                            <strong>Note:</strong> DNS propagation can take 24-48 hours. Your store will remain accessible via the default subdomain during this time.
-                        </p>
+
+                        <!-- Step 4: Test -->
+                        <div class="mb-5">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="flex items-center justify-center w-7 h-7 bg-purple-600 text-white rounded-full text-sm font-bold">4</div>
+                                <h5 class="font-bold text-gray-900">Test Your Setup</h5>
+                            </div>
+                            <div class="ml-9 space-y-2">
+                                <div class="bg-white border border-purple-300 rounded p-3">
+                                    <p class="text-xs font-semibold text-gray-700 mb-2">Check DNS:</p>
+                                    <div class="bg-gray-900 text-green-400 rounded p-2 text-xs font-mono">
+nslookup yourdomain.com<br>
+<span class="text-gray-500"># Should show: 178.16.128.28</span>
+                                    </div>
+                                </div>
+                                <div class="bg-white border border-purple-300 rounded p-3">
+                                    <p class="text-xs font-semibold text-gray-700 mb-1">Visit Your Domain:</p>
+                                    <p class="text-xs text-gray-600">After Steps 1-3 are complete, visit <span class="font-mono font-bold text-purple-600">http://yourdomain.com</span></p>
+                                    <p class="text-xs text-green-700 mt-1">✓ Should show your store!</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 5: SSL (Optional) -->
+                        <div class="mb-3">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="flex items-center justify-center w-7 h-7 bg-green-600 text-white rounded-full text-sm font-bold">5</div>
+                                <h5 class="font-bold text-gray-900">Install SSL Certificate (Recommended)</h5>
+                            </div>
+                            <div class="ml-9 space-y-2">
+                                <p class="text-sm text-gray-700">After HTTP works, add HTTPS:</p>
+                                <ul class="text-xs text-gray-600 space-y-1 list-disc list-inside">
+                                    <li><strong>Hostinger:</strong> Go to SSL section in hPanel → Enable free SSL</li>
+                                    <li><strong>SSH:</strong> Run <code class="bg-gray-100 px-1 rounded font-mono">sudo certbot --apache -d yourdomain.com -d www.yourdomain.com</code></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Quick Help Box -->
+                        <div class="bg-gradient-to-r from-indigo-50 to-blue-50 border-2 border-indigo-300 rounded-lg p-3">
+                            <div class="flex items-start gap-2">
+                                <svg class="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-bold text-indigo-900">Need Help?</p>
+                                    <p class="text-xs text-indigo-800 mt-1">
+                                        Most users should use <strong>Method A (Hostinger Parked Domains)</strong> - it's the easiest! 
+                                        If you're stuck, contact your hosting provider's support - they can do Step 3 for you in 5-30 minutes.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Actions -->
@@ -355,7 +515,6 @@
             const input = document.getElementById('domainInput');
             const removeBtn = document.getElementById('removeDomainBtn');
             const defaultUrl = document.getElementById('defaultUrl');
-            const cnameValue = document.getElementById('cnameValue');
             
             // Set form action
             form.action = '/stores/' + storeId + '/domain';
@@ -363,7 +522,6 @@
             // Set current values
             input.value = currentDomain || '';
             defaultUrl.textContent = subdomain + '.yourdomain.com';
-            cnameValue.textContent = subdomain + '.yourdomain.com';
             
             // Show/hide remove button
             if (currentDomain) {
