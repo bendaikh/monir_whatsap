@@ -372,7 +372,7 @@
         
         <!-- Back to Store Button -->
         <div class="mt-8 text-center">
-            <a href="{{ route('store.home', $store->subdomain) }}" 
+            <a href="{{ request()->attributes->get('custom_domain_store') ? url('/') : route('store.home', $store->subdomain) }}" 
                class="inline-block bg-gradient-to-r {{ $ctaBg }} text-white font-display text-xl uppercase px-8 py-4 rounded-2xl shadow-xl hover:scale-105 transition-transform animate-pulse-scale">
                 ← {{ $t['back_to_store'] }}
             </a>
@@ -399,7 +399,7 @@
          @buy-upsell.window="
             if (!buying) {
                 buying = true;
-                fetch('{{ route('store.product.buy-upsell', ['subdomain' => $store->subdomain, 'slug' => $product->slug]) }}', {
+                fetch('{{ request()->attributes->get('custom_domain_store') ? url('/product/' . $product->slug . '/buy-upsell') : route('store.product.buy-upsell', ['subdomain' => $store->subdomain, 'slug' => $product->slug]) }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

@@ -60,12 +60,12 @@
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 <div class="flex items-center">
-                    <a href="{{ route('store.home', $store->subdomain) }}" class="text-3xl font-bold bg-gradient-to-r from-emerald-500 to-blue-600 bg-clip-text text-transparent">
+                    <a href="{{ request()->attributes->get('custom_domain_store') ? url('/') : route('store.home', $store->subdomain) }}" class="text-3xl font-bold bg-gradient-to-r from-emerald-500 to-blue-600 bg-clip-text text-transparent">
                         {{ config('app.name') }}
                     </a>
                 </div>
                 <div class="hidden md:flex items-center gap-8">
-                    <a href="{{ route('store.home', $store->subdomain) }}" class="text-gray-700 hover:text-emerald-600 font-medium transition">
+                    <a href="{{ request()->attributes->get('custom_domain_store') ? url('/') : route('store.home', $store->subdomain) }}" class="text-gray-700 hover:text-emerald-600 font-medium transition">
                         <span class="material-icons align-middle mr-1">arrow_back</span>
                         Back to Store
                     </a>
@@ -501,7 +501,7 @@
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 @foreach($relatedProducts as $related)
-                <a href="{{ route('store.product.show', [$store->subdomain, $related->slug]) }}" class="group">
+                <a href="{{ request()->attributes->get('custom_domain_store') ? url('/product/' . $related->slug) : route('store.product.show', [$store->subdomain, $related->slug]) }}" class="group">
                     <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition transform hover:-translate-y-2">
                         <div class="relative overflow-hidden">
                             <img src="{{ $related->first_image }}" alt="{{ $related->name }}" class="w-full h-64 object-cover group-hover:scale-110 transition">

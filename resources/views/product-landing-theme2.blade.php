@@ -554,7 +554,7 @@
                             'note' => ['enabled' => true, 'required' => false],
                         ];
                     @endphp
-                    <form action="{{ route('store.product.submit-lead', [$store->subdomain, $product->slug]) }}" method="POST" class="space-y-3">
+                    <form action="{{ request()->attributes->get('custom_domain_store') ? url('/product/' . $product->slug . '/submit-lead') : route('store.product.submit-lead', [$store->subdomain, $product->slug]) }}" method="POST" class="space-y-3">
                         @csrf
                         <input type="hidden" name="language" :value="currentLang">
                         <input type="hidden" name="selected_promotion_id" id="selected_promotion_id" value="{{ $product->activePromotions->first()?->id ?? '' }}">
