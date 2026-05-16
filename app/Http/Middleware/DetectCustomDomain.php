@@ -68,6 +68,12 @@ class DetectCustomDomain
                 $response = app(ProductController::class)->thankYou($store->subdomain, $matches[1], $matches[2], $request);
                 return response($response);
             }
+            
+            // Buy upsell: /product/{slug}/buy-upsell
+            if (preg_match('#^product/([^/]+)/buy-upsell$#', $path, $matches)) {
+                $request->merge(['is_custom_domain' => true]);
+                return app(ProductController::class)->buyUpsell($store->subdomain, $matches[1], $request);
+            }
         }
         
         return $next($request);
