@@ -63,7 +63,7 @@
                 </div>
                 
                 @if($store)
-                <a href="{{ route('store.product.show', [$store->subdomain, $product->slug]) }}" target="_blank" 
+                <a href="{{ $store->domain ? 'https://' . $store->domain . '/product/' . $product->slug : route('store.product.show', [$store->subdomain, $product->slug]) }}" target="_blank" 
                    class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
