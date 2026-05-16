@@ -431,7 +431,7 @@ class CustomerDashboardController extends Controller
         $counter = 1;
         
         // Ensure slug is unique within the store
-        while (\App\Models\Product::where('store_id', $storeId)->where('slug', $slug)->exists()) {
+        while (\App\Models\Product::where('store_id', $validated['store_id'])->where('slug', $slug)->exists()) {
             $slug = $baseSlug . '-' . $counter;
             $counter++;
         }
