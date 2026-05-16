@@ -25,10 +25,12 @@ class DetectCustomDomain
         }
         
         // Check if this host matches a custom domain in the database
-        $store = Store::where('domain', $host)
-            ->orWhere('domain', 'www.' . $host)
-            ->orWhere('domain', str_replace('www.', '', $host))
-            ->where('is_active', true)
+        $store = Store::where('is_active', true)
+            ->where(function($query) use ($host) {
+                $query->where('domain', $host)
+                    ->orWhere('domain', 'www.' . $host)
+                    ->orWhere('domain', str_replace('www.', '', $host));
+            })
             ->first();
         
         if ($store) {
@@ -42,8 +44,8 @@ class DetectCustomDomain
             // Handle custom domain routes without /store/{subdomain} prefix
             $path = $request->path();
             
-            // Root path - show store home
-            if ($path === '/') {
+            // Root path - show store home (path() returns empty string or '/' for root)
+            if ($path === '/' || $path === '') {
                 $request->merge(['is_custom_domain' => true]);
                 $response = app(ProductController::class)->index($store->subdomain, $request);
                 return response($response);
