@@ -197,7 +197,7 @@
                             @endif
                         </div>
                         <h3 class="font-bold text-gray-900 mb-3 group-hover:text-emerald-600 transition line-clamp-2">{{ $product->name }}</h3>
-                        <a href="{{ route('store.product.show', [$store->subdomain, $product->slug]) }}" class="block w-full py-3 text-white text-center rounded-lg font-medium transition" style="background-color: {{ $settings->primary_color }}">
+                        <a href="{{ request()->attributes->get('custom_domain_store') ? url('/product/' . $product->slug) : route('store.product.show', [$store->subdomain, $product->slug]) }}" class="block w-full py-3 text-white text-center rounded-lg font-medium transition" style="background-color: {{ $settings->primary_color }}">
                             View Details
                         </a>
                     </div>
@@ -246,7 +246,7 @@
                             @endif
                         </div>
                         <h3 class="font-bold text-gray-900 mb-3 group-hover:text-emerald-600 transition line-clamp-2">{{ $product->name }}</h3>
-                        <a href="{{ route('store.product.show', [$store->subdomain, $product->slug]) }}" class="block w-full py-3 text-white text-center rounded-lg font-medium transition" style="background-color: {{ $settings->primary_color }}">
+                        <a href="{{ request()->attributes->get('custom_domain_store') ? url('/product/' . $product->slug) : route('store.product.show', [$store->subdomain, $product->slug]) }}" class="block w-full py-3 text-white text-center rounded-lg font-medium transition" style="background-color: {{ $settings->primary_color }}">
                             View Details
                         </a>
                     </div>
