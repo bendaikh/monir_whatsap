@@ -163,7 +163,7 @@
     </div>
 
     <script>
-        const leadsData = @json($leads->load(['product.activeVariations', 'product.activePromotions', 'selectedPromotion'])->keyBy('id'));
+        const leadsData = @json($leads->keyBy('id'));
         
         function showLeadDetails(leadId) {
             const modal = document.getElementById('leadDetailsModal');
@@ -338,6 +338,43 @@
                                             <span class="text-emerald-400 font-bold">${variation.price} MAD</span>
                                             <span class="text-xs text-gray-500 block">Stock: ${variation.stock}</span>
                                         </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Upsell Orders
+            if (lead.upsell_orders && lead.upsell_orders.length > 0) {
+                html += `
+                    <div class="bg-[#0a1628] rounded-lg p-4 border-2 border-emerald-500/30">
+                        <h4 class="text-sm font-semibold text-emerald-400 uppercase mb-3 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            Produits Upsell commandés
+                        </h4>
+                        <div class="space-y-2">
+                            ${lead.upsell_orders.map(order => {
+                                const upsell = order.upsell_product;
+                                return `
+                                    <div class="flex items-center gap-3 py-2 px-3 rounded bg-emerald-500/10">
+                                        <div class="flex-shrink-0 w-12 h-12 rounded overflow-hidden bg-gray-800">
+                                            ${upsell?.first_image ? `<img src="${upsell.first_image}" alt="${upsell.title}" class="w-full h-full object-cover">` : ''}
+                                        </div>
+                                        <div class="flex-1">
+                                            <span class="text-white font-medium">${upsell?.title || 'Produit upsell'}</span>
+                                            ${upsell?.description ? `<p class="text-xs text-gray-400 mt-0.5 line-clamp-1">${upsell.description}</p>` : ''}
+                                        </div>
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full ${
+                                            order.status === 'confirmed' ? 'bg-green-500/20 text-green-400' : 
+                                            order.status === 'cancelled' ? 'bg-red-500/20 text-red-400' : 
+                                            'bg-yellow-500/20 text-yellow-400'
+                                        }">
+                                            ${order.status === 'confirmed' ? 'Confirmé' : order.status === 'cancelled' ? 'Annulé' : 'En attente'}
+                                        </span>
                                     </div>
                                 `;
                             }).join('')}

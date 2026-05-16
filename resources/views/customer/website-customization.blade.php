@@ -49,7 +49,7 @@
             <div class="grid md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Site Name *</label>
-                    <input type="text" name="site_name" value="{{ old('site_name', $settings->site_name) }}" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <input type="text" name="site_name" value="{{ old('site_name', $settings->site_name) }}" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Site Logo</label>
@@ -60,7 +60,7 @@
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Site Description</label>
-                    <textarea name="site_description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{{ old('site_description', $settings->site_description) }}</textarea>
+                    <textarea name="site_description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">{{ old('site_description', $settings->site_description) }}</textarea>
                 </div>
             </div>
         </div>
@@ -79,11 +79,11 @@
                 <div class="grid md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Banner Text</label>
-                        <input type="text" name="banner_text" value="{{ old('banner_text', $settings->banner_text) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <input type="text" name="banner_text" value="{{ old('banner_text', $settings->banner_text) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Banner Icon (Material Icons)</label>
-                        <input type="text" name="banner_icon" value="{{ old('banner_icon', $settings->banner_icon) }}" placeholder="local_fire_department" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <input type="text" name="banner_icon" value="{{ old('banner_icon', $settings->banner_icon) }}" placeholder="local_fire_department" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400">
                         <p class="text-xs text-gray-500 mt-1">Visit <a href="https://fonts.google.com/icons" target="_blank" class="text-blue-600 hover:underline">Material Icons</a></p>
                     </div>
                     <div>
@@ -103,19 +103,19 @@
             <div class="grid md:grid-cols-2 gap-6">
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Hero Title</label>
-                    <input type="text" name="hero_title" value="{{ old('hero_title', $settings->hero_title) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <input type="text" name="hero_title" value="{{ old('hero_title', $settings->hero_title) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Hero Subtitle</label>
-                    <textarea name="hero_subtitle" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{{ old('hero_subtitle', $settings->hero_subtitle) }}</textarea>
+                    <textarea name="hero_subtitle" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">{{ old('hero_subtitle', $settings->hero_subtitle) }}</textarea>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Button Text</label>
-                    <input type="text" name="hero_button_text" value="{{ old('hero_button_text', $settings->hero_button_text) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <input type="text" name="hero_button_text" value="{{ old('hero_button_text', $settings->hero_button_text) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Button Link</label>
-                    <input type="text" name="hero_button_link" value="{{ old('hero_button_link', $settings->hero_button_link) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <input type="text" name="hero_button_link" value="{{ old('hero_button_link', $settings->hero_button_link) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Background Image</label>
@@ -175,15 +175,15 @@
             <div class="grid md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                    <input type="text" name="contact_phone" value="{{ old('contact_phone', $settings->contact_phone) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <input type="text" name="contact_phone" value="{{ old('contact_phone', $settings->contact_phone) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                    <input type="email" name="contact_email" value="{{ old('contact_email', $settings->contact_email) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <input type="email" name="contact_email" value="{{ old('contact_email', $settings->contact_email) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                    <textarea name="contact_address" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{{ old('contact_address', $settings->contact_address) }}</textarea>
+                    <textarea name="contact_address" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">{{ old('contact_address', $settings->contact_address) }}</textarea>
                 </div>
             </div>
         </div>
@@ -270,19 +270,19 @@
             <div class="grid md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Facebook URL</label>
-                    <input type="url" name="facebook_url" value="{{ old('facebook_url', $settings->facebook_url) }}" placeholder="https://facebook.com/yourpage" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <input type="url" name="facebook_url" value="{{ old('facebook_url', $settings->facebook_url) }}" placeholder="https://facebook.com/yourpage" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Instagram URL</label>
-                    <input type="url" name="instagram_url" value="{{ old('instagram_url', $settings->instagram_url) }}" placeholder="https://instagram.com/yourpage" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <input type="url" name="instagram_url" value="{{ old('instagram_url', $settings->instagram_url) }}" placeholder="https://instagram.com/yourpage" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Twitter URL</label>
-                    <input type="url" name="twitter_url" value="{{ old('twitter_url', $settings->twitter_url) }}" placeholder="https://twitter.com/yourpage" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <input type="url" name="twitter_url" value="{{ old('twitter_url', $settings->twitter_url) }}" placeholder="https://twitter.com/yourpage" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">YouTube URL</label>
-                    <input type="url" name="youtube_url" value="{{ old('youtube_url', $settings->youtube_url) }}" placeholder="https://youtube.com/yourchannel" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <input type="url" name="youtube_url" value="{{ old('youtube_url', $settings->youtube_url) }}" placeholder="https://youtube.com/yourchannel" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400">
                 </div>
             </div>
         </div>
@@ -296,11 +296,11 @@
             <div class="space-y-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">About Text</label>
-                    <textarea name="footer_about" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{{ old('footer_about', $settings->footer_about) }}</textarea>
+                    <textarea name="footer_about" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">{{ old('footer_about', $settings->footer_about) }}</textarea>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Copyright Text</label>
-                    <input type="text" name="footer_copyright" value="{{ old('footer_copyright', $settings->footer_copyright) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <input type="text" name="footer_copyright" value="{{ old('footer_copyright', $settings->footer_copyright) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
                 </div>
             </div>
         </div>
@@ -316,11 +316,11 @@
                 <div class="feature-row grid md:grid-cols-4 gap-4 items-end p-4 bg-gray-50 rounded-lg">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Icon</label>
-                        <input type="text" name="features[{{ $index }}][icon]" value="{{ $feature['icon'] ?? '' }}" placeholder="local_shipping" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <input type="text" name="features[{{ $index }}][icon]" value="{{ $feature['icon'] ?? '' }}" placeholder="local_shipping" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
-                        <input type="text" name="features[{{ $index }}][title]" value="{{ $feature['title'] ?? '' }}" placeholder="Free Delivery" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <input type="text" name="features[{{ $index }}][title]" value="{{ $feature['title'] ?? '' }}" placeholder="Free Delivery" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Color</label>
@@ -347,11 +347,11 @@
             <div class="space-y-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Meta Description</label>
-                    <textarea name="meta_description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Brief description of your store for search engines">{{ old('meta_description', $settings->meta_description) }}</textarea>
+                    <textarea name="meta_description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400" placeholder="Brief description of your store for search engines">{{ old('meta_description', $settings->meta_description) }}</textarea>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Meta Keywords</label>
-                    <input type="text" name="meta_keywords" value="{{ old('meta_keywords', $settings->meta_keywords) }}" placeholder="online store, products, Morocco, shopping" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <input type="text" name="meta_keywords" value="{{ old('meta_keywords', $settings->meta_keywords) }}" placeholder="online store, products, Morocco, shopping" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400">
                     <p class="text-xs text-gray-500 mt-1">Separate keywords with commas</p>
                 </div>
             </div>
@@ -379,11 +379,11 @@ function addFeature() {
         <div class="feature-row grid md:grid-cols-4 gap-4 items-end p-4 bg-gray-50 rounded-lg">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Icon</label>
-                <input type="text" name="features[${featureIndex}][icon]" placeholder="local_shipping" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <input type="text" name="features[${featureIndex}][icon]" placeholder="local_shipping" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
-                <input type="text" name="features[${featureIndex}][title]" placeholder="Free Delivery" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <input type="text" name="features[${featureIndex}][title]" placeholder="Free Delivery" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Color</label>

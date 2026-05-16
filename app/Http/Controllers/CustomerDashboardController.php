@@ -330,9 +330,16 @@ class CustomerDashboardController extends Controller
         
         $categories = $query->orderBy('order')->orderBy('name')->get();
         
+        // Load available upsell products for this store
+        $upsellProducts = \App\Models\UpsellProduct::where('store_id', $storeId)
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
         $viewName = $theme === 'theme2' ? 'customer.products-create-theme2' : 'customer.products-create';
         
-        return view($viewName, compact('categories', 'theme'));
+        return view($viewName, compact('categories', 'theme', 'upsellProducts'));
     }
     
     public function productsStore(Request $request)
@@ -410,13 +417,26 @@ class CustomerDashboardController extends Controller
             'landing_page_languages' => 'nullable|array',
             'landing_page_languages.*' => 'string|max:10',
             'default_language' => 'nullable|string|max:10',
+            'upsell_product_ids' => 'nullable|array',
+            'upsell_product_ids.*' => 'exists:upsell_products,id',
         ]);
 
         $validated['user_id'] = auth()->id();
         $validated['store_id'] = $this->getActiveStoreId();
         $validated['theme'] = $validated['theme'] ?? 'theme2';
         $validated['theme_data'] = $request->input('theme_data');
-        $validated['slug'] = \Str::slug($validated['name']) . '-' . time();
+        // Generate a clean slug
+        $baseSlug = \Str::slug($validated['name']);
+        $slug = $baseSlug;
+        $counter = 1;
+        
+        // Ensure slug is unique within the store
+        while (\App\Models\Product::where('store_id', $storeId)->where('slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+        
+        $validated['slug'] = $slug;
         $validated['is_active'] = $request->has('is_active');
         $validated['is_featured'] = $request->has('is_featured');
         $validated['has_variations'] = $hasVariations;
@@ -569,6 +589,11 @@ class CustomerDashboardController extends Controller
             $jobsDispatched[] = 'AI product images';
         }
         
+        // Sync upsell products
+        if ($request->has('upsell_product_ids')) {
+            $product->upsellProducts()->sync($request->input('upsell_product_ids', []));
+        }
+        
         if (!empty($jobsDispatched)) {
             $message = 'Product created successfully! ' . implode(' and ', $jobsDispatched) . ' generation started in the background.';
             return redirect()->route('app.products')->with('success', $message);
@@ -581,7 +606,7 @@ class CustomerDashboardController extends Controller
     {
         $storeId = $this->getActiveStoreId();
 
-        $product = \App\Models\Product::with(['variations', 'promotions'])
+        $product = \App\Models\Product::with(['variations', 'promotions', 'upsellProducts'])
             ->where('user_id', auth()->id())
             ->when($storeId, function($q) use ($storeId) {
                 $q->where('store_id', $storeId);
@@ -596,7 +621,14 @@ class CustomerDashboardController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('customer.products-edit', compact('product', 'categories'));
+        // Load available upsell products for this store
+        $upsellProducts = \App\Models\UpsellProduct::where('store_id', $storeId)
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('customer.products-edit', compact('product', 'categories', 'upsellProducts'));
     }
     
     public function productsUpdate(Request $request, $id)
@@ -683,6 +715,8 @@ class CustomerDashboardController extends Controller
             'landing_page_currency' => 'nullable|string|max:10',
             'landing_page_languages' => 'nullable|array',
             'landing_page_languages.*' => 'string|max:10',
+            'upsell_product_ids' => 'nullable|array',
+            'upsell_product_ids.*' => 'exists:upsell_products,id',
         ]);
         
         // Handle theme_data - merge with existing data to avoid overwriting other fields
@@ -914,6 +948,13 @@ class CustomerDashboardController extends Controller
         } else {
             // Only delete promotions if has_promotions checkbox is explicitly unchecked
             $product->promotions()->delete();
+        }
+
+        // Sync upsell products
+        if ($request->has('upsell_product_ids')) {
+            $product->upsellProducts()->sync($request->input('upsell_product_ids', []));
+        } else {
+            $product->upsellProducts()->detach();
         }
 
         return redirect()->route('app.products')->with('success', 'Product updated successfully!');
@@ -1193,7 +1234,8 @@ class CustomerDashboardController extends Controller
         $leads = \App\Models\ProductLead::with([
                 'product.activeVariations',
                 'product.activePromotions',
-                'selectedPromotion'
+                'selectedPromotion',
+                'upsellOrders.upsellProduct'
             ])
             ->where('user_id', $user->id)
             ->when($storeId, function($q) use ($storeId) {

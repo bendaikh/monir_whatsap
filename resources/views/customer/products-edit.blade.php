@@ -1714,6 +1714,69 @@
                 </div>
             </div>
 
+            <!-- Upsell Products -->
+            <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">Upsell Products</h3>
+                        <p class="text-sm text-gray-400">Select products to show on the thank you page</p>
+                    </div>
+                </div>
+
+                @if($upsellProducts->count() > 0)
+                <div class="space-y-3">
+                    @php
+                        $selectedUpsellIds = $product->upsellProducts->pluck('id')->toArray();
+                    @endphp
+                    @foreach($upsellProducts as $upsell)
+                    <label class="flex items-center gap-4 p-4 bg-gray-800/50 hover:bg-gray-800 rounded-lg border border-white/10 cursor-pointer transition group">
+                        <input 
+                            type="checkbox" 
+                            name="upsell_product_ids[]" 
+                            value="{{ $upsell->id }}"
+                            {{ in_array($upsell->id, $selectedUpsellIds) ? 'checked' : '' }}
+                            class="w-4 h-4 text-emerald-600 bg-gray-700 border-gray-600 rounded focus:ring-emerald-500 focus:ring-2"
+                        />
+                        @if($upsell->first_image)
+                        <img src="{{ $upsell->first_image }}" alt="{{ $upsell->title }}" class="w-12 h-12 object-cover rounded">
+                        @else
+                        <div class="w-12 h-12 bg-gray-700 rounded flex items-center justify-center">
+                            <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        @endif
+                        <div class="flex-1">
+                            <h4 class="text-white font-medium group-hover:text-emerald-400 transition">{{ $upsell->title }}</h4>
+                            @if($upsell->description)
+                            <p class="text-sm text-gray-400 mt-0.5 line-clamp-1">{{ $upsell->description }}</p>
+                            @endif
+                        </div>
+                    </label>
+                    @endforeach
+                </div>
+                @else
+                <div class="text-center py-8 bg-gray-800/30 rounded-lg border border-dashed border-white/10">
+                    <svg class="w-12 h-12 text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                    </svg>
+                    <p class="text-gray-400 mb-2">No upsell products available</p>
+                    <p class="text-sm text-gray-500 mb-4">Create upsell products first to show them on thank you pages</p>
+                    <a href="{{ route('app.upsell-products.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Create Upsell Product
+                    </a>
+                </div>
+                @endif
+            </div>
+
             <!-- Submit Buttons -->
             <div class="flex justify-end gap-4">
                 <a href="{{ route('app.products') }}" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition">

@@ -33,6 +33,7 @@ Route::get('/store/{subdomain}', [ProductController::class, 'index'])->name('sto
 Route::get('/store/{subdomain}/product/{slug}', [ProductController::class, 'show'])->name('store.product.show');
 Route::post('/store/{subdomain}/product/{slug}/submit-lead', [ProductController::class, 'submitLead'])->name('store.product.submit-lead');
 Route::get('/store/{subdomain}/product/{slug}/thank-you/{lead}', [ProductController::class, 'thankYou'])->name('store.product.thank-you');
+Route::post('/store/{subdomain}/product/{slug}/buy-upsell', [ProductController::class, 'buyUpsell'])->name('store.product.buy-upsell');
 
 // WhatsApp Webhook (no auth required for external services)
 Route::post('/webhook/whatsapp', [WhatsAppController::class, 'webhook'])->name('whatsapp.webhook');
@@ -112,6 +113,15 @@ Route::middleware(['auth', 'require.workspace', 'require.store'])->prefix('app')
     Route::post('/categories', [CustomerDashboardController::class, 'categoriesStore'])->name('categories.store');
     Route::put('/categories/{id}', [CustomerDashboardController::class, 'categoriesUpdate'])->name('categories.update');
     Route::delete('/categories/{id}', [CustomerDashboardController::class, 'categoriesDestroy'])->name('categories.destroy');
+    
+    // Upsell Products
+    Route::get('/upsell-products', [\App\Http\Controllers\UpsellProductController::class, 'index'])->name('upsell-products.index');
+    Route::get('/upsell-products/create', [\App\Http\Controllers\UpsellProductController::class, 'create'])->name('upsell-products.create');
+    Route::post('/upsell-products', [\App\Http\Controllers\UpsellProductController::class, 'store'])->name('upsell-products.store');
+    Route::get('/upsell-products/{upsellProduct}/edit', [\App\Http\Controllers\UpsellProductController::class, 'edit'])->name('upsell-products.edit');
+    Route::put('/upsell-products/{upsellProduct}', [\App\Http\Controllers\UpsellProductController::class, 'update'])->name('upsell-products.update');
+    Route::delete('/upsell-products/{upsellProduct}', [\App\Http\Controllers\UpsellProductController::class, 'destroy'])->name('upsell-products.destroy');
+    Route::delete('/upsell-products/{upsellProduct}/image/{index}', [\App\Http\Controllers\UpsellProductController::class, 'deleteImage'])->name('upsell-products.delete-image');
     
     // Website Customization
     Route::get('/website-customization', [\App\Http\Controllers\Admin\WebsiteCustomizationController::class, 'index'])->name('website-customization');

@@ -191,9 +191,9 @@
                     </div>
                     <div class="p-6">
                         <div class="flex items-baseline gap-2 mb-3">
-                            <span class="text-2xl font-bold" style="color: {{ $settings->primary_color }}">{{ number_format($product->price, 2) }} MAD</span>
+                            <span class="text-2xl font-bold" style="color: {{ $settings->primary_color }}">{{ number_format($product->price, 2) }} {{ $product->landing_page_currency ?? 'MAD' }}</span>
                             @if($product->compare_at_price)
-                            <span class="text-gray-400 line-through text-sm">{{ number_format($product->compare_at_price, 2) }} MAD</span>
+                            <span class="text-gray-400 line-through text-sm">{{ number_format($product->compare_at_price, 2) }} {{ $product->landing_page_currency ?? 'MAD' }}</span>
                             @endif
                         </div>
                         <h3 class="font-bold text-gray-900 mb-3 group-hover:text-emerald-600 transition line-clamp-2">{{ $product->name }}</h3>
@@ -240,9 +240,9 @@
                     <div class="p-6">
                         <div class="text-sm text-gray-500 mb-2">{{ $product->category->name ?? 'Uncategorized' }}</div>
                         <div class="flex items-baseline gap-2 mb-3">
-                            <span class="text-2xl font-bold" style="color: {{ $settings->primary_color }}">{{ number_format($product->price, 2) }} MAD</span>
+                            <span class="text-2xl font-bold" style="color: {{ $settings->primary_color }}">{{ number_format($product->price, 2) }} {{ $product->landing_page_currency ?? 'MAD' }}</span>
                             @if($product->compare_at_price)
-                            <span class="text-gray-400 line-through text-sm">{{ number_format($product->compare_at_price, 2) }} MAD</span>
+                            <span class="text-gray-400 line-through text-sm">{{ number_format($product->compare_at_price, 2) }} {{ $product->landing_page_currency ?? 'MAD' }}</span>
                             @endif
                         </div>
                         <h3 class="font-bold text-gray-900 mb-3 group-hover:text-emerald-600 transition line-clamp-2">{{ $product->name }}</h3>

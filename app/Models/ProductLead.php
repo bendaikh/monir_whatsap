@@ -48,4 +48,9 @@ class ProductLead extends Model
     {
         return $this->belongsTo(WhatsappProfile::class);
     }
+    
+    public function upsellOrders()
+    {
+        return $this->hasMany(UpsellOrder::class, 'lead_id');
+    }
 }

@@ -361,5 +361,12 @@ class Product extends Model
 
         return $variationId ? $this->variations()->find($variationId)?->price : $this->price;
     }
+
+    public function upsellProducts()
+    {
+        return $this->belongsToMany(UpsellProduct::class, 'product_upsell_product')
+            ->withTimestamps()
+            ->orderBy('product_upsell_product.order');
+    }
 }
 

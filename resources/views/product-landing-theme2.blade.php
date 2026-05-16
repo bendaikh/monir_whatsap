@@ -824,6 +824,37 @@
         </div>
     </section>
 
+    <!-- Testimonials (Dynamic from AI) -->
+    <section class="py-10 md:py-14 bg-amber-50">
+        <div class="container mx-auto px-4 max-w-6xl">
+            <h2 class="font-display text-3xl md:text-5xl font-black text-center uppercase mb-8 text-gray-900"
+                x-text="t('testimonials')">
+                {{ $i18n[$defaultLang]['testimonials'] ?? $i18n['en']['testimonials'] ?? 'What Our Customers Say' }}
+            </h2>
+            <div class="grid md:grid-cols-3 gap-5">
+                <template x-for="(tst, index) in getTestimonials()" :key="index">
+                    <div class="bg-white rounded-2xl p-5 shadow-md border-b-4 border-amber-300">
+                        <div class="flex gap-1 text-yellow-400 text-xl mb-2">
+                            <template x-for="star in (tst.rating || 5)" :key="star">
+                                <span>★</span>
+                            </template>
+                        </div>
+                        <p class="text-gray-700 text-sm leading-relaxed mb-4" x-text="tst.text || tst.review || ''"></p>
+                        <div class="flex items-center gap-3 pt-3 border-t border-gray-100">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-red-500 text-white font-black flex items-center justify-center"
+                                x-text="(tst.name || 'A').charAt(0).toUpperCase()">
+                            </div>
+                            <div>
+                                <div class="font-bold text-gray-900 text-sm" x-text="tst.name || 'Customer'"></div>
+                                <div class="text-xs text-gray-500" x-text="tst.city || ''"></div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </section>
+
     <!-- How to order: 3 steps (Dynamic from AI or fallback) -->
     <section class="py-10 md:py-14 bg-white">
         <div class="container mx-auto px-4 max-w-5xl">
@@ -870,37 +901,6 @@
                         x-text="t('step{{ $n }}_d')">{{ $i18n[$defaultLang]["step{$n}_d"] ?? $i18n['en']["step{$n}_d"] ?? '' }}</p>
                 </div>
                 @endforeach
-            </div>
-        </div>
-    </section>
-
-    <!-- Testimonials (Dynamic from AI) -->
-    <section class="py-10 md:py-14 bg-amber-50">
-        <div class="container mx-auto px-4 max-w-6xl">
-            <h2 class="font-display text-3xl md:text-5xl font-black text-center uppercase mb-8 text-gray-900"
-                x-text="t('testimonials')">
-                {{ $i18n[$defaultLang]['testimonials'] ?? $i18n['en']['testimonials'] ?? 'What Our Customers Say' }}
-            </h2>
-            <div class="grid md:grid-cols-3 gap-5">
-                <template x-for="(tst, index) in getTestimonials()" :key="index">
-                    <div class="bg-white rounded-2xl p-5 shadow-md border-b-4 border-amber-300">
-                        <div class="flex gap-1 text-yellow-400 text-xl mb-2">
-                            <template x-for="star in (tst.rating || 5)" :key="star">
-                                <span>★</span>
-                            </template>
-                        </div>
-                        <p class="text-gray-700 text-sm leading-relaxed mb-4" x-text="tst.text || tst.review || ''"></p>
-                        <div class="flex items-center gap-3 pt-3 border-t border-gray-100">
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-red-500 text-white font-black flex items-center justify-center"
-                                x-text="(tst.name || 'A').charAt(0).toUpperCase()">
-                            </div>
-                            <div>
-                                <div class="font-bold text-gray-900 text-sm" x-text="tst.name || 'Customer'"></div>
-                                <div class="text-xs text-gray-500" x-text="tst.city || ''"></div>
-                            </div>
-                        </div>
-                    </div>
-                </template>
             </div>
         </div>
     </section>

@@ -173,7 +173,7 @@ class ProductController extends Controller
                 ->firstOrFail();
         }
         
-        $product = Product::with(['activePromotions'])
+        $product = Product::with(['activePromotions', 'upsellProducts'])
             ->where('slug', $slug)
             ->where('is_active', true)
             ->where('store_id', $store->id)
@@ -190,5 +190,66 @@ class ProductController extends Controller
         }
 
         return view('product-thank-you-theme2', compact('product', 'store', 'lead', 'selectedPromotion'));
+    }
+    
+    public function buyUpsell($subdomain, $slug, Request $request)
+    {
+        $request->validate([
+            'upsell_product_id' => 'required|exists:upsell_products,id',
+            'lead_id' => 'required|exists:product_leads,id',
+        ]);
+
+        // Check if accessing via custom domain
+        $store = $request->attributes->get('custom_domain_store');
+        
+        // If not custom domain, use subdomain
+        if (!$store) {
+            $store = Store::where('subdomain', $subdomain)
+                ->where('is_active', true)
+                ->firstOrFail();
+        }
+
+        // Verify the lead belongs to a product in this store
+        $lead = \App\Models\ProductLead::with('product')
+            ->where('id', $request->lead_id)
+            ->firstOrFail();
+
+        if ($lead->product->store_id !== $store->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid request'
+            ], 403);
+        }
+
+        // Verify the upsell product belongs to this store
+        $upsellProduct = \App\Models\UpsellProduct::where('id', $request->upsell_product_id)
+            ->where('store_id', $store->id)
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        // Check if this upsell order already exists
+        $existingOrder = \App\Models\UpsellOrder::where('lead_id', $request->lead_id)
+            ->where('upsell_product_id', $request->upsell_product_id)
+            ->first();
+
+        if ($existingOrder) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Order already placed'
+            ]);
+        }
+
+        // Create the upsell order
+        \App\Models\UpsellOrder::create([
+            'lead_id' => $request->lead_id,
+            'upsell_product_id' => $request->upsell_product_id,
+            'store_id' => $store->id,
+            'status' => 'pending',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order placed successfully'
+        ]);
     }
 }
