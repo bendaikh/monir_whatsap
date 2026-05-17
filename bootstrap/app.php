@@ -17,10 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'require.store' => \App\Http\Middleware\RequireActiveStore::class,
         ]);
         
-        // Custom domain detection must run before route resolution
-        $middleware->prepend(\App\Http\Middleware\DetectCustomDomain::class);
-        
         $middleware->web(append: [
+            \App\Http\Middleware\DetectCustomDomain::class,
             \App\Http\Middleware\SetActiveStore::class,
         ]);
         
