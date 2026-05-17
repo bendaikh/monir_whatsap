@@ -64,11 +64,20 @@ class DetectCustomDomain
                 return app(ProductController::class)->submitLead($request, $store->subdomain, $matches[1]);
             }
             
-            // Thank you page: /product/{slug}/thank-you/{lead}
+            // Global thank you page: /thank-you
+            if ($path === 'thank-you') {
+                $request->merge(['is_custom_domain' => true]);
+                $response = app(ProductController::class)->thankYouPage($request);
+
+                return response($response);
+            }
+
+            // Legacy thank you URLs → redirect to /thank-you (lead id stored in session)
             if (preg_match('#^product/([^/]+)/thank-you/([0-9]+)$#', $path, $matches)) {
                 $request->merge(['is_custom_domain' => true]);
-                $response = app(ProductController::class)->thankYou($store->subdomain, $matches[1], $matches[2], $request);
-                return response($response);
+                $request->session()->put('thank_you_lead_id', (int) $matches[2]);
+
+                return redirect(thank_you_url());
             }
             
             // Buy upsell: /product/{slug}/buy-upsell

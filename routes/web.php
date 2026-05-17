@@ -32,7 +32,8 @@ Route::get('/', function () {
 Route::get('/store/{subdomain}', [ProductController::class, 'index'])->name('store.home');
 Route::get('/store/{subdomain}/product/{slug}', [ProductController::class, 'show'])->name('store.product.show');
 Route::post('/store/{subdomain}/product/{slug}/submit-lead', [ProductController::class, 'submitLead'])->name('store.product.submit-lead');
-Route::get('/store/{subdomain}/product/{slug}/thank-you/{lead}', [ProductController::class, 'thankYou'])->name('store.product.thank-you');
+Route::get('/thank-you', [ProductController::class, 'thankYouPage'])->name('thank-you');
+Route::get('/store/{subdomain}/product/{slug}/thank-you/{lead}', [ProductController::class, 'thankYouLegacy'])->name('store.product.thank-you');
 Route::post('/store/{subdomain}/product/{slug}/buy-upsell', [ProductController::class, 'buyUpsell'])->name('store.product.buy-upsell');
 
 // WhatsApp Webhook (no auth required for external services)

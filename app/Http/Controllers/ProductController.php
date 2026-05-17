@@ -153,37 +153,51 @@ class ProductController extends Controller
 
         \App\Jobs\PushOrderToExternalApi::dispatch($lead);
 
-        // Redirect to thank you page
-        return redirect()->route('store.product.thank-you', [
-            'subdomain' => $subdomain,
-            'slug' => $slug,
-            'lead' => $lead->id
-        ]);
+        $request->session()->put('thank_you_lead_id', $lead->id);
+
+        return redirect(thank_you_url());
     }
 
-    public function thankYou($subdomain, $slug, $leadId, Request $request)
+    public function thankYouLegacy($subdomain, $slug, $leadId, Request $request)
     {
-        // Check if accessing via custom domain
-        $store = $request->attributes->get('custom_domain_store');
-        
-        // If not custom domain, use subdomain
-        if (!$store) {
-            $store = Store::where('subdomain', $subdomain)
-                ->where('is_active', true)
-                ->firstOrFail();
+        $request->session()->put('thank_you_lead_id', (int) $leadId);
+
+        return redirect(thank_you_url());
+    }
+
+    public function thankYouPage(Request $request)
+    {
+        $leadId = $request->session()->get('thank_you_lead_id');
+
+        if (!$leadId) {
+            $customStore = $request->attributes->get('custom_domain_store');
+            if ($customStore) {
+                return redirect(url('/'));
+            }
+
+            abort(404);
         }
-        
+
+        $lead = \App\Models\ProductLead::with(['product.store'])
+            ->findOrFail($leadId);
+
+        $store = $lead->product->store;
+
+        if (!$store || !$store->is_active) {
+            abort(404);
+        }
+
+        $customStore = $request->attributes->get('custom_domain_store');
+        if ($customStore && $customStore->id !== $store->id) {
+            abort(403);
+        }
+
         $product = Product::with(['activePromotions', 'upsellProducts'])
-            ->where('slug', $slug)
+            ->where('id', $lead->product_id)
             ->where('is_active', true)
             ->where('store_id', $store->id)
             ->firstOrFail();
 
-        $lead = \App\Models\ProductLead::where('id', $leadId)
-            ->where('product_id', $product->id)
-            ->firstOrFail();
-
-        // Get the selected promotion if any
         $selectedPromotion = null;
         if ($lead->selected_promotion_id) {
             $selectedPromotion = \App\Models\ProductPromotion::find($lead->selected_promotion_id);

@@ -52,10 +52,6 @@
             'name' => 'Nom',
             'phone' => 'Téléphone',
             'note' => 'Note',
-            'what_happens_next' => 'Que se passe-t-il ensuite ?',
-            'step1' => 'Nous vous appelons pour confirmer',
-            'step2' => 'Préparation de votre commande',
-            'step3' => 'Livraison à votre domicile',
             'back_to_store' => 'Retour à la boutique',
         ],
         'en' => [
@@ -70,10 +66,6 @@
             'name' => 'Name',
             'phone' => 'Phone',
             'note' => 'Note',
-            'what_happens_next' => 'What happens next?',
-            'step1' => 'We call you to confirm',
-            'step2' => 'We prepare your order',
-            'step3' => 'Delivery to your home',
             'back_to_store' => 'Back to Store',
         ],
         'ar' => [
@@ -88,10 +80,6 @@
             'name' => 'الاسم',
             'phone' => 'الهاتف',
             'note' => 'ملاحظة',
-            'what_happens_next' => 'ماذا يحدث بعد ذلك؟',
-            'step1' => 'نتصل بك للتأكيد',
-            'step2' => 'نحضر طلبك',
-            'step3' => 'التوصيل إلى منزلك',
             'back_to_store' => 'العودة إلى المتجر',
         ],
         'sw' => [
@@ -106,10 +94,6 @@
             'name' => 'Jina',
             'phone' => 'Simu',
             'note' => 'Maelezo',
-            'what_happens_next' => 'Kinachofuata ni nini?',
-            'step1' => 'Tutakupigia simu kuthibitisha',
-            'step2' => 'Tutaandaa agizo lako',
-            'step3' => 'Utoaji nyumbani kwako',
             'back_to_store' => 'Rudi Dukani',
         ],
     ];
@@ -237,39 +221,6 @@
                         </div>
                     </div>
                     @endif
-                </div>
-            </div>
-        </div>
-        
-        <!-- What Happens Next -->
-        <div class="mt-8 bg-white rounded-2xl shadow-lg p-6 md:p-8 border-2 border-gray-100">
-            <h2 class="font-display text-2xl font-black text-gray-900 mb-6 text-center">
-                {{ $t['what_happens_next'] }}
-            </h2>
-            
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="text-center">
-                    <div class="w-16 h-16 mx-auto bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl mb-3 shadow-lg">
-                        📞
-                    </div>
-                    <div class="w-8 h-8 mx-auto -mt-5 bg-gray-900 rounded-full flex items-center justify-center text-white font-bold text-sm">1</div>
-                    <p class="font-semibold text-gray-900 mt-2">{{ $t['step1'] }}</p>
-                </div>
-                
-                <div class="text-center">
-                    <div class="w-16 h-16 mx-auto bg-yellow-500 rounded-full flex items-center justify-center text-white text-2xl mb-3 shadow-lg">
-                        📦
-                    </div>
-                    <div class="w-8 h-8 mx-auto -mt-5 bg-gray-900 rounded-full flex items-center justify-center text-white font-bold text-sm">2</div>
-                    <p class="font-semibold text-gray-900 mt-2">{{ $t['step2'] }}</p>
-                </div>
-                
-                <div class="text-center">
-                    <div class="w-16 h-16 mx-auto bg-green-500 rounded-full flex items-center justify-center text-white text-2xl mb-3 shadow-lg">
-                        🚚
-                    </div>
-                    <div class="w-8 h-8 mx-auto -mt-5 bg-gray-900 rounded-full flex items-center justify-center text-white font-bold text-sm">3</div>
-                    <p class="font-semibold text-gray-900 mt-2">{{ $t['step3'] }}</p>
                 </div>
             </div>
         </div>

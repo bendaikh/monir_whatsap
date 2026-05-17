@@ -26,6 +26,22 @@ if (!function_exists('store_url')) {
     }
 }
 
+if (!function_exists('thank_you_url')) {
+    /**
+     * Global thank-you page URL (no product slug or lead id in path).
+     */
+    function thank_you_url(): string
+    {
+        if (request()->attributes->get('custom_domain_store') || request()->get('is_custom_domain')) {
+            $baseUrl = request()->getScheme() . '://' . request()->getHost();
+
+            return $baseUrl . '/thank-you';
+        }
+
+        return route('thank-you');
+    }
+}
+
 if (!function_exists('store_route')) {
     /**
      * Generate store routes that work with both subdomain and custom domain
@@ -54,9 +70,8 @@ if (!function_exists('store_route')) {
                     return $baseUrl . '/product/' . $slug . '/submit-lead';
                     
                 case 'store.product.thank-you':
-                    $slug = $parameters['slug'] ?? $parameters[1] ?? '';
-                    $lead = $parameters['lead'] ?? $parameters[2] ?? '';
-                    return $baseUrl . '/product/' . $slug . '/thank-you/' . $lead;
+                case 'thank-you':
+                    return $baseUrl . '/thank-you';
                     
                 default:
                     return $baseUrl;
