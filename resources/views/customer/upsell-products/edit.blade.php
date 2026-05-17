@@ -34,6 +34,26 @@
     </div>
     @endif
 
+    @if($upsellProduct->images && count($upsellProduct->images) > 0)
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-3">Current Images</label>
+        <div class="grid grid-cols-4 gap-4">
+            @foreach($upsellProduct->images as $index => $image)
+            <div class="relative group">
+                <img src="{{ \App\Models\Product::resolvePublicImageUrl($image) }}" alt="Image {{ $index + 1 }}" class="w-full h-32 object-cover rounded-lg border border-gray-200">
+                <form action="{{ route('app.upsell-products.delete-image', [$upsellProduct, $index]) }}" method="POST" class="absolute inset-0 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" onclick="return confirm('Delete this image?')" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium">
+                        Delete
+                    </button>
+                </form>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
     <form action="{{ route('app.upsell-products.update', $upsellProduct) }}" method="POST" enctype="multipart/form-data" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         @csrf
         @method('PUT')
@@ -45,30 +65,16 @@
             </div>
 
             <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Price *</label>
+                <input type="number" name="price" value="{{ old('price', $upsellProduct->price) }}" step="0.01" min="0" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
+                <p class="text-xs text-gray-500 mt-1">Shown on the thank you page (same currency as the main product).</p>
+            </div>
+
+            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
                 <textarea name="description" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">{{ old('description', $upsellProduct->description) }}</textarea>
                 <p class="text-xs text-gray-500 mt-1">A short description of this upsell product</p>
             </div>
-
-            @if($upsellProduct->images && count($upsellProduct->images) > 0)
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-3">Current Images</label>
-                <div class="grid grid-cols-4 gap-4">
-                    @foreach($upsellProduct->images as $index => $image)
-                    <div class="relative group">
-                        <img src="{{ \App\Models\Product::resolvePublicImageUrl($image) }}" alt="Image {{ $index + 1 }}" class="w-full h-32 object-cover rounded-lg border border-gray-200">
-                        <form action="{{ route('app.upsell-products.delete-image', [$upsellProduct, $index]) }}" method="POST" class="absolute inset-0 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" onclick="return confirm('Delete this image?')" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium">
-                                Delete
-                            </button>
-                        </form>
-                    </div>
-                    @endforeach
-                </div>
-            </div>
-            @endif
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Add More Images</label>

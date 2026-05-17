@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\Category;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -203,7 +204,13 @@ class ProductController extends Controller
             $selectedPromotion = \App\Models\ProductPromotion::find($lead->selected_promotion_id);
         }
 
-        return view('product-thank-you-theme2', compact('product', 'store', 'lead', 'selectedPromotion'));
+        $purchasedUpsellIds = \App\Models\UpsellOrder::where('lead_id', $lead->id)
+            ->pluck('upsell_product_id')
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+
+        return view('product-thank-you-theme2', compact('product', 'store', 'lead', 'selectedPromotion', 'purchasedUpsellIds'));
     }
     
     public function buyUpsell($subdomain, $slug, Request $request)
@@ -241,29 +248,40 @@ class ProductController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
-        // Check if this upsell order already exists
-        $existingOrder = \App\Models\UpsellOrder::where('lead_id', $request->lead_id)
-            ->where('upsell_product_id', $request->upsell_product_id)
-            ->first();
-
-        if ($existingOrder) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Order already placed'
-            ]);
+        try {
+            $order = \App\Models\UpsellOrder::firstOrCreate(
+                [
+                    'lead_id' => $request->lead_id,
+                    'upsell_product_id' => $request->upsell_product_id,
+                ],
+                [
+                    'store_id' => $store->id,
+                    'status' => 'pending',
+                ]
+            );
+        } catch (QueryException $e) {
+            $sqlState = $e->errorInfo[0] ?? '';
+            $mysqlDuplicate = ($e->errorInfo[1] ?? null) === 1062;
+            $message = strtolower($e->getMessage());
+            if (
+                $sqlState === '23000'
+                || $mysqlDuplicate
+                || str_contains($message, 'duplicate')
+                || str_contains($message, 'unique constraint')
+            ) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Order already placed',
+                    'already_purchased' => true,
+                ]);
+            }
+            throw $e;
         }
-
-        // Create the upsell order
-        \App\Models\UpsellOrder::create([
-            'lead_id' => $request->lead_id,
-            'upsell_product_id' => $request->upsell_product_id,
-            'store_id' => $store->id,
-            'status' => 'pending',
-        ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Order placed successfully'
+            'message' => $order->wasRecentlyCreated ? 'Order placed successfully' : 'Order already placed',
+            'already_purchased' => ! $order->wasRecentlyCreated,
         ]);
     }
 }

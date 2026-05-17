@@ -1,6 +1,59 @@
+@php
+    $buyUpsellUrl = request()->attributes->get('custom_domain_store')
+        ? url('/product/' . $product->slug . '/buy-upsell')
+        : route('store.product.buy-upsell', ['subdomain' => $store->subdomain, 'slug' => $product->slug]);
+@endphp
 <!DOCTYPE html>
 <html lang="{{ $lead->language ?? 'fr' }}" class="scroll-smooth"
-      x-data="{ currentLang: '{{ $lead->language ?? 'fr' }}', rtlLangs: ['ar', 'he', 'fa', 'ur'] }">
+      x-data="{
+        currentLang: '{{ $lead->language ?? 'fr' }}',
+        rtlLangs: ['ar', 'he', 'fa', 'ur'],
+        purchasedUpsellIds: {{ json_encode($purchasedUpsellIds) }},
+        buyingUpsellId: null,
+        upsellSuccessVisible: false,
+        upsellSuccessPopupOpen: false,
+        lastPurchasedUpsellTitle: '',
+        upsellCarouselSlide: 0,
+        upsellModalOpen: false,
+        upsellModalProduct: null,
+        upsellModalImageIndex: 0
+      }"
+      @open-upsell-modal.window="upsellModalOpen = true; upsellModalProduct = $event.detail.upsell; upsellModalImageIndex = 0"
+      @buy-upsell.window="
+        const upsellId = $event.detail.upsellId;
+        const leadId = $event.detail.leadId;
+        const upsellTitle = $event.detail.upsellTitle || '';
+        if (purchasedUpsellIds.includes(upsellId) || buyingUpsellId === upsellId) return;
+        buyingUpsellId = upsellId;
+        upsellSuccessPopupOpen = false;
+        fetch(@js($buyUpsellUrl), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({ upsell_product_id: upsellId, lead_id: leadId })
+        })
+          .then(r => r.json())
+          .then(data => {
+            buyingUpsellId = null;
+            if (data.success) {
+              if (!purchasedUpsellIds.includes(upsellId)) { purchasedUpsellIds.push(upsellId); }
+              lastPurchasedUpsellTitle = upsellTitle;
+              upsellSuccessVisible = true;
+              upsellSuccessPopupOpen = true;
+              upsellModalOpen = false;
+            } else {
+              alert(data.message || 'Error');
+            }
+          })
+          .catch(e => {
+            buyingUpsellId = null;
+            alert('Error: ' + e.message);
+          });
+      ">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -100,6 +153,8 @@
     
     $lang = $lead->language ?? 'fr';
     $t = $i18n[$lang] ?? $i18n['en'] ?? $i18n['fr'];
+
+    $purchasedUpsellIds = array_values($purchasedUpsellIds ?? []);
 @endphp
 <body class="antialiased bg-[#f5f5f0] min-h-screen" :class="{'rtl': rtlLangs.includes(currentLang)}">
 
@@ -122,6 +177,34 @@
             <p class="text-lg opacity-80">
                 {{ $t['contact_soon'] }}
             </p>
+        </div>
+    </div>
+
+    <!-- Upsell purchase success (visible banner) -->
+    <div x-show="upsellSuccessVisible"
+         x-cloak
+         class="bg-gradient-to-r from-emerald-600 to-green-700 text-white">
+        <div class="container mx-auto px-4 py-5 max-w-4xl">
+            <div class="rounded-2xl bg-white/95 text-gray-900 border-2 border-white shadow-xl p-5 md:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+                <div class="flex-shrink-0 w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <p class="font-display text-xl md:text-2xl font-black uppercase text-gray-900">
+                        {{ $lead->language === 'ar' ? 'تم تأكيد الطلب الإضافي!' : ($lead->language === 'sw' ? 'Agizo la ziada limehakikiwa!' : ($lead->language === 'en' ? 'Add-on order confirmed!' : 'Commande complémentaire confirmée !')) }}
+                    </p>
+                    <p class="text-gray-700 mt-1 font-medium">
+                        {{ $lead->language === 'ar' ? 'شكراً لك — سنقوم بالتواصل معك قريباً لإتمام هذا الطلب.' : ($lead->language === 'sw' ? 'Asante — tutawasiliana nawe hivi karibuni kukamilisha agizo hili.' : ($lead->language === 'en' ? 'Thank you — we will contact you shortly to complete this order.' : 'Merci — nous vous contacterons rapidement pour finaliser cette commande.')) }}
+                    </p>
+                </div>
+                <button type="button"
+                        @click="upsellSuccessVisible = false"
+                        class="self-start sm:self-center px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition">
+                    {{ $lead->language === 'ar' ? 'إغلاق' : ($lead->language === 'sw' ? 'Funga' : ($lead->language === 'en' ? 'Dismiss' : 'Fermer')) }}
+                </button>
+            </div>
         </div>
     </div>
 
@@ -243,13 +326,20 @@
                     <div class="p-4">
                         <h4 class="font-bold text-gray-900 mb-2 cursor-pointer" 
                             @click="$dispatch('open-upsell-modal', { upsell: @js($upsell) })">{{ $upsell->title }}</h4>
+                        <p class="font-display text-xl font-black text-gray-900 mb-2">{{ number_format((float) $upsell->price, 0) }} {{ $currencyCode }}</p>
                         @if($upsell->description)
                         <p class="text-sm text-gray-600 line-clamp-2 mb-3">{{ $upsell->description }}</p>
                         @endif
                         <button 
-                            @click="$dispatch('buy-upsell', { upsellId: {{ $upsell->id }}, leadId: {{ $lead->id }} })"
-                            class="w-full bg-gradient-to-r {{ $ctaBg }} text-white font-semibold py-2 px-4 rounded-lg hover:shadow-lg transition">
-                            {{ $lead->language === 'ar' ? 'اشتري الآن' : ($lead->language === 'sw' ? 'Nunua Sasa' : ($lead->language === 'en' ? 'Buy Now' : 'Acheter maintenant')) }}
+                            type="button"
+                            @click="$dispatch('buy-upsell', { upsellId: {{ $upsell->id }}, leadId: {{ $lead->id }}, upsellTitle: @js($upsell->title) })"
+                            :disabled="purchasedUpsellIds.includes({{ $upsell->id }}) || buyingUpsellId === {{ $upsell->id }}"
+                            :class="purchasedUpsellIds.includes({{ $upsell->id }})
+                                ? 'w-full bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg cursor-not-allowed'
+                                : 'w-full bg-gradient-to-r {{ $ctaBg }} text-white font-semibold py-2 px-4 rounded-lg hover:shadow-lg transition'">
+                            <span x-show="!purchasedUpsellIds.includes({{ $upsell->id }}) && buyingUpsellId !== {{ $upsell->id }}">{{ $lead->language === 'ar' ? 'اشتري الآن' : ($lead->language === 'sw' ? 'Nunua Sasa' : ($lead->language === 'en' ? 'Buy Now' : 'Acheter maintenant')) }}</span>
+                            <span x-show="buyingUpsellId === {{ $upsell->id }}">{{ $lead->language === 'ar' ? 'جاري المعالجة...' : ($lead->language === 'sw' ? 'Inachakata...' : ($lead->language === 'en' ? 'Processing...' : 'Traitement...')) }}</span>
+                            <span x-show="purchasedUpsellIds.includes({{ $upsell->id }})">{{ $lead->language === 'ar' ? 'تم الشراء' : ($lead->language === 'sw' ? 'Tayari umenunua' : ($lead->language === 'en' ? 'Already bought' : 'Déjà acheté')) }}</span>
                         </button>
                     </div>
                 </div>
@@ -257,9 +347,9 @@
             </div>
             
             <!-- Mobile Carousel -->
-            <div class="md:hidden" x-data="{ currentSlide: 0, totalSlides: {{ $product->upsellProducts->count() }} }">
+            <div class="md:hidden">
                 <div class="relative overflow-hidden">
-                    <div class="flex transition-transform duration-300 ease-in-out" :style="`transform: translateX(-${currentSlide * 100}%)`">
+                    <div class="flex transition-transform duration-300 ease-in-out" :style="`transform: translateX(-${upsellCarouselSlide * 100}%)`">
                         @foreach($product->upsellProducts as $index => $upsell)
                         <div class="w-full flex-shrink-0 px-2">
                             <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
@@ -270,13 +360,20 @@
                                 <div class="p-4">
                                     <h4 class="font-bold text-gray-900 mb-2 cursor-pointer"
                                         @click="$dispatch('open-upsell-modal', { upsell: @js($upsell) })">{{ $upsell->title }}</h4>
+                                    <p class="font-display text-xl font-black text-gray-900 mb-2">{{ number_format((float) $upsell->price, 0) }} {{ $currencyCode }}</p>
                                     @if($upsell->description)
                                     <p class="text-sm text-gray-600 line-clamp-2 mb-3">{{ $upsell->description }}</p>
                                     @endif
                                     <button 
-                                        @click="$dispatch('buy-upsell', { upsellId: {{ $upsell->id }}, leadId: {{ $lead->id }} })"
-                                        class="w-full bg-gradient-to-r {{ $ctaBg }} text-white font-semibold py-2 px-4 rounded-lg hover:shadow-lg transition">
-                                        {{ $lead->language === 'ar' ? 'اشتري الآن' : ($lead->language === 'sw' ? 'Nunua Sasa' : ($lead->language === 'en' ? 'Buy Now' : 'Acheter maintenant')) }}
+                                        type="button"
+                                        @click="$dispatch('buy-upsell', { upsellId: {{ $upsell->id }}, leadId: {{ $lead->id }}, upsellTitle: @js($upsell->title) })"
+                                        :disabled="purchasedUpsellIds.includes({{ $upsell->id }}) || buyingUpsellId === {{ $upsell->id }}"
+                                        :class="purchasedUpsellIds.includes({{ $upsell->id }})
+                                            ? 'w-full bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg cursor-not-allowed'
+                                            : 'w-full bg-gradient-to-r {{ $ctaBg }} text-white font-semibold py-2 px-4 rounded-lg hover:shadow-lg transition'">
+                                        <span x-show="!purchasedUpsellIds.includes({{ $upsell->id }}) && buyingUpsellId !== {{ $upsell->id }}">{{ $lead->language === 'ar' ? 'اشتري الآن' : ($lead->language === 'sw' ? 'Nunua Sasa' : ($lead->language === 'en' ? 'Buy Now' : 'Acheter maintenant')) }}</span>
+                                        <span x-show="buyingUpsellId === {{ $upsell->id }}">{{ $lead->language === 'ar' ? 'جاري المعالجة...' : ($lead->language === 'sw' ? 'Inachakata...' : ($lead->language === 'en' ? 'Processing...' : 'Traitement...')) }}</span>
+                                        <span x-show="purchasedUpsellIds.includes({{ $upsell->id }})">{{ $lead->language === 'ar' ? 'تم الشراء' : ($lead->language === 'sw' ? 'Tayari umenunua' : ($lead->language === 'en' ? 'Already bought' : 'Déjà acheté')) }}</span>
                                     </button>
                                 </div>
                             </div>
@@ -287,17 +384,19 @@
                     <!-- Navigation Arrows -->
                     @if($product->upsellProducts->count() > 1)
                     <button 
-                        @click="currentSlide = currentSlide > 0 ? currentSlide - 1 : totalSlides - 1"
+                        type="button"
+                        @click="upsellCarouselSlide = upsellCarouselSlide > 0 ? upsellCarouselSlide - 1 : {{ $product->upsellProducts->count() }} - 1"
                         class="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition"
-                        :class="{ 'opacity-50': currentSlide === 0 }">
+                        :class="{ 'opacity-50': upsellCarouselSlide === 0 }">
                         <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                         </svg>
                     </button>
                     <button 
-                        @click="currentSlide = currentSlide < totalSlides - 1 ? currentSlide + 1 : 0"
+                        type="button"
+                        @click="upsellCarouselSlide = upsellCarouselSlide < {{ $product->upsellProducts->count() }} - 1 ? upsellCarouselSlide + 1 : 0"
                         class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition"
-                        :class="{ 'opacity-50': currentSlide === totalSlides - 1 }">
+                        :class="{ 'opacity-50': upsellCarouselSlide === {{ $product->upsellProducts->count() }} - 1 }">
                         <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>
@@ -310,9 +409,10 @@
                 <div class="flex justify-center gap-2 mt-4">
                     @foreach($product->upsellProducts as $index => $upsell)
                     <button 
-                        @click="currentSlide = {{ $index }}"
+                        type="button"
+                        @click="upsellCarouselSlide = {{ $index }}"
                         class="w-2 h-2 rounded-full transition"
-                        :class="currentSlide === {{ $index }} ? 'bg-gray-900 w-6' : 'bg-gray-300'">
+                        :class="upsellCarouselSlide === {{ $index }} ? 'bg-gray-900 w-6' : 'bg-gray-300'">
                     </button>
                     @endforeach
                 </div>
@@ -338,91 +438,85 @@
         </div>
     </footer>
 
+    <!-- Upsell purchase success popup -->
+    <div x-show="upsellSuccessPopupOpen"
+         x-cloak
+         class="fixed inset-0 z-[60] overflow-y-auto"
+         style="display: none;"
+         @keydown.escape.window="upsellSuccessPopupOpen = false">
+        <div class="fixed inset-0 bg-black/60 transition-opacity" @click="upsellSuccessPopupOpen = false"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full mx-auto overflow-hidden text-center"
+                 @click.stop
+                 x-show="upsellSuccessPopupOpen"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 transform scale-90"
+                 x-transition:enter-end="opacity-100 transform scale-100">
+                <div class="p-8">
+                    <div class="w-20 h-20 mx-auto mb-5 rounded-full bg-green-100 flex items-center justify-center animate-bounce-in">
+                        <svg class="w-11 h-11 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                    <h2 class="font-display text-2xl md:text-3xl font-black uppercase text-gray-900 mb-2">
+                        {{ $lead->language === 'ar' ? 'تم الشراء بنجاح!' : ($lead->language === 'sw' ? 'Umenunua kwa mafanikio!' : ($lead->language === 'en' ? 'Purchase successful!' : 'Achat réussi !')) }}
+                    </h2>
+                    <p class="text-gray-700 font-semibold mb-1" x-show="lastPurchasedUpsellTitle" x-text="lastPurchasedUpsellTitle"></p>
+                    <p class="text-gray-600 text-sm mb-6">
+                        {{ $lead->language === 'ar' ? 'شكراً لك — سنقوم بالتواصل معك قريباً لإتمام هذا الطلب الإضافي.' : ($lead->language === 'sw' ? 'Asante — tutawasiliana nawe hivi karibuni kukamilisha agizo hili la ziada.' : ($lead->language === 'en' ? 'Thank you — we will contact you shortly to complete this add-on order.' : 'Merci — nous vous contacterons rapidement pour finaliser cette commande complémentaire.')) }}
+                    </p>
+                    <button type="button"
+                            @click="upsellSuccessPopupOpen = false"
+                            class="w-full px-6 py-3.5 bg-gradient-to-r {{ $ctaBg }} text-white font-bold rounded-xl text-lg hover:shadow-lg transition">
+                        {{ $lead->language === 'ar' ? 'حسناً' : ($lead->language === 'sw' ? 'Sawa' : ($lead->language === 'en' ? 'OK' : 'OK')) }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Upsell Product Modal -->
-    <div x-data="{ 
-        showModal: false, 
-        currentUpsell: null,
-        currentImageIndex: 0,
-        buying: false,
-        success: false
-    }"
-         @open-upsell-modal.window="showModal = true; currentUpsell = $event.detail.upsell; currentImageIndex = 0"
-         @buy-upsell.window="
-            if (!buying) {
-                buying = true;
-                fetch('{{ request()->attributes->get('custom_domain_store') ? url('/product/' . $product->slug . '/buy-upsell') : route('store.product.buy-upsell', ['subdomain' => $store->subdomain, 'slug' => $product->slug]) }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        upsell_product_id: $event.detail.upsellId,
-                        lead_id: $event.detail.leadId
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    buying = false;
-                    if (data.success) {
-                        success = true;
-                        setTimeout(() => { success = false; }, 3000);
-                    } else {
-                        alert(data.message || 'Error');
-                    }
-                })
-                .catch(error => {
-                    buying = false;
-                    alert('Error: ' + error.message);
-                });
-            }
-         "
-         x-show="showModal"
+    <div x-show="upsellModalOpen"
          x-cloak
          class="fixed inset-0 z-50 overflow-y-auto"
          style="display: none;">
         
-        <!-- Backdrop -->
-        <div class="fixed inset-0 bg-black/70 transition-opacity" @click="showModal = false"></div>
+        <div class="fixed inset-0 bg-black/70 transition-opacity" @click="upsellModalOpen = false"></div>
         
-        <!-- Modal Content -->
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full mx-auto overflow-hidden"
                  @click.stop
-                 x-show="showModal"
+                 x-show="upsellModalOpen"
                  x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="opacity-0 transform scale-90"
                  x-transition:enter-end="opacity-100 transform scale-100">
                 
-                <!-- Close Button -->
-                <button @click="showModal = false" 
+                <button type="button" @click="upsellModalOpen = false" 
                         class="absolute top-4 right-4 z-10 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition">
                     <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
                 
-                <template x-if="currentUpsell">
+                <template x-if="upsellModalProduct">
                     <div class="grid md:grid-cols-2 gap-6 p-6">
-                        <!-- Images Section -->
                         <div>
                             <div class="aspect-square bg-gray-100 rounded-xl overflow-hidden mb-4 relative">
-                                <template x-if="currentUpsell.images && currentUpsell.images.length > 0">
-                                    <img :src="'{{ asset('storage') }}/' + currentUpsell.images[currentImageIndex]" 
-                                         :alt="currentUpsell.title"
+                                <template x-if="upsellModalProduct.images && upsellModalProduct.images.length > 0">
+                                    <img :src="'{{ asset('storage') }}/' + upsellModalProduct.images[upsellModalImageIndex]" 
+                                         :alt="upsellModalProduct.title"
                                          class="w-full h-full object-cover">
                                 </template>
                             </div>
                             
-                            <!-- Image Thumbnails -->
-                            <template x-if="currentUpsell.images && currentUpsell.images.length > 1">
+                            <template x-if="upsellModalProduct.images && upsellModalProduct.images.length > 1">
                                 <div class="grid grid-cols-4 gap-2">
-                                    <template x-for="(image, index) in currentUpsell.images" :key="index">
+                                    <template x-for="(image, index) in upsellModalProduct.images" :key="index">
                                         <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer border-2 transition"
-                                             :class="currentImageIndex === index ? 'border-gray-900' : 'border-transparent'"
-                                             @click="currentImageIndex = index">
+                                             :class="upsellModalImageIndex === index ? 'border-gray-900' : 'border-transparent'"
+                                             @click="upsellModalImageIndex = index">
                                             <img :src="'{{ asset('storage') }}/' + image" 
-                                                 :alt="currentUpsell.title"
+                                                 :alt="upsellModalProduct.title"
                                                  class="w-full h-full object-cover">
                                         </div>
                                     </template>
@@ -430,22 +524,26 @@
                             </template>
                         </div>
                         
-                        <!-- Details Section -->
                         <div class="flex flex-col">
-                            <h2 class="text-2xl font-bold text-gray-900 mb-4" x-text="currentUpsell.title"></h2>
-                            <p class="text-gray-600 mb-6 flex-1" x-text="currentUpsell.description"></p>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-2" x-text="upsellModalProduct.title"></h2>
+                            <p class="font-display text-3xl font-black text-gray-900 mb-4"
+                               x-text="Number(upsellModalProduct.price || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' {{ $currencyCode }}'"></p>
+                            <p class="text-gray-600 mb-6 flex-1" x-text="upsellModalProduct.description"></p>
                             
-                            <!-- Buy Button -->
-                            <button 
-                                @click="$dispatch('buy-upsell', { upsellId: currentUpsell.id, leadId: {{ $lead->id }} }); showModal = false"
-                                :disabled="buying"
-                                class="w-full bg-gradient-to-r {{ $ctaBg }} text-white font-bold py-4 px-6 rounded-xl text-lg hover:shadow-lg transition disabled:opacity-50"
-                                :class="{ 'opacity-50 cursor-not-allowed': buying }">
-                                <span x-show="!buying">
+                            <button type="button"
+                                @click="upsellModalOpen = false; $dispatch('buy-upsell', { upsellId: upsellModalProduct.id, leadId: {{ $lead->id }}, upsellTitle: upsellModalProduct.title })"
+                                :disabled="purchasedUpsellIds.includes(upsellModalProduct.id) || buyingUpsellId === upsellModalProduct.id"
+                                :class="purchasedUpsellIds.includes(upsellModalProduct.id)
+                                    ? 'w-full bg-gray-400 text-white font-bold py-4 px-6 rounded-xl text-lg cursor-not-allowed'
+                                    : 'w-full bg-gradient-to-r {{ $ctaBg }} text-white font-bold py-4 px-6 rounded-xl text-lg hover:shadow-lg transition disabled:opacity-50'">
+                                <span x-show="!purchasedUpsellIds.includes(upsellModalProduct.id) && buyingUpsellId !== upsellModalProduct.id">
                                     {{ $lead->language === 'ar' ? 'اشتري الآن' : ($lead->language === 'sw' ? 'Nunua Sasa' : ($lead->language === 'en' ? 'Buy Now' : 'Acheter maintenant')) }}
                                 </span>
-                                <span x-show="buying">
+                                <span x-show="buyingUpsellId === upsellModalProduct.id">
                                     {{ $lead->language === 'ar' ? 'جاري المعالجة...' : ($lead->language === 'sw' ? 'Inachakata...' : ($lead->language === 'en' ? 'Processing...' : 'Traitement...')) }}
+                                </span>
+                                <span x-show="purchasedUpsellIds.includes(upsellModalProduct.id)">
+                                    {{ $lead->language === 'ar' ? 'تم الشراء' : ($lead->language === 'sw' ? 'Tayari umenunua' : ($lead->language === 'en' ? 'Already bought' : 'Déjà acheté')) }}
                                 </span>
                             </button>
                         </div>
@@ -453,26 +551,6 @@
                 </template>
             </div>
         </div>
-    </div>
-    
-    <!-- Success Toast -->
-    <div x-data="{ show: false }"
-         @buy-upsell.window="show = true; setTimeout(() => show = false, 3000)"
-         x-show="show"
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 transform translate-y-2"
-         x-transition:enter-end="opacity-100 transform translate-y-0"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed bottom-6 right-6 z-50 bg-green-500 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3"
-         style="display: none;">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-        </svg>
-        <span class="font-semibold">
-            {{ $lead->language === 'ar' ? 'تم الطلب بنجاح!' : ($lead->language === 'sw' ? 'Imeagizwa!' : ($lead->language === 'en' ? 'Order placed successfully!' : 'Commande passée avec succès!')) }}
-        </span>
     </div>
 
 </body>

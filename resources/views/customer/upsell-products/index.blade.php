@@ -39,8 +39,9 @@
                     @endif
                 </div>
                 @if($upsell->description)
-                <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ $upsell->description }}</p>
+                <p class="text-gray-600 text-sm mb-2 line-clamp-2">{{ $upsell->description }}</p>
                 @endif
+                <p class="text-lg font-bold text-emerald-700 mb-4">{{ number_format((float) $upsell->price, 2) }}</p>
                 @if($upsell->images && count($upsell->images) > 0)
                 <p class="text-xs text-gray-500 mb-4">{{ count($upsell->images) }} image(s)</p>
                 @endif

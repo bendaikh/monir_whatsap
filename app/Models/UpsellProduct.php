@@ -10,6 +10,7 @@ class UpsellProduct extends Model
         'store_id',
         'title',
         'description',
+        'price',
         'images',
         'is_active',
         'order',
@@ -18,6 +19,7 @@ class UpsellProduct extends Model
     protected $casts = [
         'images' => 'array',
         'is_active' => 'boolean',
+        'price' => 'decimal:2',
     ];
 
     public function store()

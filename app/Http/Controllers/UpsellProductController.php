@@ -45,6 +45,7 @@ class UpsellProductController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
             'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'is_active' => 'nullable|boolean',
         ]);
@@ -69,6 +70,7 @@ class UpsellProductController extends Controller
             'store_id' => $store->id,
             'title' => $request->title,
             'description' => $request->description,
+            'price' => $request->price,
             'images' => $images,
             'is_active' => $request->has('is_active'),
             'order' => UpsellProduct::where('store_id', $store->id)->max('order') + 1,
@@ -111,6 +113,7 @@ class UpsellProductController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
             'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'is_active' => 'nullable|boolean',
         ]);
@@ -127,6 +130,7 @@ class UpsellProductController extends Controller
         $upsellProduct->update([
             'title' => $request->title,
             'description' => $request->description,
+            'price' => $request->price,
             'images' => $images,
             'is_active' => $request->has('is_active'),
         ]);

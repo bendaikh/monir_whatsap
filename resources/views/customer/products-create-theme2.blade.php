@@ -1735,6 +1735,7 @@
                         @endif
                         <div class="flex-1">
                             <h4 class="text-white font-medium group-hover:text-emerald-400 transition">{{ $upsell->title }}</h4>
+                            <p class="text-sm text-emerald-400/90 font-semibold mt-0.5">{{ number_format((float) $upsell->price, 2) }}</p>
                             @if($upsell->description)
                             <p class="text-sm text-gray-400 mt-0.5 line-clamp-1">{{ $upsell->description }}</p>
                             @endif
