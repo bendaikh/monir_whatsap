@@ -16,6 +16,13 @@ class DetectCustomDomain
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Ensure session is started for this request
+        if (!$request->hasSession()) {
+            $session = app('session')->driver();
+            $request->setLaravelSession($session);
+            $session->start();
+        }
+        
         $host = $request->getHost();
         
         // Skip if it's the main domain or localhost
@@ -61,7 +68,14 @@ class DetectCustomDomain
             // Product submission: /product/{slug}/submit-lead
             if (preg_match('#^product/([^/]+)/submit-lead$#', $path, $matches)) {
                 $request->merge(['is_custom_domain' => true]);
-                return app(ProductController::class)->submitLead($request, $store->subdomain, $matches[1]);
+                $response = app(ProductController::class)->submitLead($request, $store->subdomain, $matches[1]);
+                
+                // Save session if it was started
+                if ($request->hasSession()) {
+                    $request->session()->save();
+                }
+                
+                return $response;
             }
             
             // Global thank you page: /thank-you
@@ -76,6 +90,11 @@ class DetectCustomDomain
             if (preg_match('#^product/([^/]+)/thank-you/([0-9]+)$#', $path, $matches)) {
                 $request->merge(['is_custom_domain' => true]);
                 $request->session()->put('thank_you_lead_id', (int) $matches[2]);
+                
+                // Save session before redirecting
+                if ($request->hasSession()) {
+                    $request->session()->save();
+                }
 
                 return redirect(thank_you_url());
             }
