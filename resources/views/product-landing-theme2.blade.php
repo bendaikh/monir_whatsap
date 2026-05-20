@@ -14,7 +14,23 @@
           badge(key) { return this.badgeLabels[this.currentLang]?.[key]?.[1] || this.badgeLabels['en']?.[key]?.[1] || this.badgeLabels['fr']?.[key]?.[1] || ''; },
           testimonial(t) { return t[this.currentLang] || t['en'] || t['fr'] || ''; },
           getFeatures() { return this.pageData[this.currentLang]?.features || this.pageData['en']?.features || this.pageData['fr']?.features || []; },
-          getTestimonials() { return this.pageData[this.currentLang]?.testimonials || this.pageData['en']?.testimonials || this.pageData['fr']?.testimonials || []; },
+          getTestimonials() {
+              const ai = this.pageData[this.currentLang]?.testimonials || this.pageData['en']?.testimonials || this.pageData['fr']?.testimonials || [];
+              if (ai.length > 0) {
+                  return ai.map((tst, index) => ({
+                      ...tst,
+                      name: this.reviewerNames[index]?.name || tst.name,
+                      city: this.reviewerNames[index]?.city || tst.city,
+                  }));
+              }
+              return this.testimonialsData.map(t => ({
+                  name: t.name,
+                  city: t.city,
+                  text: t[this.currentLang] || t['en'] || t['fr'] || '',
+                  rating: 5,
+              }));
+          },
+          reviewerNames: [],
           getSteps() { return this.pageData[this.currentLang]?.steps || this.pageData['en']?.steps || this.pageData['fr']?.steps || []; },
           getFullDescription() { return this.pageData[this.currentLang]?.full_description || this.pageData['en']?.full_description || this.pageData['fr']?.full_description || ''; },
           getHeroTitle() { return this.pageData[this.currentLang]?.hero_title || this.pageData['en']?.hero_title || this.pageData['fr']?.hero_title || ''; },
@@ -81,6 +97,11 @@
     $staticFeatures = $td['features'] ?? [];
     $badges = $td['badges'] ?? [];
     $customTrustBadges = $td['trust_badges'] ?? [];
+    $reviewerNames = $td['reviewer_names'] ?? [
+        ['name' => 'Karim', 'city' => 'Casablanca'],
+        ['name' => 'Fatima', 'city' => 'Rabat'],
+        ['name' => 'Youssef', 'city' => 'Marrakech'],
+    ];
     $images = $product->all_images ?? [];
     
     $fontFamilyMap = [
@@ -137,6 +158,22 @@
             $pageData[$lang] = $pageData[$fallbackLang] ?? [];
         }
     }
+
+    // Apply custom reviewer names from theme_data to AI-generated testimonials
+    foreach ($pageData as $lang => &$langData) {
+        if (!empty($langData['testimonials']) && is_array($langData['testimonials'])) {
+            foreach ($langData['testimonials'] as $index => &$tst) {
+                if (!empty($reviewerNames[$index]['name'])) {
+                    $tst['name'] = $reviewerNames[$index]['name'];
+                }
+                if (!empty($reviewerNames[$index]['city'])) {
+                    $tst['city'] = $reviewerNames[$index]['city'];
+                }
+            }
+            unset($tst);
+        }
+    }
+    unset($langData);
     
     // Check if we have AI-generated features (prefer over static)
     $hasAiFeatures = false;
@@ -287,20 +324,13 @@
         }
     }
 
-    // Configurable reviewer names from theme_data
-    $reviewerNames = $td['reviewer_names'] ?? [
-        ['name' => 'Karim', 'city' => 'Casablanca'],
-        ['name' => 'Fatima', 'city' => 'Rabat'],
-        ['name' => 'Youssef', 'city' => 'Marrakech'],
-    ];
-    
     $testimonials = [
         ['name' => $reviewerNames[0]['name'] ?? 'Karim', 'city' => $reviewerNames[0]['city'] ?? 'Casablanca', 'fr' => "Produit de qualité, livraison rapide. Je recommande vivement !", 'en' => 'Great product, fast delivery. Highly recommend!', 'ar' => 'منتج ممتاز والتوصيل سريع جدا. أنصح به بشدة !'],
         ['name' => $reviewerNames[1]['name'] ?? 'Fatima', 'city' => $reviewerNames[1]['city'] ?? 'Rabat', 'fr' => "Exactement comme décrit. Service client au top.", 'en' => 'Exactly as described. Great customer service.', 'ar' => 'تماما كما هو موضح. خدمة العملاء ممتازة.'],
         ['name' => $reviewerNames[2]['name'] ?? 'Youssef', 'city' => $reviewerNames[2]['city'] ?? 'Marrakech', 'fr' => "J'étais hésitant mais au final très satisfait. Merci !", 'en' => 'I was hesitant but in the end very satisfied. Thank you!', 'ar' => 'كنت مترددا لكن في النهاية راض جدا. شكرا !'],
     ];
 @endphp
-<body class="antialiased bg-[#f5f5f0]" :class="{'rtl': rtlLangs.includes(currentLang)}" x-init="i18n = @js($i18n); badgeLabels = @js($badgeLabels); testimonialsData = @js($testimonials); pageData = @js($pageData)">
+<body class="antialiased bg-[#f5f5f0]" :class="{'rtl': rtlLangs.includes(currentLang)}" x-init="i18n = @js($i18n); badgeLabels = @js($badgeLabels); testimonialsData = @js($testimonials); reviewerNames = @js($reviewerNames); pageData = @js($pageData)">
 
     <!-- Top promo marquee -->
     @php

@@ -61,6 +61,31 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@400;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    @if($store->facebook_pixel_enabled && $store->facebook_pixel_id)
+    @php
+        $pixelOrderValue = $selectedPromotion ? (float) $selectedPromotion->price : (float) $product->price;
+        $pixelCurrency = $product->landing_page_currency ?? 'MAD';
+    @endphp
+    <!-- Facebook Pixel Code -->
+    <script>
+        !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '{{ $store->facebook_pixel_id }}');
+        fbq('track', 'PageView');
+        fbq('track', 'Lead', {
+            content_name: '{{ addslashes($product->name) }}',
+            content_ids: ['{{ $product->id }}'],
+            content_type: 'product',
+            value: {{ $pixelOrderValue }},
+            currency: '{{ $pixelCurrency }}'
+        });
+    </script>
+    <noscript>
+        <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id={{ $store->facebook_pixel_id }}&ev=PageView&noscript=1"/>
+    </noscript>
+    <!-- End Facebook Pixel Code -->
+    @endif
+
     <style>
         [x-cloak] { display: none !important; }
         body { font-family: 'Inter', sans-serif; background: #f5f5f0; }
