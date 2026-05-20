@@ -185,10 +185,11 @@
                                             </svg>
                                         </a>
                                         @endif
-                                        <a href="{{ route('app.products.landing-builder', $product->id) }}" class="text-purple-400 hover:text-purple-300 transition" title="Edit Landing Page">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                        <a href="{{ route('app.products.landing-builder', $product->id) }}" class="px-3 py-1.5 bg-purple-600/30 hover:bg-purple-600/50 text-purple-300 hover:text-white rounded-lg text-xs font-bold transition inline-flex items-center gap-1" title="Landing Page Builder">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6z"/>
                                             </svg>
+                                            Builder
                                         </a>
                                         <a href="{{ route('app.products.edit', $product->id) }}" class="text-yellow-400 hover:text-yellow-300 transition" title="Edit Product">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

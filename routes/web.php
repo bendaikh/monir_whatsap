@@ -97,6 +97,7 @@ Route::middleware(['auth', 'require.workspace', 'require.store'])->prefix('app')
     Route::get('/products/{id}/edit', [CustomerDashboardController::class, 'productsEdit'])->name('products.edit');
     Route::put('/products/{id}', [CustomerDashboardController::class, 'productsUpdate'])->name('products.update');
     Route::delete('/products/{id}', [CustomerDashboardController::class, 'productsDestroy'])->name('products.destroy');
+    Route::get('/landing-builder', [CustomerDashboardController::class, 'landingBuilderIndex'])->name('landing-builder');
     Route::get('/products/{id}/landing-builder', [CustomerDashboardController::class, 'landingPageBuilder'])->name('products.landing-builder');
     Route::post('/products/{id}/landing-builder', [CustomerDashboardController::class, 'saveLandingPageBuilder'])->name('products.save-landing-builder');
     Route::post('/products/{id}/upload-image', [CustomerDashboardController::class, 'uploadProductImage'])->name('products.upload-image');
@@ -108,6 +109,7 @@ Route::middleware(['auth', 'require.workspace', 'require.store'])->prefix('app')
     Route::get('/products/{id}/image-progress', [CustomerDashboardController::class, 'checkImageGenerationProgress'])->name('products.image-progress');
     Route::get('/campaigns', [CustomerDashboardController::class, 'campaigns'])->name('campaigns');
     Route::get('/leads', [CustomerDashboardController::class, 'leads'])->name('leads');
+    Route::get('/leads/export', [CustomerDashboardController::class, 'exportLeads'])->name('leads.export');
     
     // Categories
     Route::get('/categories', [CustomerDashboardController::class, 'categories'])->name('categories');
@@ -160,6 +162,7 @@ Route::middleware(['auth', 'require.workspace', 'require.store'])->prefix('app')
     Route::get('/pixel-connect', [\App\Http\Controllers\PixelConnectController::class, 'index'])->name('pixel-connect');
     Route::post('/pixel-connect/facebook', [\App\Http\Controllers\PixelConnectController::class, 'saveFacebookPixel'])->name('pixel-connect.facebook.save');
     Route::post('/pixel-connect/facebook/disconnect', [\App\Http\Controllers\PixelConnectController::class, 'disconnectFacebookPixel'])->name('pixel-connect.facebook.disconnect');
+    Route::post('/pixel-connect/facebook/toggle', [\App\Http\Controllers\PixelConnectController::class, 'toggleFacebookPixel'])->name('pixel-connect.facebook.toggle');
     Route::post('/pixel-connect/tiktok', [\App\Http\Controllers\PixelConnectController::class, 'saveTikTokPixel'])->name('pixel-connect.tiktok.save');
     Route::post('/pixel-connect/tiktok/disconnect', [\App\Http\Controllers\PixelConnectController::class, 'disconnectTikTokPixel'])->name('pixel-connect.tiktok.disconnect');
     

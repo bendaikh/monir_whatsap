@@ -3,6 +3,12 @@
 @section('title', 'Pixel Connect')
 
 @section('content')
+@php
+    $fbPixels = $activeStore->facebook_pixels ?? [];
+    if (empty($fbPixels) && $activeStore->facebook_pixel_id) {
+        $fbPixels = [['id' => $activeStore->facebook_pixel_id, 'name' => 'Primary Pixel', 'enabled' => $activeStore->facebook_pixel_enabled]];
+    }
+@endphp
 <div class="max-w-4xl mx-auto">
     <div class="mb-8">
         <div class="flex items-center gap-3 mb-2">
@@ -11,12 +17,12 @@
             </svg>
             <h1 class="text-3xl font-bold text-white">Pixel Connect</h1>
         </div>
-        <p class="text-gray-400">Connect Facebook Pixel and TikTok Pixel to track conversions and optimize your marketing</p>
+        <p class="text-gray-400">Connect multiple Facebook Pixels and TikTok Pixel to track conversions and optimize your marketing</p>
     </div>
 
     <div id="notification-container"></div>
 
-    <!-- Facebook Pixel Section -->
+    <!-- Facebook Pixels Section -->
     <div class="bg-[#0f1c2e] rounded-xl shadow-sm border border-white/10 mb-6 overflow-hidden">
         <div class="p-6 border-b border-white/10">
             <div class="flex items-center justify-between">
@@ -25,16 +31,13 @@
                         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                     </svg>
                     <div>
-                        <h2 class="text-xl font-bold text-white">Facebook Pixel</h2>
-                        <p class="text-sm text-gray-400">Track conversions and optimize Facebook ads</p>
+                        <h2 class="text-xl font-bold text-white">Facebook Pixels</h2>
+                        <p class="text-sm text-gray-400">Add and manage multiple pixels for this store</p>
                     </div>
                 </div>
-                @if($activeStore->facebook_pixel_enabled && $activeStore->facebook_pixel_id)
-                <span class="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    Connected
+                @if(count($fbPixels) > 0)
+                <span class="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium">
+                    {{ count($fbPixels) }} connected
                 </span>
                 @else
                 <span class="px-3 py-1 bg-gray-500/20 text-gray-400 rounded-full text-sm font-medium">Not Connected</span>
@@ -42,41 +45,47 @@
             </div>
         </div>
 
-        <div class="p-6">
-            @if($activeStore->facebook_pixel_enabled && $activeStore->facebook_pixel_id)
-            <!-- Connected State -->
-            <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4 mb-4">
-                <div class="flex items-start gap-3">
-                    <svg class="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <div class="flex-1">
-                        <p class="text-sm font-medium text-green-400 mb-1">Facebook Pixel is Active</p>
-                        <p class="text-xs text-green-300">Pixel ID: <code class="bg-green-500/20 px-2 py-0.5 rounded">{{ $activeStore->facebook_pixel_id }}</code></p>
+        <div class="p-6 space-y-4">
+            @if(count($fbPixels) > 0)
+            <div class="space-y-3" id="facebook-pixels-list">
+                @foreach($fbPixels as $pixel)
+                <div class="flex items-center justify-between gap-4 bg-green-500/10 border border-green-500/30 rounded-lg p-4" data-pixel-id="{{ $pixel['id'] }}">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-green-400">{{ $pixel['name'] ?? 'Facebook Pixel' }}</p>
+                        <p class="text-xs text-green-300 mt-0.5">ID: <code class="bg-green-500/20 px-2 py-0.5 rounded">{{ $pixel['id'] }}</code></p>
+                        @if(!($pixel['enabled'] ?? true))
+                        <span class="inline-block mt-1 text-xs text-amber-400">Disabled</span>
+                        @endif
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <button type="button" onclick="toggleFacebookPixel('{{ $pixel['id'] }}', {{ ($pixel['enabled'] ?? true) ? 'false' : 'true' }})"
+                                class="px-3 py-1.5 bg-gray-600/50 hover:bg-gray-600 text-gray-300 rounded-lg text-xs font-medium transition">
+                            {{ ($pixel['enabled'] ?? true) ? 'Disable' : 'Enable' }}
+                        </button>
+                        <button type="button" onclick="disconnectFacebookPixel('{{ $pixel['id'] }}')"
+                                class="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-xs font-medium transition inline-flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            Remove
+                        </button>
                     </div>
                 </div>
+                @endforeach
             </div>
-            
-            <button onclick="disconnectFacebookPixel()" class="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg font-medium transition inline-flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-                Disconnect Facebook Pixel
-            </button>
-            @else
-            <!-- Not Connected State -->
-            <div class="mb-6 bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+            @endif
+
+            <div class="mb-4 bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
                 <div class="flex items-start gap-3">
                     <svg class="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     <div class="flex-1">
-                        <p class="text-sm font-medium text-blue-400 mb-1">How to Find Your Facebook Pixel ID</p>
+                        <p class="text-sm font-medium text-blue-400 mb-1">Add a Facebook Pixel</p>
                         <ol class="text-xs text-blue-300 space-y-1 list-decimal list-inside">
                             <li>Go to <a href="https://business.facebook.com/events_manager2" target="_blank" class="underline hover:text-blue-200">Facebook Events Manager</a></li>
-                            <li>Select your pixel from the list</li>
-                            <li>Your Pixel ID is displayed in the header or settings</li>
-                            <li>Copy the Pixel ID and paste it below</li>
+                            <li>Copy your Pixel ID and paste it below</li>
+                            <li>You can add multiple pixels — all active pixels fire on your storefront</li>
                         </ol>
                     </div>
                 </div>
@@ -84,22 +93,23 @@
 
             <form id="facebook-pixel-form" class="space-y-4">
                 @csrf
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">
-                        Facebook Pixel ID *
-                    </label>
-                    <input type="text" name="facebook_pixel_id" placeholder="123456789012345" required class="w-full px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-gray-500">
-                    <p class="text-xs text-gray-400 mt-1">Your 15-digit Facebook Pixel ID</p>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Pixel Name (optional)</label>
+                        <input type="text" name="name" placeholder="e.g. Main Store Pixel" class="w-full px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-gray-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Facebook Pixel ID *</label>
+                        <input type="text" name="facebook_pixel_id" placeholder="123456789012345" required class="w-full px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-gray-500">
+                    </div>
                 </div>
-
                 <button type="submit" class="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition inline-flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
-                    Connect Facebook Pixel
+                    Add Facebook Pixel
                 </button>
             </form>
-            @endif
         </div>
     </div>
 
@@ -131,7 +141,6 @@
 
         <div class="p-6">
             @if($activeStore->tiktok_pixel_enabled && $activeStore->tiktok_pixel_id)
-            <!-- Connected State -->
             <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4 mb-4">
                 <div class="flex items-start gap-3">
                     <svg class="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,7 +160,6 @@
                 Disconnect TikTok Pixel
             </button>
             @else
-            <!-- Not Connected State -->
             <div class="mb-6 bg-pink-500/10 border border-pink-500/30 rounded-lg p-4">
                 <div class="flex items-start gap-3">
                     <svg class="w-5 h-5 text-pink-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,7 +170,6 @@
                         <ol class="text-xs text-pink-300 space-y-1 list-decimal list-inside">
                             <li>Go to <a href="https://ads.tiktok.com/i18n/events_manager" target="_blank" class="underline hover:text-pink-200">TikTok Events Manager</a></li>
                             <li>Select "Web Events" and choose your pixel</li>
-                            <li>Click on "Settings" to view your Pixel ID</li>
                             <li>Copy the Pixel ID and paste it below</li>
                         </ol>
                     </div>
@@ -172,13 +179,9 @@
             <form id="tiktok-pixel-form" class="space-y-4">
                 @csrf
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">
-                        TikTok Pixel ID *
-                    </label>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">TikTok Pixel ID *</label>
                     <input type="text" name="tiktok_pixel_id" placeholder="ABCDEFGHIJKLMNOP" required class="w-full px-4 py-3 bg-[#0a1628] border border-white/10 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-gray-500">
-                    <p class="text-xs text-gray-400 mt-1">Your TikTok Pixel ID</p>
                 </div>
-
                 <button type="submit" class="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition inline-flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -203,86 +206,58 @@
                 <svg class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
-                <div>
-                    <strong class="text-white">Track Conversions:</strong> Monitor purchases, sign-ups, and other important actions on your website.
-                </div>
+                <div><strong class="text-white">Multiple Facebook Pixels:</strong> Track the same events across different ad accounts or campaigns.</div>
             </div>
             <div class="flex gap-3">
                 <svg class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
-                <div>
-                    <strong class="text-white">Optimize Ads:</strong> Use conversion data to optimize your ad campaigns for better performance.
-                </div>
+                <div><strong class="text-white">Track Conversions:</strong> Monitor purchases, sign-ups, and other important actions on your website.</div>
             </div>
             <div class="flex gap-3">
                 <svg class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
-                <div>
-                    <strong class="text-white">Build Audiences:</strong> Create custom audiences based on website visitors for retargeting campaigns.
-                </div>
-            </div>
-            <div class="flex gap-3">
-                <svg class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                </svg>
-                <div>
-                    <strong class="text-white">Automatic Integration:</strong> Once connected, the pixels will be automatically added to all pages of your website.
-                </div>
+                <div><strong class="text-white">Automatic Integration:</strong> Once connected, all active pixels are automatically added to your storefront pages.</div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
+const csrfToken = document.querySelector('input[name="_token"]')?.value;
+
 function showNotification(message, type = 'success') {
     const container = document.getElementById('notification-container');
     const colors = {
         success: 'bg-green-500/10 border-green-500/30 text-green-400',
         error: 'bg-red-500/10 border-red-500/30 text-red-400'
     };
-    
     const notification = document.createElement('div');
     notification.className = `mb-6 ${colors[type]} border rounded-lg px-4 py-3 flex items-center gap-2`;
-    notification.innerHTML = `
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${type === 'success' ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' : 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'}"/>
-        </svg>
-        <span>${message}</span>
-    `;
-    
+    notification.innerHTML = `<span>${message}</span>`;
     container.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 5000);
+    setTimeout(() => notification.remove(), 5000);
 }
 
 document.getElementById('facebook-pixel-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    
     try {
         const response = await fetch('{{ route("app.pixel-connect.facebook.save") }}', {
             method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
+            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({
-                facebook_pixel_id: formData.get('facebook_pixel_id')
+                facebook_pixel_id: formData.get('facebook_pixel_id'),
+                name: formData.get('name'),
             })
         });
-        
         const data = await response.json();
-        
         if (data.success) {
             showNotification(data.message, 'success');
-            setTimeout(() => window.location.reload(), 1500);
+            setTimeout(() => window.location.reload(), 1200);
         } else {
-            showNotification(data.error || 'Failed to connect Facebook Pixel', 'error');
+            showNotification(data.error || 'Failed to add Facebook Pixel', 'error');
         }
     } catch (error) {
         showNotification('An error occurred. Please try again.', 'error');
@@ -292,22 +267,13 @@ document.getElementById('facebook-pixel-form')?.addEventListener('submit', async
 document.getElementById('tiktok-pixel-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    
     try {
         const response = await fetch('{{ route("app.pixel-connect.tiktok.save") }}', {
             method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                tiktok_pixel_id: formData.get('tiktok_pixel_id')
-            })
+            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ tiktok_pixel_id: formData.get('tiktok_pixel_id') })
         });
-        
         const data = await response.json();
-        
         if (data.success) {
             showNotification(data.message, 'success');
             setTimeout(() => window.location.reload(), 1500);
@@ -319,26 +285,40 @@ document.getElementById('tiktok-pixel-form')?.addEventListener('submit', async (
     }
 });
 
-async function disconnectFacebookPixel() {
-    if (!confirm('Are you sure you want to disconnect Facebook Pixel?')) return;
-    
+async function disconnectFacebookPixel(pixelId) {
+    const msg = pixelId ? 'Remove this Facebook Pixel?' : 'Remove all Facebook Pixels?';
+    if (!confirm(msg)) return;
     try {
         const response = await fetch('{{ route("app.pixel-connect.facebook.disconnect") }}', {
             method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
+            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ facebook_pixel_id: pixelId || null })
         });
-        
         const data = await response.json();
-        
         if (data.success) {
             showNotification(data.message, 'success');
-            setTimeout(() => window.location.reload(), 1500);
+            setTimeout(() => window.location.reload(), 1200);
         } else {
-            showNotification(data.error || 'Failed to disconnect Facebook Pixel', 'error');
+            showNotification(data.error || 'Failed to disconnect', 'error');
+        }
+    } catch (error) {
+        showNotification('An error occurred. Please try again.', 'error');
+    }
+}
+
+async function toggleFacebookPixel(pixelId, enabled) {
+    try {
+        const response = await fetch('{{ route("app.pixel-connect.facebook.toggle") }}', {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ facebook_pixel_id: pixelId, enabled: enabled })
+        });
+        const data = await response.json();
+        if (data.success) {
+            showNotification(data.message, 'success');
+            setTimeout(() => window.location.reload(), 800);
+        } else {
+            showNotification(data.error || 'Failed to update pixel', 'error');
         }
     } catch (error) {
         showNotification('An error occurred. Please try again.', 'error');
@@ -347,19 +327,12 @@ async function disconnectFacebookPixel() {
 
 async function disconnectTikTokPixel() {
     if (!confirm('Are you sure you want to disconnect TikTok Pixel?')) return;
-    
     try {
         const response = await fetch('{{ route("app.pixel-connect.tiktok.disconnect") }}', {
             method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
+            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' }
         });
-        
         const data = await response.json();
-        
         if (data.success) {
             showNotification(data.message, 'success');
             setTimeout(() => window.location.reload(), 1500);

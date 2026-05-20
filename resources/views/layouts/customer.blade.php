@@ -71,7 +71,7 @@
                 @endif
 
                 <!-- Navigation -->
-                <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto" x-data="{ socialMediaOpen: {{ request()->routeIs('app.facebook-ads') || request()->routeIs('app.tiktok-ads') || request()->routeIs('app.ad-campaigns*') || request()->routeIs('app.campaign-creator*') ? 'true' : 'false' }}, aiApiOpen: {{ request()->routeIs('workspaces.ai-settings') ? 'true' : 'false' }}, productsOpen: {{ request()->routeIs('app.products*') || request()->routeIs('app.categories*') ? 'true' : 'false' }} }">
+                <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto" x-data="{ socialMediaOpen: {{ request()->routeIs('app.facebook-ads') || request()->routeIs('app.tiktok-ads') || request()->routeIs('app.ad-campaigns*') || request()->routeIs('app.campaign-creator*') ? 'true' : 'false' }}, aiApiOpen: {{ request()->routeIs('workspaces.ai-settings') ? 'true' : 'false' }}, productsOpen: {{ request()->routeIs('app.products*') || request()->routeIs('app.categories*') || request()->routeIs('app.landing-builder*') ? 'true' : 'false' }} }">
                 
                 @if(request()->routeIs('workspaces.*'))
                     <!-- Workspace Management Navigation -->
@@ -191,11 +191,17 @@
                             </svg>
                         </button>
                         <div x-show="productsOpen" x-collapse class="ml-8 mt-1 space-y-1">
-                            <a href="{{ route('app.products') }}" class="{{ request()->routeIs('app.products') && !request()->routeIs('app.products.create') ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-400' }} hover:bg-white/5 flex items-center gap-3 px-3 py-2 rounded-lg transition text-sm">
+                            <a href="{{ route('app.products') }}" class="{{ request()->routeIs('app.products') && !request()->routeIs('app.products.create') && !request()->routeIs('app.products.landing-builder') ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-400' }} hover:bg-white/5 flex items-center gap-3 px-3 py-2 rounded-lg transition text-sm">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                                 </svg>
                                 <span>All Products</span>
+                            </a>
+                            <a href="{{ route('app.landing-builder') }}" class="{{ request()->routeIs('app.landing-builder*') || request()->routeIs('app.products.landing-builder') ? 'bg-purple-500/20 text-purple-400' : 'text-gray-400' }} hover:bg-white/5 flex items-center gap-3 px-3 py-2 rounded-lg transition text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                                </svg>
+                                <span>Landing Page Builder</span>
                             </a>
                             <a href="{{ route('app.products.create') }}" class="{{ request()->routeIs('app.products.create') ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-400' }} hover:bg-white/5 flex items-center gap-3 px-3 py-2 rounded-lg transition text-sm">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -353,22 +359,6 @@
                                     Dashboard
                                 @endif
                             </h2>
-                        @endif
-                    </div>
-                    <div class="flex items-center gap-4">
-                        @if(request()->routeIs('app.*'))
-                            <button class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition">
-                                Upgrade
-                            </button>
-                            <div class="flex items-center gap-2 text-sm">
-                                <span class="text-gray-400">fr</span>
-                                <span class="text-gray-600">|</span>
-                                <span class="text-gray-400">MAD</span>
-                            </div>
-                            <div class="flex items-center gap-2 text-sm">
-                                <span class="text-white font-medium">900</span>
-                                <span class="text-gray-400">tokens left</span>
-                            </div>
                         @endif
                     </div>
                 </div>

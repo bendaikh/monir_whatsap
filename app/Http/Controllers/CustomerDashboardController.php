@@ -1053,6 +1053,19 @@ class CustomerDashboardController extends Controller
         ]);
     }
 
+    public function landingBuilderIndex()
+    {
+        $storeId = $this->getActiveStoreId();
+        $store = $storeId ? \App\Models\Store::find($storeId) : null;
+
+        $products = \App\Models\Product::where('user_id', auth()->id())
+            ->when($storeId, fn ($q) => $q->where('store_id', $storeId))
+            ->orderBy('name')
+            ->get();
+
+        return view('customer.landing-builder-index', compact('products', 'store'));
+    }
+
     public function landingPageBuilder($id)
     {
         $storeId = $this->getActiveStoreId();
@@ -1067,8 +1080,16 @@ class CustomerDashboardController extends Controller
         if ($storeId) {
             $store = \App\Models\Store::find($storeId);
         }
+
+        $translations = $product->landing_page_translations ?? [];
+        if (empty($translations)) {
+            if (!empty($product->landing_page_fr)) $translations['fr'] = $product->landing_page_fr;
+            if (!empty($product->landing_page_en)) $translations['en'] = $product->landing_page_en;
+            if (!empty($product->landing_page_ar)) $translations['ar'] = $product->landing_page_ar;
+        }
+        $enabledLanguages = $product->landing_page_languages ?? (array_keys($translations) ?: ['fr']);
         
-        return view('customer.products-landing-builder', compact('product', 'store'));
+        return view('customer.products-landing-builder', compact('product', 'store', 'translations', 'enabledLanguages'));
     }
 
     public function saveLandingPageBuilder(Request $request, $id)
@@ -1095,6 +1116,8 @@ class CustomerDashboardController extends Controller
             'page_data.en' => 'nullable|array',
             'page_data.ar' => 'nullable|array',
             'show_product_sections' => 'nullable|boolean',
+            'theme_data' => 'nullable|array',
+            'builder_sections' => 'nullable|array',
         ]);
         
         // Add show_product_sections to each language's page data
@@ -1107,12 +1130,49 @@ class CustomerDashboardController extends Controller
         $pageDataEn['show_product_sections'] = $showSections;
         $pageDataAr['show_product_sections'] = $showSections;
         
-        $product->update([
+        $updateData = [
             'landing_page_sections' => $validated['sections'] ?? [],
             'landing_page_fr' => $pageDataFr,
             'landing_page_en' => $pageDataEn,
             'landing_page_ar' => $pageDataAr,
-        ]);
+        ];
+
+        if (isset($validated['theme_data'])) {
+            $themeData = array_merge($product->theme_data ?? [], $validated['theme_data']);
+            if (isset($validated['builder_sections'])) {
+                $themeData['builder_sections'] = $validated['builder_sections'];
+            }
+            $updateData['theme_data'] = $themeData;
+        } elseif (isset($validated['builder_sections'])) {
+            $themeData = $product->theme_data ?? [];
+            $themeData['builder_sections'] = $validated['builder_sections'];
+            $updateData['theme_data'] = $themeData;
+        }
+
+        // Sync unified translations (source of truth for multilingual content)
+        $translations = $product->landing_page_translations ?? [];
+        $sections = $validated['sections'] ?? [];
+        foreach (['fr', 'en', 'ar'] as $lang) {
+            $langData = $validated['page_data'][$lang] ?? [];
+            if (!isset($translations[$lang])) {
+                $translations[$lang] = [];
+            }
+            $translations[$lang] = array_merge($translations[$lang], $langData);
+
+            $imageSections = [];
+            foreach ($sections as $section) {
+                $imageSections[] = [
+                    'title' => $section["title_{$lang}"] ?? '',
+                    'description' => $section["description_{$lang}"] ?? '',
+                ];
+            }
+            if (!empty($imageSections)) {
+                $translations[$lang]['image_sections'] = $imageSections;
+            }
+        }
+        $updateData['landing_page_translations'] = $translations;
+
+        $product->update($updateData);
         
         return response()->json([
             'success' => true,
@@ -1245,8 +1305,34 @@ class CustomerDashboardController extends Controller
             })
             ->latest()
             ->paginate(20);
+
+        $leadsCount = \App\Models\ProductLead::where('user_id', $user->id)
+            ->when($storeId, function ($q) use ($storeId) {
+                $q->whereHas('product', function ($q) use ($storeId) {
+                    $q->where('store_id', $storeId);
+                });
+            })
+            ->count();
         
-        return view('customer.leads', compact('leads'));
+        return view('customer.leads', compact('leads', 'leadsCount'));
+    }
+
+    public function exportLeads()
+    {
+        $user = auth()->user();
+        $storeId = $this->getActiveStoreId();
+
+        $leads = \App\Models\ProductLead::with(['product', 'selectedPromotion'])
+            ->where('user_id', $user->id)
+            ->when($storeId, function ($q) use ($storeId) {
+                $q->whereHas('product', function ($q) use ($storeId) {
+                    $q->where('store_id', $storeId);
+                });
+            })
+            ->latest()
+            ->get();
+
+        return app(\App\Services\LeadsExportService::class)->exportCsv($leads);
     }
     
     public function categories()

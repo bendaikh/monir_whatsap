@@ -45,20 +45,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@400;600;700;800;900&family=Bebas+Neue&family=Oswald:wght@400;600;700&family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:wght@400;600;700;800;900&family=Roboto:wght@400;500;700;900&family=Poppins:wght@400;600;700;800;900&family=Anton&family=Raleway:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    @if($store->facebook_pixel_enabled && $store->facebook_pixel_id)
-    <script>
-        !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
-        fbq('init', '{{ $store->facebook_pixel_id }}');
-        fbq('track', 'PageView');
-        fbq('track', 'ViewContent', {
-            content_name: '{{ addslashes($product->name) }}',
-            content_ids: ['{{ $product->id }}'],
-            content_type: 'product',
-            value: {{ $product->price }},
-            currency: '{{ $product->landing_page_currency ?? 'MAD' }}'
-        });
-    </script>
-    @endif
+    @include('partials.facebook-pixels', ['store' => $store, 'product' => $product, 'trackViewContent' => true])
 
     <style>
         [x-cloak] { display: none !important; }
@@ -97,11 +84,22 @@
     $staticFeatures = $td['features'] ?? [];
     $badges = $td['badges'] ?? [];
     $customTrustBadges = $td['trust_badges'] ?? [];
+    $builderSections = $td['builder_sections'] ?? [];
+    $sectionVisible = fn(string $key) => ($builderSections[$key] ?? true);
     $reviewerNames = $td['reviewer_names'] ?? [
         ['name' => 'Karim', 'city' => 'Casablanca'],
         ['name' => 'Fatima', 'city' => 'Rabat'],
         ['name' => 'Youssef', 'city' => 'Marrakech'],
     ];
+
+    $marqueeBgColor = $td['marquee_bg_color'] ?? '#000000';
+    $heroBgColor = $td['hero_bg_color'] ?? '';
+    $statsBgColor = $td['stats_bg_color'] ?? '#dc2626';
+    $featuresBgColor = $td['features_bg_color'] ?? '#111827';
+    $ctaBgColor = $td['cta_bg_color'] ?? '';
+    $testimonialsBgColor = $td['testimonials_bg_color'] ?? '#fffbeb';
+    $trustBgColor = $td['trust_bg_color'] ?? '#ffffff';
+
     $images = $product->all_images ?? [];
     
     $fontFamilyMap = [
@@ -332,12 +330,13 @@
 @endphp
 <body class="antialiased bg-[#f5f5f0]" :class="{'rtl': rtlLangs.includes(currentLang)}" x-init="i18n = @js($i18n); badgeLabels = @js($badgeLabels); testimonialsData = @js($testimonials); reviewerNames = @js($reviewerNames); pageData = @js($pageData)">
 
+    @if($sectionVisible('marquee'))
     <!-- Top promo marquee -->
     @php
         $headerItems = $td['header_items'] ?? [];
         $hasCustomHeaderItems = !empty($headerItems) && is_array($headerItems);
     @endphp
-    <div class="bg-black text-white text-xs font-bold py-2 overflow-hidden whitespace-nowrap relative">
+    <div class="text-white text-xs font-bold py-2 overflow-hidden whitespace-nowrap relative" style="background-color: {{ $marqueeBgColor }}">
         <div class="flex animate-marquee gap-8 w-max pl-8">
             @for($i = 0; $i < 2; $i++)
                 @if($hasCustomHeaderItems)
@@ -360,6 +359,7 @@
             @endfor
         </div>
     </div>
+    @endif
 
     <!-- Language Switcher & More Options Dropdown -->
     @php
@@ -420,7 +420,7 @@
     @endif
 
     <!-- HERO: Big bold product title + image + order form + price -->
-    <section class="relative bg-gradient-to-br {{ $heroBg }} stripe-bg text-white overflow-hidden">
+    <section class="relative {{ $heroBgColor ? '' : 'bg-gradient-to-br ' . $heroBg . ' stripe-bg' }} text-white overflow-hidden" style="{{ $heroBgColor ? 'background-color: ' . $heroBgColor : '' }}">
         <div class="container mx-auto px-4 py-6 md:py-12 relative z-10 max-w-6xl">
             <div class="grid lg:grid-cols-2 gap-6 items-start">
                 <!-- Left: Title + image + price -->
@@ -663,8 +663,9 @@
         </div>
     </section>
 
+    @if($sectionVisible('stats'))
     <!-- Red stats bar with big numbers -->
-    <section class="bg-red-600 text-white py-5 md:py-7 relative overflow-hidden stripe-bg">
+    <section class="text-white py-5 md:py-7 relative overflow-hidden stripe-bg" style="background-color: {{ $statsBgColor }}">
         <div class="container mx-auto px-4 max-w-5xl">
             <div class="grid grid-cols-3 gap-3 md:gap-6 text-center">
                 <div>
@@ -685,9 +686,10 @@
             </div>
         </div>
     </section>
+    @endif
 
     <!-- Content sections from user uploads (alternating colored banners) -->
-    @if(!empty($product->landing_page_sections))
+    @if($sectionVisible('image_sections') && !empty($product->landing_page_sections))
         @php $sectionColors = ['bg-gray-900 text-white', 'bg-red-500 text-white', 'bg-amber-400 text-gray-900', 'bg-emerald-600 text-white', 'bg-indigo-600 text-white']; @endphp
         @foreach($product->landing_page_sections as $i => $section)
             @php
@@ -758,10 +760,12 @@
             @php
                 $sectionId = 'section_' . $i;
                 $sectionTransJson = json_encode($sectionTranslations);
+                $customBandColor = $section['band_color'] ?? '';
+                $customBgColor = $section['bg_color'] ?? '#ffffff';
             @endphp
 
             @if($fallbackTitle)
-            <div class="{{ $bandClass }} py-4 md:py-6 relative stripe-bg">
+            <div class="{{ $customBandColor ? '' : $bandClass }} py-4 md:py-6 relative stripe-bg" style="{{ $customBandColor ? 'background-color: ' . $customBandColor : '' }}">
                 <div class="container mx-auto px-4 max-w-4xl text-center">
                     <h2 class="font-display text-3xl md:text-5xl font-black uppercase tracking-wide"
                         x-text="({{ $sectionTransJson }})[currentLang]?.title || @js($fallbackTitle)">{{ $fallbackTitle }}</h2>
@@ -770,7 +774,7 @@
             @endif
 
             @if($sectionImg || $fallbackDesc)
-            <section class="py-6 md:py-10 bg-white">
+            <section class="py-6 md:py-10" style="background-color: {{ $customBgColor }}">
                 <div class="container mx-auto px-4 max-w-4xl space-y-5">
                     @if($sectionImg)
                     <div class="rounded-2xl overflow-hidden shadow-xl border-4 border-white ring-1 ring-gray-200">
@@ -788,8 +792,9 @@
     @endif
 
 
+    @if($sectionVisible('features'))
     <!-- Why choose / Features (Dynamic from AI) -->
-    <section class="py-10 md:py-14 bg-gray-900 text-white relative overflow-hidden" x-show="getFeatures().length > 0">
+    <section class="py-10 md:py-14 text-white relative overflow-hidden" x-show="getFeatures().length > 0" style="background-color: {{ $featuresBgColor }}">
         <div class="absolute inset-0 stripe-bg opacity-60"></div>
         <div class="container mx-auto px-4 max-w-5xl relative z-10">
             <h2 class="font-display text-3xl md:text-5xl font-black text-center uppercase mb-8 text-yellow-300"
@@ -812,7 +817,7 @@
     
     <!-- Fallback: Static Features from theme_data (if no AI features) -->
     @if(!empty(array_filter($staticFeatures, fn($f) => !empty($f['text']))))
-    <section class="py-10 md:py-14 bg-gray-900 text-white relative overflow-hidden" x-show="getFeatures().length === 0">
+    <section class="py-10 md:py-14 text-white relative overflow-hidden" x-show="getFeatures().length === 0" style="background-color: {{ $featuresBgColor }}">
         <div class="absolute inset-0 stripe-bg opacity-60"></div>
         <div class="container mx-auto px-4 max-w-5xl relative z-10">
             <h2 class="font-display text-3xl md:text-5xl font-black text-center uppercase mb-8 text-yellow-300"
@@ -834,9 +839,11 @@
         </div>
     </section>
     @endif
+    @endif
 
+    @if($sectionVisible('cta'))
     <!-- Big CTA banner (order again) -->
-    <section class="bg-gradient-to-r {{ $ctaBg }} text-white py-10 md:py-14 relative overflow-hidden stripe-bg">
+    <section class="text-white py-10 md:py-14 relative overflow-hidden stripe-bg {{ $ctaBgColor ? '' : 'bg-gradient-to-r ' . $ctaBg }}" style="{{ $ctaBgColor ? 'background-color: ' . $ctaBgColor : '' }}">
         <div class="container mx-auto px-4 text-center max-w-3xl relative z-10">
             <div class="inline-block bg-yellow-300 text-gray-900 px-4 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider mb-4">
                 🔥 {{ $promoBadge }}
@@ -853,9 +860,11 @@
             </a>
         </div>
     </section>
+    @endif
 
+    @if($sectionVisible('testimonials'))
     <!-- Testimonials (Dynamic from AI) -->
-    <section class="py-10 md:py-14 bg-amber-50">
+    <section class="py-10 md:py-14" style="background-color: {{ $testimonialsBgColor }}">
         <div class="container mx-auto px-4 max-w-6xl">
             <h2 class="font-display text-3xl md:text-5xl font-black text-center uppercase mb-8 text-gray-900"
                 x-text="t('testimonials')">
@@ -884,60 +893,11 @@
             </div>
         </div>
     </section>
-
-    <!-- How to order: 3 steps (Dynamic from AI or fallback) -->
-    <section class="py-10 md:py-14 bg-white">
-        <div class="container mx-auto px-4 max-w-5xl">
-            <h2 class="font-display text-3xl md:text-5xl font-black text-center uppercase mb-10 text-gray-900"
-                x-text="t('how_to_order')">
-                {{ $i18n[$defaultLang]['how_to_order'] ?? $i18n['en']['how_to_order'] ?? 'How To Order' }}
-            </h2>
-            
-            <!-- Dynamic steps from AI -->
-            <div class="grid md:grid-cols-3 gap-5" x-show="getSteps().length > 0">
-                <template x-for="(step, index) in getSteps()" :key="index">
-                    <div class="text-center">
-                        <div class="relative inline-block mb-3">
-                            <div class="w-20 h-20 rounded-full text-white flex items-center justify-center text-4xl shadow-xl"
-                                :class="index === 0 ? 'bg-red-500' : (index === 1 ? 'bg-amber-500' : 'bg-emerald-600')">
-                                <span x-text="index === 0 ? '📝' : (index === 1 ? '📞' : '🚚')"></span>
-                            </div>
-                            <div class="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-gray-900 text-yellow-300 flex items-center justify-center font-black text-lg shadow-md"
-                                x-text="step.number || (index + 1)"></div>
-                        </div>
-                        <h3 class="font-black text-lg text-gray-900 mb-1" x-text="step.title"></h3>
-                        <p class="text-sm text-gray-600 font-medium" x-text="step.description"></p>
-                    </div>
-                </template>
-            </div>
-            
-            <!-- Fallback static steps -->
-            <div class="grid md:grid-cols-3 gap-5" x-show="getSteps().length === 0">
-                @foreach([1,2,3] as $n)
-                @php
-                    $icons = [1 => '📝', 2 => '📞', 3 => '🚚'];
-                    $colors = [1 => 'bg-red-500', 2 => 'bg-amber-500', 3 => 'bg-emerald-600'];
-                @endphp
-                <div class="text-center">
-                    <div class="relative inline-block mb-3">
-                        <div class="w-20 h-20 rounded-full {{ $colors[$n] }} text-white flex items-center justify-center text-4xl shadow-xl">
-                            {{ $icons[$n] }}
-                        </div>
-                        <div class="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-gray-900 text-yellow-300 flex items-center justify-center font-black text-lg shadow-md">{{ $n }}</div>
-                    </div>
-                    <h3 class="font-black text-lg text-gray-900 mb-1"
-                        x-text="t('step{{ $n }}_t')">{{ $i18n[$defaultLang]["step{$n}_t"] ?? $i18n['en']["step{$n}_t"] ?? 'Step '.$n }}</h3>
-                    <p class="text-sm text-gray-600 font-medium"
-                        x-text="t('step{{ $n }}_d')">{{ $i18n[$defaultLang]["step{$n}_d"] ?? $i18n['en']["step{$n}_d"] ?? '' }}</p>
-                </div>
-                @endforeach
-            </div>
-        </div>
-    </section>
+    @endif
 
     <!-- Trust badges strip -->
-    @if(!empty($customTrustBadges) || !empty($badges))
-    <section class="bg-white py-6 border-y-2 border-gray-100">
+    @if($sectionVisible('trust_badges') && (!empty($customTrustBadges) || !empty($badges)))
+    <section class="py-6 border-y-2 border-gray-100" style="background-color: {{ $trustBgColor }}">
         <div class="container mx-auto px-4 max-w-5xl">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                 @if(!empty($customTrustBadges))
