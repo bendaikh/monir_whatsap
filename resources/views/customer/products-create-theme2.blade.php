@@ -609,6 +609,8 @@
                         @enderror
                     </div>
 
+                    @include('customer.partials.google-sheet-selector')
+
                     <!-- Stock and SKU -->
                     <div class="grid grid-cols-2 gap-4">
                         <div>

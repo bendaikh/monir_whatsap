@@ -1,7 +1,7 @@
 <x-customer-layout>
     <x-slot name="header">
         <div>
-            <h2 class="text-2xl font-bold text-white">System Connect - API Integration</h2>
+            <h2 class="text-2xl font-bold text-white">System Connect</h2>
             <p class="text-sm text-gray-400 mt-1">Connect your external application to automatically receive orders from your landing pages</p>
         </div>
     </x-slot>

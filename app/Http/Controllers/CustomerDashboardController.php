@@ -11,12 +11,41 @@ use App\Jobs\GenerateProductLandingPageJob;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\Rule;
+use App\Models\GoogleSheetConnection;
 
 class CustomerDashboardController extends Controller
 {
     protected function getActiveStoreId()
     {
         return session('active_store_id');
+    }
+
+    protected function getGoogleSheetConnections()
+    {
+        $storeId = $this->getActiveStoreId();
+
+        return GoogleSheetConnection::where('user_id', auth()->id())
+            ->where('is_active', true)
+            ->when($storeId, fn ($q) => $q->where('store_id', $storeId))
+            ->orderBy('name')
+            ->get();
+    }
+
+    protected function googleSheetConnectionRule(): array
+    {
+        $storeId = $this->getActiveStoreId();
+
+        return [
+            'nullable',
+            'integer',
+            Rule::exists('google_sheet_connections', 'id')->where(function ($query) use ($storeId) {
+                $query->where('user_id', auth()->id());
+                if ($storeId) {
+                    $query->where('store_id', $storeId);
+                }
+            }),
+        ];
     }
 
     public function dashboard()
@@ -338,8 +367,9 @@ class CustomerDashboardController extends Controller
             ->get();
         
         $viewName = $theme === 'theme2' ? 'customer.products-create-theme2' : 'customer.products-create';
+        $googleSheetConnections = $this->getGoogleSheetConnections();
         
-        return view($viewName, compact('categories', 'theme', 'upsellProducts'));
+        return view($viewName, compact('categories', 'theme', 'upsellProducts', 'googleSheetConnections'));
     }
     
     public function productsStore(Request $request)
@@ -419,10 +449,12 @@ class CustomerDashboardController extends Controller
             'default_language' => 'nullable|string|max:10',
             'upsell_product_ids' => 'nullable|array',
             'upsell_product_ids.*' => 'exists:upsell_products,id',
+            'google_sheet_connection_id' => $this->googleSheetConnectionRule(),
         ]);
 
         $validated['user_id'] = auth()->id();
         $validated['store_id'] = $this->getActiveStoreId();
+        $validated['google_sheet_connection_id'] = $request->input('google_sheet_connection_id') ?: null;
         $validated['theme'] = $validated['theme'] ?? 'theme2';
         $validated['theme_data'] = $request->input('theme_data');
         // Generate a clean slug
@@ -628,7 +660,17 @@ class CustomerDashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('customer.products-edit', compact('product', 'categories', 'upsellProducts'));
+        $googleSheetConnections = $this->getGoogleSheetConnections();
+        if ($product->google_sheet_connection_id
+            && ! $googleSheetConnections->contains('id', $product->google_sheet_connection_id)) {
+            $current = GoogleSheetConnection::where('user_id', auth()->id())
+                ->find($product->google_sheet_connection_id);
+            if ($current) {
+                $googleSheetConnections = $googleSheetConnections->push($current);
+            }
+        }
+
+        return view('customer.products-edit', compact('product', 'categories', 'upsellProducts', 'googleSheetConnections'));
     }
     
     public function productsUpdate(Request $request, $id)
@@ -717,7 +759,10 @@ class CustomerDashboardController extends Controller
             'landing_page_languages.*' => 'string|max:10',
             'upsell_product_ids' => 'nullable|array',
             'upsell_product_ids.*' => 'exists:upsell_products,id',
+            'google_sheet_connection_id' => $this->googleSheetConnectionRule(),
         ]);
+
+        $validated['google_sheet_connection_id'] = $request->input('google_sheet_connection_id') ?: null;
         
         // Handle theme_data - merge with existing data to avoid overwriting other fields
         if ($request->has('theme_data')) {

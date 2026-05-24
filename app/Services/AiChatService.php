@@ -607,6 +607,7 @@ PROMPT;
             
             // Dispatch the job to push to external API if configured
             \App\Jobs\PushOrderToExternalApi::dispatch($lead);
+            \App\Jobs\PushLeadToGoogleSheet::dispatch($lead);
             
             return true;
             

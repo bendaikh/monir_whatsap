@@ -10,6 +10,7 @@ class Product extends Model
     protected $fillable = [
         'user_id',
         'store_id',
+        'google_sheet_connection_id',
         'theme',
         'theme_data',
         'category_id',
@@ -179,6 +180,11 @@ class Product extends Model
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function googleSheetConnection()
+    {
+        return $this->belongsTo(GoogleSheetConnection::class);
     }
 
     /**

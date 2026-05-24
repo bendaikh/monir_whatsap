@@ -71,7 +71,7 @@
                 @endif
 
                 <!-- Navigation -->
-                <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto" x-data="{ socialMediaOpen: {{ request()->routeIs('app.facebook-ads') || request()->routeIs('app.tiktok-ads') || request()->routeIs('app.ad-campaigns*') || request()->routeIs('app.campaign-creator*') ? 'true' : 'false' }}, aiApiOpen: {{ request()->routeIs('workspaces.ai-settings') ? 'true' : 'false' }}, productsOpen: {{ request()->routeIs('app.products*') || request()->routeIs('app.categories*') || request()->routeIs('app.landing-builder*') ? 'true' : 'false' }} }">
+                <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto" x-data="{ socialMediaOpen: {{ request()->routeIs('app.facebook-ads') || request()->routeIs('app.tiktok-ads') || request()->routeIs('app.ad-campaigns*') || request()->routeIs('app.campaign-creator*') ? 'true' : 'false' }}, aiApiOpen: {{ request()->routeIs('workspaces.ai-settings') ? 'true' : 'false' }}, productsOpen: {{ request()->routeIs('app.products*') || request()->routeIs('app.categories*') || request()->routeIs('app.landing-builder*') ? 'true' : 'false' }}, connectsOpen: {{ request()->routeIs('app.external-api-settings') || request()->routeIs('app.google-sheet-connect*') ? 'true' : 'false' }} }">
                 
                 @if(request()->routeIs('workspaces.*'))
                     <!-- Workspace Management Navigation -->
@@ -275,13 +275,35 @@
                         </div>
                     </div>
                     
-                    <a href="{{ route('app.external-api-settings') }}" class="{{ request()->routeIs('app.external-api-settings') ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-400 hover:bg-white/5' }} flex items-center gap-3 px-3 py-2.5 rounded-lg transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                        <span class="text-sm font-medium">System Connect</span>
-                    </a>
+                    <!-- Connects Section -->
+                    <div>
+                        <button @click="connectsOpen = !connectsOpen" class="w-full {{ request()->routeIs('app.external-api-settings') || request()->routeIs('app.google-sheet-connect*') ? 'text-emerald-400' : 'text-gray-400' }} hover:bg-white/5 flex items-center justify-between px-3 py-2.5 rounded-lg transition">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                                </svg>
+                                <span class="text-sm font-medium">Connects</span>
+                            </div>
+                            <svg :class="{'rotate-180': connectsOpen}" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div x-show="connectsOpen" x-collapse class="ml-8 mt-1 space-y-1">
+                            <a href="{{ route('app.external-api-settings') }}" class="{{ request()->routeIs('app.external-api-settings') ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-400' }} hover:bg-white/5 flex items-center gap-3 px-3 py-2 rounded-lg transition text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                <span>System Connect</span>
+                            </a>
+                            <a href="{{ route('app.google-sheet-connect') }}" class="{{ request()->routeIs('app.google-sheet-connect*') ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-400' }} hover:bg-white/5 flex items-center gap-3 px-3 py-2 rounded-lg transition text-sm">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M19.35 10.04A7.49 7.49 0 0012 4C7.58 4 4.01 7.58 4.01 12s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.65 6.04z"/>
+                                </svg>
+                                <span>Google Sheet Connect</span>
+                            </a>
+                        </div>
+                    </div>
                 @endif
                 </nav>
 

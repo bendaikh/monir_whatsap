@@ -153,10 +153,17 @@ Route::middleware(['auth', 'require.workspace', 'require.store'])->prefix('app')
     Route::post('/campaign-creator/create', [\App\Http\Controllers\CampaignCreatorController::class, 'createCampaign'])->name('campaign-creator.create');
     Route::post('/campaign-creator/facebook/pages', [\App\Http\Controllers\CampaignCreatorController::class, 'getFacebookPages'])->name('campaign-creator.facebook.pages');
     
-    // External API Integration
+    // Connects - External API (System Connect)
     Route::get('/external-api-settings', [CustomerDashboardController::class, 'externalApiSettings'])->name('external-api-settings');
     Route::post('/external-api-settings', [CustomerDashboardController::class, 'saveExternalApiSettings'])->name('external-api-settings.save');
     Route::post('/external-api-settings/test', [CustomerDashboardController::class, 'testExternalApiConnection'])->name('external-api-settings.test');
+
+    // Connects - Google Sheet Connect
+    Route::get('/google-sheet-connect', [\App\Http\Controllers\GoogleSheetConnectController::class, 'index'])->name('google-sheet-connect');
+    Route::post('/google-sheet-connect', [\App\Http\Controllers\GoogleSheetConnectController::class, 'store'])->name('google-sheet-connect.store');
+    Route::put('/google-sheet-connect/{connection}', [\App\Http\Controllers\GoogleSheetConnectController::class, 'update'])->name('google-sheet-connect.update');
+    Route::delete('/google-sheet-connect/{connection}', [\App\Http\Controllers\GoogleSheetConnectController::class, 'destroy'])->name('google-sheet-connect.destroy');
+    Route::post('/google-sheet-connect/{connection}/test', [\App\Http\Controllers\GoogleSheetConnectController::class, 'test'])->name('google-sheet-connect.test');
     
     // Pixel Connect
     Route::get('/pixel-connect', [\App\Http\Controllers\PixelConnectController::class, 'index'])->name('pixel-connect');
