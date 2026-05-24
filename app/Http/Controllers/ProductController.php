@@ -153,7 +153,7 @@ class ProductController extends Controller
         ]);
 
         \App\Jobs\PushOrderToExternalApi::dispatch($lead);
-        \App\Jobs\PushLeadToGoogleSheet::dispatch($lead);
+        \App\Jobs\PushLeadToGoogleSheet::dispatchSync($lead);
 
         $request->session()->put('thank_you_lead_id', $lead->id);
 

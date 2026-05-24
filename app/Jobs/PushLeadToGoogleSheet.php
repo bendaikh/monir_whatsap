@@ -4,11 +4,10 @@ namespace App\Jobs;
 
 use App\Models\ProductLead;
 use App\Services\GoogleSheetsService;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 
-class PushLeadToGoogleSheet implements ShouldQueue
+class PushLeadToGoogleSheet
 {
     use Queueable;
 
@@ -27,6 +26,20 @@ class PushLeadToGoogleSheet implements ShouldQueue
         $connection = $lead->product->googleSheetConnection;
 
         if (! $connection) {
+            Log::info('Google Sheets export skipped: no sheet assigned to product', [
+                'lead_id' => $lead->id,
+                'product_id' => $lead->product_id,
+            ]);
+
+            return;
+        }
+
+        if (! $sheetsService->isConfigured()) {
+            Log::error('Google Sheets export failed: credentials not configured in .env', [
+                'lead_id' => $lead->id,
+                'connection_id' => $connection->id,
+            ]);
+
             return;
         }
 
