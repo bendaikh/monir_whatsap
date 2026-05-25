@@ -71,7 +71,7 @@ class LeadsExportService
             $lead->name ?? '',
             $lead->phone ?? '',
             $lead->address ?? '',
-            $price !== '' ? number_format((float) $price, 2, '.', '') : '',
+            $this->formatPrice($price),
             $lead->city ?? '',
             $lead->note ?? '',
             $lead->email ?? '',
@@ -91,10 +91,28 @@ class LeadsExportService
             $lead?->name ?? '',
             $lead?->phone ?? '',
             $lead?->address ?? '',
-            $price !== '' ? number_format((float) $price, 2, '.', '') : '',
+            $this->formatPrice($price),
             $lead?->city ?? '',
             'Upsell',
             $lead?->email ?? '',
         ];
+    }
+
+    /**
+     * Format monetary values for export: no decimals when .00, otherwise up to 2 decimals.
+     */
+    protected function formatPrice(mixed $price): string
+    {
+        if ($price === '' || $price === null) {
+            return '';
+        }
+
+        $value = round((float) $price, 2);
+
+        if ($value == floor($value)) {
+            return (string) (int) $value;
+        }
+
+        return number_format($value, 2, '.', '');
     }
 }
