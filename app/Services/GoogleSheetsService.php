@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\GoogleSheetConnection;
 use App\Models\ProductLead;
-use Firebase\JWT\JWT;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -117,7 +116,7 @@ class GoogleSheetsService
             'exp' => $now + 3600,
         ];
 
-        $jwt = JWT::encode($payload, $credentials['private_key'], 'RS256');
+        $jwt = $this->encodeJwt($payload, $credentials['private_key']);
 
         $response = Http::asForm()->post(self::TOKEN_URL, [
             'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
@@ -195,5 +194,28 @@ class GoogleSheetsService
         }
 
         return $name;
+    }
+
+    protected function encodeJwt(array $payload, string $privateKey): string
+    {
+        $header = $this->base64UrlEncode(json_encode(['alg' => 'RS256', 'typ' => 'JWT']));
+        $body = $this->base64UrlEncode(json_encode($payload));
+        $input = $header . '.' . $body;
+
+        $key = openssl_pkey_get_private($privateKey);
+        if ($key === false) {
+            throw new \RuntimeException('Invalid Google service account private key.');
+        }
+
+        if (! openssl_sign($input, $signature, $key, OPENSSL_ALGO_SHA256)) {
+            throw new \RuntimeException('Failed to sign JWT for Google API.');
+        }
+
+        return $input . '.' . $this->base64UrlEncode($signature);
+    }
+
+    protected function base64UrlEncode(string $data): string
+    {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
 }
