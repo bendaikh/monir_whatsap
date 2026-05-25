@@ -279,6 +279,10 @@ class ProductController extends Controller
             throw $e;
         }
 
+        if ($order->wasRecentlyCreated) {
+            \App\Jobs\PushUpsellToGoogleSheet::dispatchSync($order);
+        }
+
         return response()->json([
             'success' => true,
             'message' => $order->wasRecentlyCreated ? 'Order placed successfully' : 'Order already placed',

@@ -157,14 +157,14 @@
                     </li>
                     <li class="flex gap-3">
                         <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center justify-center">5</span>
-                        <span>Leads are exported automatically when customers submit forms</span>
+                        <span>Leads and upsell orders are exported automatically (one row each)</span>
                     </li>
                 </ol>
             </div>
             <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-6">
                 <h3 class="text-lg font-semibold text-white mb-4">Export columns</h3>
                 <p class="text-xs text-gray-400 mb-2">Same format as CSV export:</p>
-                <p class="text-xs text-gray-300">Horodateur, Nom, Address, Ville, Tel, Price, Produit Ref, qte, Note</p>
+                <p class="text-xs text-gray-300">Horodateur, Produit Ref, qte, Nom, Tel, Address, Price, Ville, Note, Adresse e-mail</p>
             </div>
         </div>
     </div>

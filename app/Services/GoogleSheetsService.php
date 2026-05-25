@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\GoogleSheetConnection;
 use App\Models\ProductLead;
+use App\Models\UpsellOrder;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -31,6 +32,31 @@ class GoogleSheetsService
 
     public function appendLead(ProductLead $lead, GoogleSheetConnection $connection): array
     {
+        $row = app(LeadsExportService::class)->rowForLead(
+            $lead->loadMissing(['product', 'selectedPromotion'])
+        );
+
+        return $this->appendRows([$row], $connection, [
+            'lead_id' => $lead->id,
+            'type' => 'lead',
+        ]);
+    }
+
+    public function appendUpsellOrder(UpsellOrder $order, GoogleSheetConnection $connection): array
+    {
+        $row = app(LeadsExportService::class)->rowForUpsellOrder(
+            $order->loadMissing(['lead', 'upsellProduct'])
+        );
+
+        return $this->appendRows([$row], $connection, [
+            'lead_id' => $order->lead_id,
+            'upsell_order_id' => $order->id,
+            'type' => 'upsell',
+        ]);
+    }
+
+    protected function appendRows(array $rows, GoogleSheetConnection $connection, array $logContext = []): array
+    {
         if (! $this->isConfigured()) {
             return ['success' => false, 'message' => 'Google Sheets credentials are not configured.'];
         }
@@ -41,37 +67,41 @@ class GoogleSheetsService
 
         try {
             $token = $this->getAccessToken();
-            $row = app(LeadsExportService::class)->rowForLead($lead->loadMissing(['product', 'selectedPromotion']));
-            $range = $this->escapeSheetName($connection->sheet_name) . '!A:I';
+            $range = $this->escapeSheetName($connection->sheet_name) . '!A:J';
 
             $url = self::SHEETS_API . '/' . $connection->spreadsheet_id . '/values/' . rawurlencode($range) . ':append';
             $url .= '?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS';
 
             $response = Http::withToken($token)
                 ->post($url, [
-                    'values' => [$row],
+                    'values' => $rows,
                 ]);
 
             if ($response->successful()) {
-                return ['success' => true, 'message' => 'Lead exported to Google Sheet.'];
+                return ['success' => true, 'message' => 'Exported to Google Sheet.'];
             }
 
             $error = $response->json('error.message') ?? $response->body();
 
-            Log::error('Google Sheets append failed', [
+            if ($response->status() === 403) {
+                $email = $this->getServiceAccountEmail();
+                $error = 'The caller does not have permission. Share the spreadsheet with '
+                    . ($email ?? 'your service account email')
+                    . ' as Editor (not Viewer), then try again.';
+            }
+
+            Log::error('Google Sheets append failed', array_merge($logContext, [
                 'connection_id' => $connection->id,
-                'lead_id' => $lead->id,
                 'status' => $response->status(),
                 'error' => $error,
-            ]);
+            ]));
 
             return ['success' => false, 'message' => 'Google Sheets API error: ' . $error];
         } catch (\Throwable $e) {
-            Log::error('Google Sheets exception', [
+            Log::error('Google Sheets exception', array_merge($logContext, [
                 'connection_id' => $connection->id,
-                'lead_id' => $lead->id,
                 'error' => $e->getMessage(),
-            ]);
+            ]));
 
             return ['success' => false, 'message' => $e->getMessage()];
         }
@@ -85,7 +115,7 @@ class GoogleSheetsService
 
         try {
             $token = $this->getAccessToken();
-            $range = $this->escapeSheetName($connection->sheet_name) . '!A1:I1';
+            $range = $this->escapeSheetName($connection->sheet_name) . '!A1:J1';
 
             $url = self::SHEETS_API . '/' . $connection->spreadsheet_id . '/values/' . rawurlencode($range);
 

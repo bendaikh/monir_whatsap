@@ -3,15 +3,31 @@
 namespace App\Services;
 
 use App\Models\ProductLead;
+use App\Models\UpsellOrder;
 use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LeadsExportService
 {
     /**
-     * Export leads as CSV matching the standard template:
-     * Horodateur, Nom, Address, Ville, Tel, Price, Produit Ref, qte, Note
+     * Column order for Google Sheets and CSV export (A–J).
      */
+    public function columnHeaders(): array
+    {
+        return [
+            'Horodateur',
+            'Produit Ref',
+            'qte',
+            'Nom',
+            'Tel',
+            'Address',
+            'Price',
+            'Ville',
+            'Note',
+            'Adresse e-mail',
+        ];
+    }
+
     public function exportCsv(Collection $leads): StreamedResponse
     {
         $filename = 'leads_export_' . now()->format('Y-m-d_His') . '.csv';
@@ -22,20 +38,15 @@ class LeadsExportService
             // UTF-8 BOM for Excel compatibility
             fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
-            fputcsv($handle, [
-                'Horodateur',
-                'Nom',
-                'Address',
-                'Ville',
-                'Tel',
-                'Price',
-                'Produit Ref',
-                'qte',
-                'Note',
-            ]);
+            fputcsv($handle, $this->columnHeaders());
+
+            $leads->loadMissing(['product', 'selectedPromotion', 'upsellOrders.upsellProduct']);
 
             foreach ($leads as $lead) {
                 fputcsv($handle, $this->rowForLead($lead));
+                foreach ($lead->upsellOrders as $upsellOrder) {
+                    fputcsv($handle, $this->rowForUpsellOrder($upsellOrder));
+                }
             }
 
             fclose($handle);
@@ -51,18 +62,39 @@ class LeadsExportService
 
         $price = $promotion?->price ?? $product?->price ?? '';
         $quantity = $promotion?->min_quantity ?? 1;
-        $productRef = $product?->sku ?? '';
+        $productRef = $product?->sku ?: ($product?->name ?? '');
 
         return [
             $lead->created_at->format('d/m/Y H:i:s'),
-            $lead->name ?? '',
-            $lead->address ?? '',
-            $lead->city ?? '',
-            $lead->phone ?? '',
-            $price !== '' ? (string) $price : '',
             $productRef,
             (string) $quantity,
+            $lead->name ?? '',
+            $lead->phone ?? '',
+            $lead->address ?? '',
+            $price !== '' ? number_format((float) $price, 2, '.', '') : '',
+            $lead->city ?? '',
             $lead->note ?? '',
+            $lead->email ?? '',
+        ];
+    }
+
+    public function rowForUpsellOrder(UpsellOrder $order): array
+    {
+        $lead = $order->lead;
+        $upsell = $order->upsellProduct;
+        $price = $upsell?->price ?? '';
+
+        return [
+            $order->created_at->format('d/m/Y H:i:s'),
+            $upsell?->title ?? '',
+            '1',
+            $lead?->name ?? '',
+            $lead?->phone ?? '',
+            $lead?->address ?? '',
+            $price !== '' ? number_format((float) $price, 2, '.', '') : '',
+            $lead?->city ?? '',
+            'Upsell',
+            $lead?->email ?? '',
         ];
     }
 }
