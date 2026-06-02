@@ -13,7 +13,7 @@
                 </h1>
                 <p class="text-gray-600 mt-1">Create and publish ad campaigns with AI assistance</p>
             </div>
-            <a href="{{ route('app.ad-campaigns') }}" class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition inline-flex items-center gap-2">
+            <a href="{{ route('app.ad-campaigns') }}" onclick="window.showCampaignDashboardLoader()" class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition inline-flex items-center gap-2">
                 <span class="material-icons text-sm">arrow_back</span>
                 Back to Campaigns
             </a>
@@ -371,7 +371,7 @@
 
         <!-- Submit Button -->
         <div class="flex justify-end gap-4">
-            <a href="{{ route('app.ad-campaigns') }}" class="px-8 py-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition">
+            <a href="{{ route('app.ad-campaigns') }}" onclick="window.showCampaignDashboardLoader()" class="px-8 py-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition">
                 Cancel
             </a>
             <button type="submit" class="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-bold transition inline-flex items-center gap-2">

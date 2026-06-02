@@ -5,13 +5,19 @@ namespace App\Http\Controllers;
 use App\Models\FacebookAdAccount;
 use App\Models\TikTokAdAccount;
 use App\Models\Campaign;
+use App\Services\CampaignDashboardService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdCampaignsController extends Controller
 {
+    public function __construct(
+        private CampaignDashboardService $dashboardService
+    ) {}
+
     public function index(Request $request)
     {
         $user = auth()->user();
@@ -135,26 +141,35 @@ class AdCampaignsController extends Controller
             return $campaign['is_local'] ?? false ? 1 : 0;
         })->sortByDesc('spend');
         
-        // Calculate totals (excluding local pending campaigns)
-        $totalSpend = $campaigns->filter(fn($c) => !($c['is_local'] ?? false))->sum('spend');
-        $totalImpressions = $campaigns->filter(fn($c) => !($c['is_local'] ?? false))->sum('impressions');
-        $totalClicks = $campaigns->filter(fn($c) => !($c['is_local'] ?? false))->sum('clicks');
-        $totalConversions = $campaigns->filter(fn($c) => !($c['is_local'] ?? false))->sum('conversions');
-        
-        // Manual pagination
-        $page = $request->get('page', 1);
-        $campaignsCollection = $campaigns->values();
-        $total = $campaignsCollection->count();
-        $campaigns = $campaignsCollection->forPage($page, $perPage);
-        
-        $paginator = new \Illuminate\Pagination\LengthAwarePaginator(
+        $activeCampaigns = $campaigns->filter(fn ($c) => ! ($c['is_local'] ?? false));
+
+        $dashboard = $this->dashboardService->buildDashboard(
             $campaigns,
+            $dateFrom,
+            $dateTo,
+            $facebookAccounts,
+            $tiktokAccounts
+        );
+
+        $totalSpend = $activeCampaigns->sum('spend');
+        $totalImpressions = $activeCampaigns->sum('impressions');
+        $totalClicks = $activeCampaigns->sum('clicks');
+        $totalConversions = $activeCampaigns->sum('conversions');
+
+        // Manual pagination on enriched campaigns
+        $page = $request->get('page', 1);
+        $campaignsCollection = $dashboard['enrichedCampaigns'];
+        $total = $campaignsCollection->count();
+        $paginatedCampaigns = $campaignsCollection->forPage($page, $perPage);
+
+        $paginator = new \Illuminate\Pagination\LengthAwarePaginator(
+            $paginatedCampaigns,
             $total,
             $perPage,
             $page,
             ['path' => $request->url(), 'query' => $request->query()]
         );
-        
+
         return view('customer.ad-campaigns', compact(
             'paginator',
             'facebookAccounts',
@@ -169,8 +184,127 @@ class AdCampaignsController extends Controller
             'totalImpressions',
             'totalClicks',
             'totalConversions',
-            'errors'
+            'errors',
+            'dashboard'
         ));
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $user = auth()->user();
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+
+        $campaigns = $this->collectAllCampaigns($user, $request);
+        $dashboard = $this->dashboardService->buildDashboard(
+            $campaigns,
+            $dateFrom,
+            $dateTo,
+            FacebookAdAccount::where('user_id', $user->id)->get(),
+            TikTokAdAccount::where('user_id', $user->id)->get()
+        );
+
+        $filename = 'campaign-performance-'.now()->format('Y-m-d').'.csv';
+
+        return response()->streamDownload(function () use ($dashboard) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, [
+                'Campaign', 'Platform', 'Status', 'Spend', 'Leads', 'Purchases',
+                'Revenue', 'CPL', 'CPP', 'ROAS', 'CTR', 'Impressions', 'Clicks', 'Last Updated',
+            ]);
+
+            foreach ($dashboard['enrichedCampaigns'] as $campaign) {
+                fputcsv($handle, [
+                    $campaign['name'],
+                    $campaign['platform'],
+                    $campaign['status'],
+                    $campaign['spend'],
+                    $campaign['leads'],
+                    $campaign['purchases'],
+                    $campaign['revenue'],
+                    $campaign['cpl'],
+                    $campaign['cpp'],
+                    $campaign['roas'],
+                    $campaign['ctr'],
+                    $campaign['impressions'],
+                    $campaign['clicks'],
+                    $campaign['last_updated'],
+                ]);
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv',
+        ]);
+    }
+
+    private function collectAllCampaigns($user, Request $request): \Illuminate\Support\Collection
+    {
+        $platform = $request->get('platform', 'all');
+        $status = $request->get('status', 'all');
+        $accountId = $request->get('account_id', 'all');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+
+        $campaigns = collect();
+        $facebookAccounts = FacebookAdAccount::where('user_id', $user->id)->get();
+        $tiktokAccounts = TikTokAdAccount::where('user_id', $user->id)->get();
+
+        $localCampaigns = Campaign::where('user_id', $user->id)
+            ->when($dateFrom, fn ($q) => $q->whereDate('created_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($q) => $q->whereDate('created_at', '<=', $dateTo))
+            ->get()
+            ->map(fn ($c) => [
+                'id' => 'local_'.$c->id,
+                'name' => $c->name,
+                'platform' => collect($c->platforms)->map(fn ($p) => ucfirst($p))->join(', '),
+                'status' => ucfirst($c->status),
+                'spend' => 0, 'impressions' => 0, 'clicks' => 0, 'conversions' => 0,
+                'ctr' => 0, 'cpc' => 0, 'cpm' => 0, 'is_local' => true,
+                'created_at' => $c->created_at,
+            ]);
+
+        $campaigns = $campaigns->merge($localCampaigns);
+
+        if (in_array($platform, ['all', 'facebook'])) {
+            foreach ($facebookAccounts as $account) {
+                if ($accountId === 'all' || $accountId == 'fb_'.$account->id) {
+                    try {
+                        $campaigns = $campaigns->merge($this->getFacebookCampaigns($account, $dateFrom, $dateTo));
+                    } catch (\Exception $e) {
+                        continue;
+                    }
+                }
+            }
+        }
+
+        if (in_array($platform, ['all', 'tiktok'])) {
+            foreach ($tiktokAccounts as $account) {
+                if ($accountId === 'all' || $accountId == 'tt_'.$account->id) {
+                    try {
+                        $campaigns = $campaigns->merge($this->getTikTokCampaigns($account, $dateFrom, $dateTo));
+                    } catch (\Exception $e) {
+                        continue;
+                    }
+                }
+            }
+        }
+
+        if ($status !== 'all') {
+            $campaigns = $campaigns->filter(function ($campaign) use ($status) {
+                $campaignStatus = strtolower($campaign['status']);
+                if ($status === 'active') {
+                    return in_array($campaignStatus, ['active', 'processing', 'completed']);
+                }
+                if ($status === 'paused') {
+                    return in_array($campaignStatus, ['paused', 'pending']);
+                }
+
+                return $campaignStatus === $status;
+            });
+        }
+
+        return $campaigns;
     }
     
     private function getFacebookCampaigns(FacebookAdAccount $account, $dateFrom = null, $dateTo = null)
@@ -243,6 +377,11 @@ class AdCampaignsController extends Controller
                         'spend' => $insights['spend'] ?? 0,
                         'impressions' => $insights['impressions'] ?? 0,
                         'clicks' => $insights['clicks'] ?? 0,
+                        'link_clicks' => $insights['link_clicks'] ?? 0,
+                        'leads' => $insights['leads'] ?? 0,
+                        'purchases' => $insights['purchases'] ?? 0,
+                        'revenue' => $insights['revenue'] ?? 0,
+                        'frequency' => $insights['frequency'] ?? 0,
                         'conversions' => $insights['conversions'] ?? 0,
                         'ctr' => $insights['ctr'] ?? 0,
                         'cpc' => $insights['cpc'] ?? 0,
@@ -262,61 +401,27 @@ class AdCampaignsController extends Controller
     private function getFacebookCampaignInsights($campaignId, $accessToken, $dateFrom = null, $dateTo = null)
     {
         try {
-            $params = [
-                'access_token' => $accessToken,
-                'fields' => 'spend,impressions,clicks,actions,ctr,cpc,cpm',
-            ];
-            
-            // If date range is provided, use it; otherwise use last 30 days
-            if ($dateFrom && $dateTo) {
-                $params['time_range'] = json_encode([
-                    'since' => $dateFrom,
-                    'until' => $dateTo
+            $insights = $this->dashboardService->fetchFacebookInsights($campaignId, $accessToken, $dateFrom, $dateTo);
+
+            if (empty($insights)) {
+                $errorResponse = Http::get("https://graph.facebook.com/v18.0/{$campaignId}/insights", [
+                    'access_token' => $accessToken,
+                    'fields' => 'spend',
                 ]);
-            } else {
-                $params['date_preset'] = 'last_30d';
-            }
-            
-            $response = Http::get("https://graph.facebook.com/v18.0/{$campaignId}/insights", $params);
-            
-            if (!$response->successful()) {
-                $errorData = $response->json();
-                $errorCode = $errorData['error']['code'] ?? 0;
-                
-                // If token is expired, throw exception to be caught by parent method
+                $errorCode = data_get($errorResponse->json(), 'error.code', 0);
                 if ($errorCode == 190) {
-                    throw new \Exception("Token expired while fetching insights");
+                    throw new \Exception('Token expired while fetching insights');
                 }
-                
+
                 return [];
             }
-            
-            if (empty($response->json()['data'])) {
-                return [];
-            }
-            
-            $data = $response->json()['data'][0];
-            
-            // Extract conversions from actions
-            $conversions = 0;
-            if (isset($data['actions'])) {
-                foreach ($data['actions'] as $action) {
-                    if (in_array($action['action_type'], ['purchase', 'lead', 'complete_registration'])) {
-                        $conversions += (int)$action['value'];
-                    }
-                }
-            }
-            
-            return [
-                'spend' => (float)($data['spend'] ?? 0),
-                'impressions' => (int)($data['impressions'] ?? 0),
-                'clicks' => (int)($data['clicks'] ?? 0),
-                'conversions' => $conversions,
-                'ctr' => (float)($data['ctr'] ?? 0),
-                'cpc' => (float)($data['cpc'] ?? 0),
-                'cpm' => (float)($data['cpm'] ?? 0),
-            ];
+
+            return $insights;
         } catch (\Exception $e) {
+            if (str_contains($e->getMessage(), 'Token expired')) {
+                throw $e;
+            }
+
             return [];
         }
     }

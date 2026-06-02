@@ -8,8 +8,65 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        #campaign-dashboard-loader { transition: opacity 0.35s ease; }
+        #campaign-dashboard-loader.is-hiding { opacity: 0; pointer-events: none; }
+        @keyframes cdl-spin { to { transform: rotate(360deg); } }
+        @keyframes cdl-pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+        @keyframes cdl-msg { 0%, 24% { opacity: 1; } 25%, 100% { opacity: 0; } }
+        .cdl-spinner { animation: cdl-spin 0.9s linear infinite; }
+        .cdl-msg-1 { animation: cdl-msg 8s infinite 0s; }
+        .cdl-msg-2 { animation: cdl-msg 8s infinite 2s; }
+        .cdl-msg-3 { animation: cdl-msg 8s infinite 4s; }
+        .cdl-msg-4 { animation: cdl-msg 8s infinite 6s; }
+    </style>
 </head>
 <body class="bg-[#0a1628] text-white antialiased">
+
+    {{-- Campaign Dashboard loading overlay --}}
+    <div id="campaign-dashboard-loader"
+         class="fixed inset-0 z-[9999] hidden items-center justify-center bg-[#0a1628]/95 backdrop-blur-sm"
+         role="status" aria-live="polite" aria-label="Loading campaign dashboard">
+        <div class="text-center px-6 max-w-sm">
+            <div class="relative mx-auto mb-6 w-20 h-20">
+                <div class="absolute inset-0 rounded-full border-2 border-emerald-500/20"></div>
+                <div class="absolute inset-0 rounded-full border-2 border-transparent border-t-emerald-400 cdl-spinner"></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <span class="material-icons text-3xl text-emerald-400" style="animation: cdl-pulse 2s ease-in-out infinite">campaign</span>
+                </div>
+            </div>
+            <h2 class="text-xl font-bold text-white mb-2">Loading Campaign Dashboard</h2>
+            <p class="text-sm text-gray-400 mb-4">Fetching your ad performance data — this may take a moment.</p>
+            <div class="relative h-5 text-xs text-emerald-400/80 font-medium">
+                <span class="cdl-msg-1 absolute inset-x-0">Connecting to Facebook Ads...</span>
+                <span class="cdl-msg-2 absolute inset-x-0">Connecting to TikTok Ads...</span>
+                <span class="cdl-msg-3 absolute inset-x-0">Calculating KPIs & metrics...</span>
+                <span class="cdl-msg-4 absolute inset-x-0">Building charts & insights...</span>
+            </div>
+        </div>
+    </div>
+    <script>
+        window.showCampaignDashboardLoader = function () {
+            sessionStorage.setItem('campaignDashboardLoading', '1');
+            var el = document.getElementById('campaign-dashboard-loader');
+            if (el) { el.classList.remove('is-hiding'); el.style.display = 'flex'; }
+        };
+        window.hideCampaignDashboardLoader = function () {
+            sessionStorage.removeItem('campaignDashboardLoading');
+            var el = document.getElementById('campaign-dashboard-loader');
+            if (!el) return;
+            el.classList.add('is-hiding');
+            setTimeout(function () { el.style.display = 'none'; el.classList.remove('is-hiding'); }, 350);
+        };
+        (function () {
+            var isCampaignPage = /\/app\/ad-campaigns(\?|$|\/)/.test(window.location.pathname + window.location.search)
+                || window.location.pathname.endsWith('/ad-campaigns');
+            if (sessionStorage.getItem('campaignDashboardLoading') === '1' || isCampaignPage) {
+                window.showCampaignDashboardLoader();
+            }
+        })();
+    </script>
+
     <div class="flex h-screen overflow-hidden">
         <!-- Sidebar -->
         <aside class="w-64 bg-[#0f1c2e] border-r border-white/10 flex-shrink-0">
@@ -252,7 +309,9 @@
                             </svg>
                         </button>
                         <div x-show="socialMediaOpen" x-collapse class="ml-8 mt-1 space-y-1">
-                            <a href="{{ route('app.ad-campaigns') }}" class="{{ request()->routeIs('app.ad-campaigns') ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-400' }} hover:bg-white/5 flex items-center gap-3 px-3 py-2 rounded-lg transition text-sm">
+                            <a href="{{ route('app.ad-campaigns') }}"
+                               onclick="window.showCampaignDashboardLoader()"
+                               class="{{ request()->routeIs('app.ad-campaigns') ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-400' }} hover:bg-white/5 flex items-center gap-3 px-3 py-2 rounded-lg transition text-sm">
                                 <span class="material-icons text-sm">campaign</span>
                                 <span>Campaigns Dashboard</span>
                             </a>
@@ -397,5 +456,13 @@
         </div>
     </div>
     @stack('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var isCampaignPage = window.location.pathname.indexOf('/ad-campaigns') !== -1;
+            if (!isCampaignPage && typeof window.hideCampaignDashboardLoader === 'function') {
+                window.hideCampaignDashboardLoader();
+            }
+        });
+    </script>
 </body>
 </html>

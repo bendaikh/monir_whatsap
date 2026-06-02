@@ -144,6 +144,7 @@ Route::middleware(['auth', 'require.workspace', 'require.store'])->prefix('app')
     
     // Ad Campaigns Dashboard
     Route::get('/ad-campaigns', [\App\Http\Controllers\AdCampaignsController::class, 'index'])->name('ad-campaigns');
+    Route::get('/ad-campaigns/export', [\App\Http\Controllers\AdCampaignsController::class, 'export'])->name('ad-campaigns.export');
     Route::post('/ad-campaigns/refresh', [\App\Http\Controllers\AdCampaignsController::class, 'refresh'])->name('ad-campaigns.refresh');
     Route::post('/ad-campaigns/analyze', [\App\Http\Controllers\AdCampaignsController::class, 'analyzeCampaigns'])->name('ad-campaigns.analyze');
     

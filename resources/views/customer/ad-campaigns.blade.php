@@ -1,615 +1,707 @@
 @extends('layouts.customer')
 
-@section('title', 'Ad Campaigns')
+@section('title', 'Campaign Dashboard')
+
+@php
+    $kpiIcons = [
+        'spend' => 'payments', 'leads' => 'groups', 'cpl' => 'price_change', 'purchases' => 'shopping_cart',
+        'cpp' => 'sell', 'impressions' => 'visibility', 'clicks' => 'ads_click', 'link_clicks' => 'link',
+        'ctr' => 'trending_up', 'cpc' => 'touch_app', 'cpm' => 'monetization_on', 'frequency' => 'repeat',
+        'conversion_rate' => 'percent', 'revenue' => 'account_balance_wallet', 'roas' => 'show_chart', 'net_profit' => 'savings',
+    ];
+    $formatKpi = function ($kpi) {
+        $v = $kpi['value'];
+        return match ($kpi['format']) {
+            'currency' => '$' . number_format($v, 2),
+            'percent' => number_format($v, 2) . '%',
+            'multiplier' => number_format($v, 2) . 'x',
+            'decimal' => number_format($v, 2),
+            default => number_format($v),
+        };
+    };
+@endphp
 
 @section('content')
-<div class="max-w-7xl mx-auto" 
-     x-data="campaignAnalysis()" 
-     x-init="init()">
-    <div class="mb-8">
-        <div class="flex items-center justify-between mb-4">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">Ad Campaigns</h1>
-                <p class="text-gray-600 mt-1">Monitor and manage your advertising campaigns</p>
-            </div>
-            <div class="flex gap-3">
-                <a href="{{ route('app.campaign-creator') }}" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-bold transition inline-flex items-center gap-2 shadow-lg">
-                    <span class="material-icons text-sm">auto_awesome</span>
-                    Create with AI
-                </a>
-                <form action="{{ route('app.ad-campaigns.refresh') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition inline-flex items-center gap-2">
-                        <span class="material-icons text-sm">refresh</span>
-                        Refresh Data
-                    </button>
-                </form>
-            </div>
+<div class="max-w-[1600px] mx-auto space-y-6"
+     x-data="campaignDashboard()"
+     x-init="initCharts()">
+
+    {{-- Header --}}
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl lg:text-3xl font-bold text-white">Campaign Dashboard</h1>
+            <p class="text-gray-400 mt-1 text-sm">Monitor performance, profitability, and optimization opportunities</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('app.campaign-creator') }}" class="px-4 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-lg text-sm font-semibold inline-flex items-center gap-2 transition">
+                <span class="material-icons text-base">auto_awesome</span> Create Campaign
+            </a>
+            <form action="{{ route('app.ad-campaigns.refresh') }}" method="POST" class="inline" onsubmit="window.showCampaignDashboardLoader()">
+                @csrf
+                <button type="submit" class="px-4 py-2.5 bg-white/10 hover:bg-white/15 text-white rounded-lg text-sm font-medium inline-flex items-center gap-2 transition border border-white/10">
+                    <span class="material-icons text-base">refresh</span> Refresh
+                </button>
+            </form>
+            <button @click="showAnalysisModal = true" class="px-4 py-2.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 rounded-lg text-sm font-medium inline-flex items-center gap-2 transition border border-emerald-500/30">
+                <span class="material-icons text-base">psychology</span> AI Analysis
+            </button>
         </div>
     </div>
 
+    {{-- Alerts --}}
     @if(session('success'))
-    <div class="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center gap-2">
-        <span class="material-icons">check_circle</span>
-        <span>{{ session('success') }}</span>
-    </div>
-    @endif
-    
-    @if($paginator->filter(fn($c) => in_array(strtolower($c['status']), ['pending', 'processing']))->isNotEmpty())
-    <div class="mb-6 bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg flex items-center gap-2">
-        <svg class="animate-spin h-5 w-5 text-blue-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <span>Campaigns are being generated. This page will auto-refresh every 10 seconds. You can continue creating more campaigns!</span>
+    <div class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-3 rounded-xl flex items-center gap-2 text-sm">
+        <span class="material-icons text-base">check_circle</span>{{ session('success') }}
     </div>
     @endif
 
-    @if(session('error'))
-    <div class="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center gap-2">
-        <span class="material-icons">error</span>
-        <span>{{ session('error') }}</span>
-    </div>
-    @endif
-
-    @if(!empty($errors) && count($errors) > 0)
-    <div class="mb-6 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
+    @if(!empty($errors))
+    <div class="bg-amber-500/10 border border-amber-500/30 text-amber-300 px-4 py-3 rounded-xl text-sm">
         <div class="flex items-start gap-2">
-            <span class="material-icons">warning</span>
-            <div class="flex-1">
-                <p class="font-semibold mb-2">Attention Required:</p>
-                <ul class="list-disc list-inside space-y-2 text-sm">
-                    @foreach($errors as $error)
-                    <li>
-                        {{ $error }}
-                        @if(str_contains($error, 'expired') || str_contains($error, 'invalid'))
-                            @if(str_contains($error, 'Facebook'))
-                            <a href="{{ route('app.facebook-ads') }}" class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium ml-2">
-                                <span>Reconnect Facebook</span>
-                                <span class="material-icons text-sm">arrow_forward</span>
-                            </a>
-                            @elseif(str_contains($error, 'TikTok'))
-                            <a href="{{ route('app.tiktok-ads') }}" class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium ml-2">
-                                <span>Reconnect TikTok</span>
-                                <span class="material-icons text-sm">arrow_forward</span>
-                            </a>
-                            @endif
-                        @endif
-                    </li>
-                    @endforeach
-                </ul>
-                <p class="text-xs mt-3 pt-2 border-t border-yellow-300">Check <code class="bg-yellow-100 px-2 py-1 rounded">storage/logs/laravel.log</code> for more details.</p>
-            </div>
+            <span class="material-icons text-base">warning</span>
+            <ul class="space-y-1">
+                @foreach($errors as $error)
+                <li>{{ $error }}</li>
+                @endforeach
+            </ul>
         </div>
     </div>
     @endif
 
-    <!-- Stats Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-gray-600">Total Spend</span>
-                <span class="material-icons text-green-600">payments</span>
+    {{-- Date Range & Filters --}}
+    <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-4">
+        <form method="GET" action="{{ route('app.ad-campaigns') }}" class="space-y-4" onsubmit="window.showCampaignDashboardLoader()">
+            <div class="flex flex-wrap gap-2 mb-3">
+                @foreach(['today' => 'Today', 'yesterday' => 'Yesterday', '7d' => 'Last 7 Days', '30d' => 'Last 30 Days'] as $preset => $label)
+                <button type="button" @click="applyPreset('{{ $preset }}'); window.showCampaignDashboardLoader()"
+                    class="px-3 py-1.5 text-xs font-medium rounded-lg border transition"
+                    :class="datePreset === '{{ $preset }}' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'">
+                    {{ $label }}
+                </button>
+                @endforeach
             </div>
-            <div class="text-3xl font-bold text-gray-900">${{ number_format($totalSpend, 2) }}</div>
-            <p class="text-xs text-gray-500 mt-1">Last 30 days</p>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-gray-600">Total Impressions</span>
-                <span class="material-icons text-blue-600">visibility</span>
-            </div>
-            <div class="text-3xl font-bold text-gray-900">{{ number_format($totalImpressions) }}</div>
-            <p class="text-xs text-gray-500 mt-1">Last 30 days</p>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-gray-600">Total Clicks</span>
-                <span class="material-icons text-purple-600">ads_click</span>
-            </div>
-            <div class="text-3xl font-bold text-gray-900">{{ number_format($totalClicks) }}</div>
-            <p class="text-xs text-gray-500 mt-1">Last 30 days</p>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-gray-600">Total Conversions</span>
-                <span class="material-icons text-orange-600">shopping_cart</span>
-            </div>
-            <div class="text-3xl font-bold text-gray-900">{{ number_format($totalConversions) }}</div>
-            <p class="text-xs text-gray-500 mt-1">Last 30 days</p>
-        </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <form method="GET" action="{{ route('app.ad-campaigns') }}" class="space-y-4">
-            <div class="flex flex-wrap gap-4 items-end">
-                <div class="flex-1 min-w-[200px]">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Platform</label>
-                    <select name="platform" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Platform</label>
+                    <select name="platform" class="w-full bg-[#0a1628] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:ring-emerald-500 focus:border-emerald-500">
                         <option value="all" {{ $platform === 'all' ? 'selected' : '' }}>All Platforms</option>
                         <option value="facebook" {{ $platform === 'facebook' ? 'selected' : '' }}>Facebook</option>
                         <option value="tiktok" {{ $platform === 'tiktok' ? 'selected' : '' }}>TikTok</option>
                     </select>
                 </div>
-
-                <div class="flex-1 min-w-[200px]">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                    <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Status</label>
+                    <select name="status" class="w-full bg-[#0a1628] border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
                         <option value="all" {{ $status === 'all' ? 'selected' : '' }}>All Statuses</option>
-                        <option value="generating" {{ $status === 'generating' ? 'selected' : '' }}>Generating</option>
                         <option value="active" {{ $status === 'active' ? 'selected' : '' }}>Active</option>
                         <option value="paused" {{ $status === 'paused' ? 'selected' : '' }}>Paused</option>
                     </select>
                 </div>
-
-                <div class="flex-1 min-w-[200px]">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Account</label>
-                    <select name="account_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
-                        <option value="all" {{ $accountId === 'all' ? 'selected' : '' }}>All Accounts</option>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Account</label>
+                    <select name="account_id" class="w-full bg-[#0a1628] border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
+                        <option value="all">All Accounts</option>
                         @foreach($facebookAccounts as $account)
-                            <option value="fb_{{ $account->id }}" {{ $accountId === 'fb_' . $account->id ? 'selected' : '' }}>
-                                Facebook - {{ $account->ad_account_name ?? $account->ad_account_id }}
-                            </option>
+                        <option value="fb_{{ $account->id }}" {{ $accountId === 'fb_'.$account->id ? 'selected' : '' }}>FB - {{ $account->ad_account_name ?? $account->ad_account_id }}</option>
                         @endforeach
                         @foreach($tiktokAccounts as $account)
-                            <option value="tt_{{ $account->id }}" {{ $accountId === 'tt_' . $account->id ? 'selected' : '' }}>
-                                TikTok - {{ $account->advertiser_name ?? $account->advertiser_id }}
-                            </option>
+                        <option value="tt_{{ $account->id }}" {{ $accountId === 'tt_'.$account->id ? 'selected' : '' }}>TT - {{ $account->advertiser_name ?? $account->advertiser_id }}</option>
                         @endforeach
                     </select>
                 </div>
-            </div>
-            
-            <div class="flex flex-wrap gap-4 items-end">
-                <div class="flex-1 min-w-[200px]">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Date From</label>
-                    <input type="date" name="date_from" value="{{ $dateFrom ?? '' }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Date From</label>
+                    <input type="date" name="date_from" x-ref="dateFrom" value="{{ $dateFrom ?? $dashboard['periodFrom'] }}" class="w-full bg-[#0a1628] border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
                 </div>
-
-                <div class="flex-1 min-w-[200px]">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Date To</label>
-                    <input type="date" name="date_to" value="{{ $dateTo ?? '' }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Date To</label>
+                    <input type="date" name="date_to" x-ref="dateTo" value="{{ $dateTo ?? $dashboard['periodTo'] }}" class="w-full bg-[#0a1628] border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
                 </div>
-                
-                <div class="flex-1 min-w-[200px]">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Per Page</label>
-                    <select name="per_page" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900">
-                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10</option>
-                        <option value="15" {{ $perPage == 15 ? 'selected' : '' }}>15</option>
-                        <option value="25" {{ $perPage == 25 ? 'selected' : '' }}>25</option>
-                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50</option>
-                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100</option>
-                    </select>
+                <div class="flex items-end gap-2">
+                    <button type="submit" class="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition">Apply</button>
+                    <a href="{{ route('app.ad-campaigns.export', request()->query()) }}" class="px-3 py-2 bg-white/10 hover:bg-white/15 text-gray-300 rounded-lg transition" title="Export to Excel">
+                        <span class="material-icons text-base">download</span>
+                    </a>
                 </div>
-
-                <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
-                    Apply Filters
-                </button>
-                
-                @if($platform !== 'all' || $status !== 'all' || $accountId !== 'all' || $dateFrom || $dateTo)
-                <a href="{{ route('app.ad-campaigns') }}" class="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition">
-                    Clear
-                </a>
-                @endif
-                
-                <button type="button" @click="showAnalysisModal = true" class="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-medium transition inline-flex items-center gap-2">
-                    <span class="material-icons text-sm">psychology</span>
-                    Analyze Campaigns
-                </button>
             </div>
         </form>
     </div>
 
-    <!-- Campaigns List -->
-    @if($paginator->isEmpty())
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-        <span class="material-icons text-gray-400 text-6xl mb-4">campaign</span>
-        <h3 class="text-xl font-semibold text-gray-900 mb-2">No Campaigns Found</h3>
-        <p class="text-gray-600 mb-6">
-            @if($facebookAccounts->isEmpty() && $tiktokAccounts->isEmpty())
-                Connect your ad accounts to see your campaigns here.
-            @else
-                Your connected accounts don't have any campaigns, or there was an error fetching them.
-            @endif
-        </p>
-        
-        @if($facebookAccounts->isEmpty() || $tiktokAccounts->isEmpty())
-        <div class="flex gap-4 justify-center mb-8">
-            @if($facebookAccounts->isEmpty())
-            <a href="{{ route('app.facebook-ads') }}" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
-                Connect Facebook Ads
-            </a>
-            @endif
-            @if($tiktokAccounts->isEmpty())
-            <a href="{{ route('app.tiktok-ads') }}" class="px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-lg font-medium transition">
-                Connect TikTok Ads
-            </a>
-            @endif
-        </div>
-        @endif
-        
-        @if($facebookAccounts->isNotEmpty() || $tiktokAccounts->isNotEmpty())
-        <div class="mt-8 p-6 bg-gray-50 rounded-lg text-left max-w-2xl mx-auto">
-            <h4 class="font-semibold text-gray-900 mb-4">Connected Accounts:</h4>
-            
-            @if($facebookAccounts->isNotEmpty())
-            <div class="mb-4">
-                <p class="text-sm font-medium text-gray-700 mb-2">Facebook Accounts ({{ $facebookAccounts->count() }}):</p>
-                <ul class="text-sm text-gray-600 space-y-1">
-                    @foreach($facebookAccounts as $account)
-                    <li>• {{ $account->ad_account_name ?? $account->ad_account_id }} (ID: {{ $account->ad_account_id }})</li>
-                    @endforeach
-                </ul>
+    {{-- KPI Cards --}}
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+        @foreach($dashboard['kpis'] as $kpi)
+        <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-3 hover:border-white/20 transition">
+            <div class="flex items-center justify-between mb-1">
+                <span class="text-[10px] uppercase tracking-wide text-gray-500 font-medium leading-tight">{{ $kpi['label'] }}</span>
+                <span class="material-icons text-sm text-gray-600">{{ $kpiIcons[$kpi['key']] ?? 'analytics' }}</span>
             </div>
-            @endif
-            
-            @if($tiktokAccounts->isNotEmpty())
-            <div>
-                <p class="text-sm font-medium text-gray-700 mb-2">TikTok Accounts ({{ $tiktokAccounts->count() }}):</p>
-                <ul class="text-sm text-gray-600 space-y-1">
-                    @foreach($tiktokAccounts as $account)
-                    <li>• {{ $account->advertiser_name ?? $account->advertiser_id }} (ID: {{ $account->advertiser_id }})</li>
-                    @endforeach
-                </ul>
-            </div>
-            @endif
-            
-            <div class="mt-4 pt-4 border-t border-gray-200">
-                <form action="{{ route('app.ad-campaigns.refresh') }}" method="POST" class="inline">
-                    @csrf
-                    <button type="submit" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                        Try refreshing the data →
-                    </button>
-                </form>
-            </div>
-        </div>
-        @endif
-    </div>
-    @else
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Campaign</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Budget</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Spend</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Impressions</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Clicks</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">CTR</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">CPC</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Conversions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    @foreach($paginator as $campaign)
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-6 py-4">
-                            <div class="flex items-start gap-3">
-                                <div class="mt-1">
-                                    @if($campaign['platform'] === 'Facebook')
-                                    <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                                    </svg>
-                                    @else
-                                    <svg class="w-5 h-5 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12.53.02C1.84-.117.02 1.79.02 11.82V23.8h11.96V.02h.55zm5.66 0c-.28 0-.53.02-.79.07v12.03H23.98v-.28c0-9.65-1.54-11.65-5.79-11.82zM12.53 23.98V24h11.45v-3.08H12.53v3.06z"/>
-                                    </svg>
-                                    @endif
-                                </div>
-                                <div class="min-w-0 flex-1">
-                                    <div class="text-sm font-semibold text-gray-900 truncate">{{ $campaign['name'] }}</div>
-                                    <div class="text-xs text-gray-500 mt-0.5">{{ $campaign['account_name'] }}</div>
-                                    <div class="text-xs text-gray-400 mt-0.5">{{ $campaign['objective'] }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            @php
-                                $statusLower = strtolower($campaign['status']);
-                            @endphp
-                            
-                            @if($statusLower === 'active')
-                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    {{ $campaign['status'] }}
-                                </span>
-                            @elseif($statusLower === 'paused')
-                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                    {{ $campaign['status'] }}
-                                </span>
-                            @elseif(in_array($statusLower, ['pending', 'processing']))
-                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 animate-pulse">
-                                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    {{ $statusLower === 'pending' ? 'Generating' : 'Creating' }}
-                                </span>
-                            @elseif($statusLower === 'completed')
-                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    <span class="material-icons text-xs mr-1">check_circle</span>
-                                    Completed
-                                </span>
-                            @elseif($statusLower === 'failed')
-                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                    <span class="material-icons text-xs mr-1">error</span>
-                                    Failed
-                                </span>
-                            @else
-                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                    {{ $campaign['status'] }}
-                                </span>
-                            @endif
-                            
-                            @if(!empty($campaign['error_message']))
-                                <div class="text-xs text-red-600 mt-1" title="{{ $campaign['error_message'] }}">
-                                    View error
-                                </div>
-                            @endif
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">
-                                @if($campaign['daily_budget'] > 0)
-                                    ${{ number_format($campaign['daily_budget'], 2) }}/day
-                                @elseif($campaign['lifetime_budget'] > 0)
-                                    ${{ number_format($campaign['lifetime_budget'], 2) }} lifetime
-                                @else
-                                    -
-                                @endif
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right">
-                            <div class="text-sm font-semibold text-gray-900">${{ number_format($campaign['spend'], 2) }}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right">
-                            <div class="text-sm text-gray-900">{{ number_format($campaign['impressions']) }}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right">
-                            <div class="text-sm text-gray-900">{{ number_format($campaign['clicks']) }}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right">
-                            <div class="text-sm text-gray-900">{{ number_format($campaign['ctr'], 2) }}%</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right">
-                            <div class="text-sm text-gray-900">${{ number_format($campaign['cpc'], 2) }}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right">
-                            <div class="text-sm font-semibold text-green-600">{{ number_format($campaign['conversions']) }}</div>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
-            <div class="flex items-center justify-between">
-                <div class="text-sm text-gray-600">
-                    Showing {{ $paginator->firstItem() ?? 0 }} to {{ $paginator->lastItem() ?? 0 }} of {{ $paginator->total() }} campaign(s) • Data cached for 5 minutes
-                    @if($dateFrom && $dateTo)
-                        • {{ $dateFrom }} to {{ $dateTo }}
-                    @else
-                        • Last 30 days
-                    @endif
-                </div>
-                
-                @if($paginator->hasPages())
-                <div class="flex gap-2">
-                    {{ $paginator->links() }}
-                </div>
+            <div class="text-lg font-bold text-white truncate">{{ $formatKpi($kpi) }}</div>
+            <div class="flex items-center gap-1 mt-1">
+                @if($kpi['change'] != 0)
+                <span class="material-icons text-xs {{ $kpi['positive'] ? 'text-emerald-400' : 'text-red-400' }}">{{ $kpi['change'] >= 0 ? 'arrow_upward' : 'arrow_downward' }}</span>
+                <span class="text-[10px] font-medium {{ $kpi['positive'] ? 'text-emerald-400' : 'text-red-400' }}">{{ $kpi['change'] >= 0 ? '+' : '' }}{{ $kpi['change'] }}%</span>
+                @else
+                <span class="text-[10px] text-gray-600">— vs prev period</span>
                 @endif
             </div>
         </div>
+        @endforeach
     </div>
-    @endif
-    
-    <!-- AI Analysis Modal -->
-    <div x-show="showAnalysisModal" 
-         x-cloak
-         class="fixed inset-0 z-50 overflow-y-auto" 
-         @keydown.escape.window="showAnalysisModal = false">
-        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <!-- Background overlay -->
-            <div x-show="showAnalysisModal" 
-                 x-transition:enter="ease-out duration-300"
-                 x-transition:enter-start="opacity-0"
-                 x-transition:enter-end="opacity-100"
-                 x-transition:leave="ease-in duration-200"
-                 x-transition:leave-start="opacity-100"
-                 x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" 
-                 @click="showAnalysisModal = false"></div>
 
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+    {{-- Main Grid: Tables + Sidebar --}}
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {{-- Left Column (2/3) --}}
+        <div class="xl:col-span-2 space-y-6">
 
-            <!-- Modal panel -->
-            <div x-show="showAnalysisModal" 
-                 x-transition:enter="ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                 x-transition:leave="ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
-                
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 sm:mx-0 sm:h-10 sm:w-10">
-                            <span class="material-icons text-purple-600">psychology</span>
-                        </div>
-                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-1">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900">
-                                AI Campaign Analysis
-                            </h3>
-                            <div class="mt-2">
-                                <p class="text-sm text-gray-500">
-                                    Our AI media buyer will analyze your campaigns and provide recommendations on scaling, optimization, and budget allocation.
-                                </p>
-                            </div>
-                            
-                            <!-- Analysis Result -->
-                            <div x-show="!isAnalyzing && analysisResult && !analysisError" class="mt-4 bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
-                                <div class="prose prose-sm max-w-none text-gray-800">
-                                    <div x-html="analysisResult"></div>
-                                </div>
-                            </div>
-                            
-                            <!-- Loading State -->
-                            <div x-show="isAnalyzing" class="mt-4 text-center py-8">
-                                <svg class="animate-spin h-8 w-8 text-purple-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <p class="text-sm text-gray-600 mt-3">Analyzing campaigns... This may take up to a minute.</p>
-                            </div>
-                            
-                            <!-- Error State -->
-                            <div x-show="analysisError && !isAnalyzing" class="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
-                                <p class="text-sm text-red-800" x-text="analysisError"></p>
-                            </div>
-                            
-                            <!-- Initial State -->
-                            <div x-show="!isAnalyzing && !analysisResult && !analysisError" class="mt-4 text-center py-8">
-                                <p class="text-sm text-gray-600">Click "Analyze Now" to start the AI analysis of your campaigns.</p>
-                            </div>
-                        </div>
+            {{-- Campaign Performance Table --}}
+            <div class="bg-[#0f1c2e] border border-white/10 rounded-xl overflow-hidden">
+                <div class="px-5 py-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <h2 class="text-lg font-semibold text-white">Campaign Performance</h2>
+                    <input type="text" x-model="searchQuery" placeholder="Search campaigns..."
+                        class="bg-[#0a1628] border border-white/10 rounded-lg px-3 py-2 text-sm text-white w-full sm:w-64 focus:ring-emerald-500">
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-left text-xs uppercase tracking-wider text-gray-500 border-b border-white/5">
+                                @foreach(['name' => 'Campaign', 'spend' => 'Spent', 'leads' => 'Leads', 'purchases' => 'Purchases', 'revenue' => 'Revenue', 'cpl' => 'CPL', 'cpp' => 'CPP', 'roas' => 'ROAS', 'ctr' => 'CTR', 'status' => 'Status', 'last_updated' => 'Updated'] as $col => $label)
+                                <th class="px-4 py-3 font-medium cursor-pointer hover:text-white transition whitespace-nowrap" @click="sortBy('{{ $col }}')">
+                                    {{ $label }}
+                                    <span x-show="sortColumn === '{{ $col }}'" x-text="sortDir === 'asc' ? '↑' : '↓'" class="text-emerald-400"></span>
+                                </th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5">
+                            @forelse($paginator as $campaign)
+                            <tr class="hover:bg-white/[0.02] transition campaign-row"
+                                data-name="{{ strtolower($campaign['name']) }}"
+                                x-show="matchesSearch('{{ addslashes($campaign['name']) }}')">
+                                <td class="px-4 py-3">
+                                    <div class="font-medium text-white truncate max-w-[180px]">{{ $campaign['name'] }}</div>
+                                    <div class="text-xs text-gray-500">{{ $campaign['platform'] ?? '' }}</div>
+                                </td>
+                                <td class="px-4 py-3 text-white font-medium">${{ number_format($campaign['spend'], 2) }}</td>
+                                <td class="px-4 py-3 text-gray-300">{{ number_format($campaign['leads']) }}</td>
+                                <td class="px-4 py-3 text-gray-300">{{ number_format($campaign['purchases']) }}</td>
+                                <td class="px-4 py-3 text-emerald-400">${{ number_format($campaign['revenue'], 2) }}</td>
+                                <td class="px-4 py-3 text-gray-300">${{ number_format($campaign['cpl'], 2) }}</td>
+                                <td class="px-4 py-3 text-gray-300">${{ number_format($campaign['cpp'], 2) }}</td>
+                                <td class="px-4 py-3">
+                                    <span class="{{ $campaign['roas'] >= 2 ? 'text-emerald-400' : ($campaign['roas'] >= 1 ? 'text-amber-400' : 'text-red-400') }} font-medium">{{ number_format($campaign['roas'], 2) }}x</span>
+                                </td>
+                                <td class="px-4 py-3 text-gray-300">{{ number_format($campaign['ctr'], 2) }}%</td>
+                                <td class="px-4 py-3">
+                                    @php $st = strtolower($campaign['status']); @endphp
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-medium
+                                        {{ in_array($st, ['active','completed']) ? 'bg-emerald-500/20 text-emerald-400' : (in_array($st, ['paused','pending']) ? 'bg-amber-500/20 text-amber-400' : 'bg-gray-500/20 text-gray-400') }}">
+                                        {{ $campaign['status'] }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                                    {{ isset($campaign['last_updated']) ? \Carbon\Carbon::parse($campaign['last_updated'])->diffForHumans() : '—' }}
+                                </td>
+                            </tr>
+                            @empty
+                            <tr><td colspan="11" class="px-4 py-12 text-center text-gray-500">No campaigns found. Connect ad accounts or create a campaign.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                @if($paginator->hasPages())
+                <div class="px-5 py-3 border-t border-white/10 flex justify-between items-center text-sm text-gray-500">
+                    <span>Showing {{ $paginator->firstItem() }}-{{ $paginator->lastItem() }} of {{ $paginator->total() }}</span>
+                    <div>{{ $paginator->links() }}</div>
+                </div>
+                @endif
+            </div>
+
+            {{-- Top Performing Campaigns --}}
+            @if(count($dashboard['topCampaigns']) > 0)
+            <div class="bg-[#0f1c2e] border border-emerald-500/20 rounded-xl overflow-hidden">
+                <div class="px-5 py-4 border-b border-white/10 flex items-center gap-2">
+                    <span class="material-icons text-emerald-400">emoji_events</span>
+                    <h2 class="text-lg font-semibold text-white">Top Campaigns</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-left text-xs uppercase tracking-wider text-gray-500 border-b border-white/5">
+                                <th class="px-4 py-3">Campaign</th>
+                                <th class="px-4 py-3">Spent</th>
+                                <th class="px-4 py-3">Leads</th>
+                                <th class="px-4 py-3">CPL</th>
+                                <th class="px-4 py-3">ROAS</th>
+                                <th class="px-4 py-3">CTR</th>
+                                <th class="px-4 py-3">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5">
+                            @foreach($dashboard['topCampaigns'] as $item)
+                            <tr class="hover:bg-white/[0.02]">
+                                <td class="px-4 py-3">
+                                    <div class="font-medium text-white">{{ $item['name'] }}</div>
+                                    <div class="text-xs text-gray-500">{{ $item['platform'] }}</div>
+                                </td>
+                                <td class="px-4 py-3 text-gray-300">${{ number_format($item['spend'], 2) }}</td>
+                                <td class="px-4 py-3 text-gray-300">{{ number_format($item['leads']) }}</td>
+                                <td class="px-4 py-3 text-gray-300">${{ number_format($item['cpl'], 2) }}</td>
+                                <td class="px-4 py-3 text-emerald-400 font-medium">{{ number_format($item['roas'], 2) }}x</td>
+                                <td class="px-4 py-3 text-gray-300">{{ number_format($item['ctr'], 2) }}%</td>
+                                <td class="px-4 py-3">
+                                    @php
+                                        $topAction = $item['roas'] >= 3 ? 'Scale' : ($item['roas'] >= 1.5 ? 'Maintain' : 'Optimize');
+                                        $topColor = match($topAction) {
+                                            'Scale' => 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+                                            'Maintain' => 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                                            default => 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+                                        };
+                                    @endphp
+                                    <span class="px-2 py-1 rounded-lg text-xs font-medium border {{ $topColor }}">{{ $topAction }}</span>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
+
+            {{-- Underperforming Campaigns --}}
+            @if(count($dashboard['underperforming']) > 0)
+            <div class="bg-[#0f1c2e] border border-red-500/20 rounded-xl overflow-hidden">
+                <div class="px-5 py-4 border-b border-white/10 flex items-center gap-2">
+                    <span class="material-icons text-red-400">warning</span>
+                    <h2 class="text-lg font-semibold text-white">Needs Attention</h2>
+                    <span class="ml-auto text-xs text-gray-500">{{ count($dashboard['underperforming']) }} campaigns</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-left text-xs uppercase tracking-wider text-gray-500 border-b border-white/5">
+                                <th class="px-4 py-3">Campaign</th>
+                                <th class="px-4 py-3">Issue</th>
+                                <th class="px-4 py-3">Spent</th>
+                                <th class="px-4 py-3">CPL</th>
+                                <th class="px-4 py-3">CTR</th>
+                                <th class="px-4 py-3">ROAS</th>
+                                <th class="px-4 py-3">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5">
+                            @foreach($dashboard['underperforming'] as $item)
+                            <tr class="hover:bg-white/[0.02]">
+                                <td class="px-4 py-3">
+                                    <div class="font-medium text-white">{{ $item['name'] }}</div>
+                                    <div class="text-xs text-gray-500">{{ $item['platform'] }}</div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    @foreach($item['issues'] as $issue)
+                                    <span class="inline-block px-2 py-0.5 rounded text-xs bg-red-500/20 text-red-400 mr-1">{{ $issue }}</span>
+                                    @endforeach
+                                </td>
+                                <td class="px-4 py-3 text-gray-300">${{ number_format($item['spend'], 2) }}</td>
+                                <td class="px-4 py-3 text-gray-300">${{ number_format($item['cpl'], 2) }}</td>
+                                <td class="px-4 py-3 text-gray-300">{{ number_format($item['ctr'], 2) }}%</td>
+                                <td class="px-4 py-3 text-red-400">{{ number_format($item['roas'], 2) }}x</td>
+                                <td class="px-4 py-3">
+                                    @php
+                                        $actionColors = [
+                                            'Pause Campaign' => 'bg-red-500/20 text-red-400 border-red-500/30',
+                                            'Scale Campaign' => 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+                                            'Improve Creatives' => 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+                                            'Optimize Audience' => 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                                        ];
+                                        $color = $actionColors[$item['recommendation']] ?? 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+                                    @endphp
+                                    <span class="px-2 py-1 rounded-lg text-xs font-medium border {{ $color }}">{{ $item['recommendation'] }}</span>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
+
+            {{-- Daily Performance Charts --}}
+            <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-5">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                    <h2 class="text-lg font-semibold text-white">Daily Performance Overview</h2>
+                    <div class="flex gap-1">
+                        @foreach(['spend' => 'Spend', 'leads' => 'Leads', 'purchases' => 'Purchases', 'revenue' => 'Revenue', 'profit' => 'Profit'] as $key => $label)
+                        <button @click="activeChart = '{{ $key }}'; updateDailyChart()"
+                            class="px-2.5 py-1 text-xs rounded-lg transition"
+                            :class="activeChart === '{{ $key }}' ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-500 hover:text-white'">{{ $label }}</button>
+                        @endforeach
                     </div>
                 </div>
-                
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button x-show="!isAnalyzing" 
-                            @click="analyzeCampaigns()" 
-                            type="button" 
-                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-purple-600 text-base font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:ml-3 sm:w-auto sm:text-sm">
-                        Analyze Now
-                    </button>
-                    <button @click="showAnalysisModal = false; analysisResult = null; analysisError = null;" 
-                            type="button" 
-                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                        Close
-                    </button>
+                <div class="h-64"><canvas id="dailyChart"></canvas></div>
+            </div>
+
+            {{-- Funnel Analysis --}}
+            <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-5">
+                <h2 class="text-lg font-semibold text-white mb-4">Funnel Analysis</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 space-y-2">
+                        @foreach($dashboard['funnel']['steps'] as $i => $step)
+                        @php
+                            $pct = $i === 0 ? 100 : ($dashboard['funnel']['steps'][0]['value'] > 0 ? ($step['value'] / $dashboard['funnel']['steps'][0]['value']) * 100 : 0);
+                        @endphp
+                        <div class="flex items-center gap-3">
+                            <div class="w-36 text-xs text-gray-400 shrink-0">{{ $step['label'] }}</div>
+                            <div class="flex-1 bg-white/5 rounded-full h-7 overflow-hidden relative">
+                                <div class="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full flex items-center justify-end pr-2 transition-all duration-500"
+                                     style="width: {{ max(2, $pct) }}%">
+                                    <span class="text-[10px] font-bold text-white">{{ number_format($step['value']) }}</span>
+                                </div>
+                            </div>
+                            @if(isset($step['conversion_to_next']))
+                            <div class="w-14 text-xs text-gray-500 text-right">{{ $step['conversion_to_next'] }}%</div>
+                            @endif
+                        </div>
+                        @endforeach
+                    </div>
+                    <div class="bg-[#0a1628] border border-white/10 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 uppercase tracking-wide mb-2">Biggest Drop-off</div>
+                        <div class="text-white font-semibold mb-1">{{ $dashboard['funnel']['biggest_drop']['from'] }} → {{ $dashboard['funnel']['biggest_drop']['to'] }}</div>
+                        <div class="text-2xl font-bold text-red-400 mb-3">{{ $dashboard['funnel']['biggest_drop']['rate'] }}%</div>
+                        <div class="text-xs text-gray-500 uppercase tracking-wide mb-2">AI Recommendation</div>
+                        <p class="text-sm text-gray-300 leading-relaxed">{{ $dashboard['funnel']['recommendation'] }}</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Audience & Placement --}}
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-[#0f1c2e] border border-white/10 rounded-xl overflow-hidden">
+                    <div class="px-5 py-4 border-b border-white/10"><h2 class="text-lg font-semibold text-white">Audience Performance</h2></div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs">
+                            <thead><tr class="text-gray-500 uppercase border-b border-white/5">
+                                <th class="px-3 py-2 text-left">Audience</th><th class="px-3 py-2 text-right">Spend</th><th class="px-3 py-2 text-right">Leads</th><th class="px-3 py-2 text-right">ROAS</th>
+                            </tr></thead>
+                            <tbody class="divide-y divide-white/5">
+                                @foreach($dashboard['audience'] as $row)
+                                <tr class="hover:bg-white/[0.02]">
+                                    <td class="px-3 py-2.5">
+                                        <div class="text-white font-medium">{{ $row['audience'] }}</div>
+                                        <div class="text-gray-600">{{ $row['age'] }} · {{ $row['gender'] }} · {{ $row['location'] }}</div>
+                                    </td>
+                                    <td class="px-3 py-2.5 text-right text-gray-300">${{ number_format($row['spend'], 0) }}</td>
+                                    <td class="px-3 py-2.5 text-right text-gray-300">{{ number_format($row['leads']) }}</td>
+                                    <td class="px-3 py-2.5 text-right text-emerald-400 font-medium">{{ number_format($row['roas'], 2) }}x</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="bg-[#0f1c2e] border border-white/10 rounded-xl overflow-hidden">
+                    <div class="px-5 py-4 border-b border-white/10"><h2 class="text-lg font-semibold text-white">Placement Performance</h2></div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs">
+                            <thead><tr class="text-gray-500 uppercase border-b border-white/5">
+                                <th class="px-3 py-2 text-left">Placement</th><th class="px-3 py-2 text-right">Spend</th><th class="px-3 py-2 text-right">Purchases</th><th class="px-3 py-2 text-right">ROAS</th>
+                            </tr></thead>
+                            <tbody class="divide-y divide-white/5">
+                                @foreach($dashboard['placements'] as $row)
+                                <tr class="hover:bg-white/[0.02]">
+                                    <td class="px-3 py-2.5 text-white font-medium">{{ $row['placement'] }}</td>
+                                    <td class="px-3 py-2.5 text-right text-gray-300">${{ number_format($row['spend'], 0) }}</td>
+                                    <td class="px-3 py-2.5 text-right text-gray-300">{{ number_format($row['purchases']) }}</td>
+                                    <td class="px-3 py-2.5 text-right text-emerald-400 font-medium">{{ number_format($row['roas'], 2) }}x</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Right Sidebar --}}
+        <div class="space-y-6">
+            {{-- Quick Actions --}}
+            <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-5">
+                <h2 class="text-lg font-semibold text-white mb-4">Quick Actions</h2>
+                <div class="grid grid-cols-2 gap-2">
+                    @foreach([
+                        ['route' => 'app.campaign-creator', 'icon' => 'add_circle', 'label' => 'Create Campaign'],
+                        ['route' => 'app.campaign-creator', 'icon' => 'content_copy', 'label' => 'Duplicate'],
+                        ['route' => 'app.ad-campaigns', 'icon' => 'pause_circle', 'label' => 'Pause'],
+                        ['route' => 'app.ad-campaigns', 'icon' => 'trending_up', 'label' => 'Scale'],
+                        ['route' => 'app.ad-campaigns', 'icon' => 'edit', 'label' => 'Edit Budget'],
+                        ['route' => 'app.ad-campaigns.export', 'icon' => 'file_download', 'label' => 'Export Report', 'params' => request()->query()],
+                        ['route' => 'app.ad-campaigns', 'icon' => 'rule', 'label' => 'Automation'],
+                    ] as $action)
+                    <a href="{{ isset($action['params']) ? route($action['route'], $action['params']) : route($action['route']) }}"
+                       class="flex flex-col items-center gap-1.5 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5 hover:border-white/15">
+                        <span class="material-icons text-emerald-400">{{ $action['icon'] }}</span>
+                        <span class="text-[10px] text-gray-400 text-center leading-tight">{{ $action['label'] }}</span>
+                    </a>
+                    @endforeach
+                </div>
+            </div>
+
+            {{-- Alerts Center --}}
+            <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-5">
+                <h2 class="text-lg font-semibold text-white mb-4">Alerts Center</h2>
+                <div class="space-y-3 max-h-80 overflow-y-auto">
+                    @foreach($dashboard['alerts'] as $alert)
+                    @php
+                        $priorityColors = ['high' => 'border-red-500/40 bg-red-500/10', 'medium' => 'border-amber-500/40 bg-amber-500/10', 'low' => 'border-blue-500/40 bg-blue-500/10'];
+                        $pc = $priorityColors[$alert['priority']] ?? 'border-white/10 bg-white/5';
+                    @endphp
+                    <div class="p-3 rounded-lg border {{ $pc }}">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="font-medium text-white text-sm">{{ $alert['title'] }}</div>
+                            <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded
+                                {{ $alert['priority'] === 'high' ? 'text-red-400' : ($alert['priority'] === 'medium' ? 'text-amber-400' : 'text-blue-400') }}">{{ $alert['priority'] }}</span>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-1">{{ $alert['message'] }}</p>
+                        <div class="text-[10px] text-gray-600 mt-1">{{ $alert['time'] }}</div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+
+            {{-- Creative Performance --}}
+            <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-5">
+                <h2 class="text-lg font-semibold text-white mb-4">Top Creatives</h2>
+                <div class="space-y-3">
+                    @forelse($dashboard['creatives'] as $creative)
+                    <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/[0.03] transition">
+                        <div class="w-12 h-12 rounded-lg shrink-0 flex items-center justify-center" style="background: {{ $creative['preview_color'] }}20; border: 1px solid {{ $creative['preview_color'] }}40">
+                            <span class="material-icons text-lg" style="color: {{ $creative['preview_color'] }}">image</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm text-white truncate">{{ $creative['name'] }}</div>
+                            <div class="text-xs text-gray-500">CTR {{ number_format($creative['ctr'], 2) }}% · {{ number_format($creative['purchases']) }} purchases</div>
+                        </div>
+                        @php
+                            $statusColors = ['Winner' => 'text-emerald-400 bg-emerald-500/20', 'Strong' => 'text-blue-400 bg-blue-500/20', 'Fatigued' => 'text-amber-400 bg-amber-500/20', 'Weak' => 'text-red-400 bg-red-500/20'];
+                            $sc = $statusColors[$creative['status']] ?? 'text-gray-400 bg-gray-500/20';
+                        @endphp
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $sc }}">{{ $creative['status'] }}</span>
+                    </div>
+                    @empty
+                    <p class="text-sm text-gray-500 text-center py-4">No creative data available</p>
+                    @endforelse
+                </div>
+                @if(count($dashboard['creatives']) > 0)
+                @php $avgFatigue = collect($dashboard['creatives'])->avg('fatigue_score'); @endphp
+                <div class="mt-4 pt-4 border-t border-white/10">
+                    <div class="flex items-center justify-between text-xs text-gray-500 mb-2">
+                        <span>Creative Fatigue</span>
+                        <span class="{{ $avgFatigue >= 70 ? 'text-red-400' : 'text-emerald-400' }} font-bold">{{ round($avgFatigue) }}%</span>
+                    </div>
+                    <div class="w-full bg-white/5 rounded-full h-2">
+                        <div class="h-2 rounded-full {{ $avgFatigue >= 70 ? 'bg-red-500' : 'bg-emerald-500' }}" style="width: {{ $avgFatigue }}%"></div>
+                    </div>
+                    @if($avgFatigue >= 70)
+                    <p class="text-xs text-amber-400 mt-2">Replace creatives within 48 hours</p>
+                    @endif
+                </div>
+                @endif
+            </div>
+
+            {{-- 7-Day Forecast --}}
+            <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-5">
+                <h2 class="text-lg font-semibold text-white mb-1">7-Day Forecast</h2>
+                <p class="text-xs text-gray-500 mb-4">Based on historical performance {{ $dashboard['forecast']['trend_percent'] >= 0 ? '+' : '' }}{{ $dashboard['forecast']['trend_percent'] }}% trend</p>
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    @foreach([
+                        ['label' => 'Leads', 'value' => number_format($dashboard['forecast']['projected_leads'])],
+                        ['label' => 'Purchases', 'value' => number_format($dashboard['forecast']['projected_purchases'])],
+                        ['label' => 'Revenue', 'value' => '$'.number_format($dashboard['forecast']['projected_revenue'], 0)],
+                        ['label' => 'Profit', 'value' => '$'.number_format($dashboard['forecast']['projected_profit'], 0)],
+                    ] as $f)
+                    <div class="bg-[#0a1628] rounded-lg p-3 border border-white/5">
+                        <div class="text-[10px] text-gray-500 uppercase">{{ $f['label'] }}</div>
+                        <div class="text-lg font-bold text-white">{{ $f['value'] }}</div>
+                    </div>
+                    @endforeach
+                </div>
+                <div class="h-40"><canvas id="forecastChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    {{-- AI Analysis Modal --}}
+    <div x-show="showAnalysisModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape.window="showAnalysisModal = false">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black/70" @click="showAnalysisModal = false"></div>
+            <div class="relative bg-[#0f1c2e] border border-white/10 rounded-2xl shadow-2xl max-w-3xl w-full p-6 z-10">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="material-icons text-emerald-400">psychology</span>
+                    <h3 class="text-xl font-bold text-white">AI Campaign Analysis</h3>
+                </div>
+                <div x-show="isAnalyzing" class="py-12 text-center">
+                    <svg class="animate-spin h-8 w-8 text-emerald-400 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    <p class="text-gray-400 mt-3 text-sm">Analyzing campaigns...</p>
+                </div>
+                <div x-show="analysisResult && !isAnalyzing" class="max-h-96 overflow-y-auto text-sm text-gray-300 prose-invert" x-html="analysisResult"></div>
+                <div x-show="analysisError" class="text-red-400 text-sm" x-text="analysisError"></div>
+                <div x-show="!isAnalyzing && !analysisResult && !analysisError" class="text-gray-500 text-sm py-8 text-center">Click Analyze to get AI-powered recommendations.</div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button @click="showAnalysisModal = false" class="px-4 py-2 text-gray-400 hover:text-white text-sm transition">Close</button>
+                    <button @click="analyzeCampaigns()" :disabled="isAnalyzing" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition disabled:opacity-50">Analyze Now</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-function campaignAnalysis() {
+const dailyData = @json($dashboard['dailyPerformance']);
+const forecastData = @json($dashboard['forecast']['chart']);
+
+function campaignDashboard() {
     return {
-        hasGeneratingCampaigns: {{ $paginator->filter(fn($c) => in_array(strtolower($c['status']), ['pending', 'processing']))->isNotEmpty() ? 'true' : 'false' }},
+        searchQuery: '',
+        sortColumn: 'spend',
+        sortDir: 'desc',
+        activeChart: 'spend',
+        datePreset: '{{ $dateFrom ? "custom" : "30d" }}',
         showAnalysisModal: false,
         isAnalyzing: false,
         analysisResult: null,
         analysisError: null,
-        dateFrom: '{{ $dateFrom ?? '' }}',
-        dateTo: '{{ $dateTo ?? '' }}',
+        dailyChart: null,
+        forecastChart: null,
         analyzeUrl: '{{ route('app.ad-campaigns.analyze') }}',
         csrfToken: '{{ csrf_token() }}',
-        
-        init() {
-            if (this.hasGeneratingCampaigns) {
-                setTimeout(() => {
-                    window.location.reload();
-                }, 10000);
-            }
+        dateFrom: '{{ $dateFrom ?? $dashboard['periodFrom'] }}',
+        dateTo: '{{ $dateTo ?? $dashboard['periodTo'] }}',
+
+        matchesSearch(name) {
+            if (!this.searchQuery) return true;
+            return name.toLowerCase().includes(this.searchQuery.toLowerCase());
         },
-        
-        analyzeCampaigns() {
-            console.log('Starting campaign analysis...', { 
-                dateFrom: this.dateFrom, 
-                dateTo: this.dateTo 
+
+        sortBy(col) {
+            if (this.sortColumn === col) this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+            else { this.sortColumn = col; this.sortDir = 'desc'; }
+        },
+
+        applyPreset(preset) {
+            const form = this.$refs.dateFrom?.closest('form');
+            if (!form) return;
+            const from = form.querySelector('[name=date_from]');
+            const to = form.querySelector('[name=date_to]');
+            const today = new Date();
+            const fmt = d => d.toISOString().split('T')[0];
+            this.datePreset = preset;
+            if (preset === 'today') { from.value = fmt(today); to.value = fmt(today); }
+            else if (preset === 'yesterday') { const y = new Date(today); y.setDate(y.getDate()-1); from.value = fmt(y); to.value = fmt(y); }
+            else if (preset === '7d') { const s = new Date(today); s.setDate(s.getDate()-6); from.value = fmt(s); to.value = fmt(today); }
+            else if (preset === '30d') { const s = new Date(today); s.setDate(s.getDate()-29); from.value = fmt(s); to.value = fmt(today); }
+            form.submit();
+        },
+
+        initCharts() {
+            this.$nextTick(() => {
+                this.renderDailyChart();
+                this.renderForecastChart();
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        if (typeof window.hideCampaignDashboardLoader === 'function') {
+                            window.hideCampaignDashboardLoader();
+                        }
+                    }, 300);
+                });
             });
-            
+        },
+
+        chartColors() {
+            return { grid: 'rgba(255,255,255,0.05)', text: '#9ca3af', emerald: '#10b981', blue: '#3b82f6', violet: '#8b5cf6' };
+        },
+
+        renderDailyChart() {
+            const ctx = document.getElementById('dailyChart');
+            if (!ctx) return;
+            if (this.dailyChart) this.dailyChart.destroy();
+            const c = this.chartColors();
+            const labels = dailyData.map(d => d.date);
+            const values = dailyData.map(d => d[this.activeChart] ?? 0);
+            this.dailyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: this.activeChart.charAt(0).toUpperCase() + this.activeChart.slice(1),
+                        data: values,
+                        backgroundColor: c.emerald + '80',
+                        borderColor: c.emerald,
+                        borderWidth: 1,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: c.grid }, ticks: { color: c.text, maxRotation: 45, font: { size: 10 } } },
+                        y: { grid: { color: c.grid }, ticks: { color: c.text, font: { size: 10 } }, beginAtZero: true }
+                    }
+                }
+            });
+        },
+
+        updateDailyChart() { this.renderDailyChart(); },
+
+        renderForecastChart() {
+            const ctx = document.getElementById('forecastChart');
+            if (!ctx) return;
+            const c = this.chartColors();
+            this.forecastChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: forecastData.map(d => d.day),
+                    datasets: [
+                        { label: 'Revenue', data: forecastData.map(d => d.revenue), borderColor: c.emerald, backgroundColor: c.emerald + '20', fill: true, tension: 0.4 },
+                        { label: 'Profit', data: forecastData.map(d => d.profit), borderColor: c.violet, backgroundColor: c.violet + '20', fill: true, tension: 0.4 },
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: c.text, boxWidth: 12, font: { size: 10 } } } },
+                    scales: {
+                        x: { grid: { color: c.grid }, ticks: { color: c.text, font: { size: 10 } } },
+                        y: { grid: { color: c.grid }, ticks: { color: c.text, font: { size: 10 } }, beginAtZero: true }
+                    }
+                }
+            });
+        },
+
+        analyzeCampaigns() {
             this.isAnalyzing = true;
             this.analysisResult = null;
             this.analysisError = null;
-            
             fetch(this.analyzeUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': this.csrfToken
-                },
-                body: JSON.stringify({
-                    date_from: this.dateFrom || null,
-                    date_to: this.dateTo || null
-                })
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrfToken },
+                body: JSON.stringify({ date_from: this.dateFrom || null, date_to: this.dateTo || null })
             })
-            .then(response => {
-                console.log('Response status:', response.status);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
+            .then(r => r.json())
             .then(data => {
-                console.log('Response data:', data);
-                console.log('Analysis text length:', data.analysis ? data.analysis.length : 0);
-                
                 this.isAnalyzing = false;
-                
-                if (data.error) {
-                    console.error('Analysis error:', data.error);
-                    this.analysisError = data.error;
-                } else if (data.analysis) {
-                    console.log('Analysis successful, formatting...');
-                    const formatted = this.formatAnalysis(data.analysis);
-                    console.log('Formatted HTML length:', formatted.length);
-                    console.log('Formatted HTML preview:', formatted.substring(0, 200));
-                    this.analysisResult = formatted;
-                    console.log('analysisResult set:', this.analysisResult ? 'YES' : 'NO');
-                } else {
-                    console.error('No analysis in response');
-                    this.analysisError = 'No analysis data received from the server.';
-                }
+                if (data.error) this.analysisError = data.error;
+                else if (data.analysis) this.analysisResult = this.formatAnalysis(data.analysis);
+                else this.analysisError = 'No analysis received.';
             })
-            .catch(error => {
-                console.error('Fetch error:', error);
-                this.isAnalyzing = false;
-                this.analysisError = 'An error occurred while analyzing campaigns: ' + error.message;
-            });
+            .catch(e => { this.isAnalyzing = false; this.analysisError = e.message; });
         },
-        
+
         formatAnalysis(text) {
-            if (!text) {
-                console.error('formatAnalysis: No text provided');
-                return '<p class="text-red-600">Error: No analysis text to format</p>';
-            }
-            
-            console.log('formatAnalysis: Input text length:', text.length);
-            
-            try {
-                // Convert markdown-style formatting to HTML
-                let html = text
-                    .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>') // Bold+Italic
-                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // Bold
-                    .replace(/\*(.+?)\*/g, '<em>$1</em>') // Italic
-                    .replace(/###\s+(.+?)$/gm, '<h3 class="text-lg font-bold mt-4 mb-2">$1</h3>') // H3
-                    .replace(/##\s+(.+?)$/gm, '<h2 class="text-xl font-bold mt-4 mb-2">$1</h2>') // H2
-                    .replace(/^(\d+)\.\s+(.+?)$/gm, '<div class="ml-4 mb-2"><strong>$1.</strong> $2</div>') // Numbered lists
-                    .replace(/^-\s+(.+?)$/gm, '<li class="ml-6 mb-1">$1</li>') // Bullet lists
-                    .replace(/\n\n/g, '</p><p class="mb-2">') // Paragraphs
-                    .replace(/\n/g, '<br>'); // Line breaks
-                
-                // Wrap in paragraph tags
-                html = '<div class="text-gray-800">' + html + '</div>';
-                
-                // Fix list formatting
-                html = html.replace(/<li/g, '<ul class="list-disc ml-4 mb-2"><li').replace(/<\/li>(?!<li)/g, '</li></ul>');
-                
-                console.log('formatAnalysis: Output HTML length:', html.length);
-                
-                return html;
-            } catch (error) {
-                console.error('formatAnalysis error:', error);
-                return '<p class="text-red-600">Error formatting analysis: ' + error.message + '</p>';
-            }
+            return text
+                .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>')
+                .replace(/##\s+(.+?)$/gm, '<h3 class="text-white font-bold mt-4 mb-2">$1</h3>')
+                .replace(/^-\s+(.+?)$/gm, '<li class="ml-4 mb-1">$1</li>')
+                .replace(/\n\n/g, '<br><br>')
+                .replace(/\n/g, '<br>');
         }
     };
 }
@@ -617,6 +709,19 @@ function campaignAnalysis() {
 
 <style>
 [x-cloak] { display: none !important; }
+.pagination { display: flex; gap: 0.25rem; }
+.pagination a, .pagination span { padding: 0.25rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; }
+.pagination a { background: rgba(255,255,255,0.05); color: #9ca3af; }
+.pagination a:hover { background: rgba(255,255,255,0.1); color: white; }
+.pagination span { background: rgba(16,185,129,0.2); color: #34d399; }
 </style>
-
+<script>
+window.addEventListener('load', function () {
+    setTimeout(function () {
+        if (typeof window.hideCampaignDashboardLoader === 'function') {
+            window.hideCampaignDashboardLoader();
+        }
+    }, 600);
+});
+</script>
 @endsection
