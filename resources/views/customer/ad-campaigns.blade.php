@@ -164,7 +164,7 @@
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="text-left text-xs uppercase tracking-wider text-gray-500 border-b border-white/5">
-                                @foreach(['name' => 'Campaign', 'spend' => 'Spent', 'leads' => 'Leads', 'purchases' => 'Purchases', 'revenue' => 'Revenue', 'cpl' => 'CPL', 'cpp' => 'CPP', 'roas' => 'ROAS', 'ctr' => 'CTR', 'status' => 'Status', 'last_updated' => 'Updated'] as $col => $label)
+                                @foreach(['name' => 'Campaign', 'spend' => 'Spent', 'leads' => 'Leads', 'cpl' => 'CPL', 'ctr' => 'CTR', 'status' => 'Status', 'last_updated' => 'Updated'] as $col => $label)
                                 <th class="px-4 py-3 font-medium cursor-pointer hover:text-white transition whitespace-nowrap" @click="sortBy('{{ $col }}')">
                                     {{ $label }}
                                     <span x-show="sortColumn === '{{ $col }}'" x-text="sortDir === 'asc' ? '↑' : '↓'" class="text-emerald-400"></span>
@@ -183,13 +183,7 @@
                                 </td>
                                 <td class="px-4 py-3 text-white font-medium">${{ number_format($campaign['spend'], 2) }}</td>
                                 <td class="px-4 py-3 text-gray-300">{{ number_format($campaign['leads']) }}</td>
-                                <td class="px-4 py-3 text-gray-300">{{ number_format($campaign['purchases']) }}</td>
-                                <td class="px-4 py-3 text-emerald-400">${{ number_format($campaign['revenue'], 2) }}</td>
                                 <td class="px-4 py-3 text-gray-300">${{ number_format($campaign['cpl'], 2) }}</td>
-                                <td class="px-4 py-3 text-gray-300">${{ number_format($campaign['cpp'], 2) }}</td>
-                                <td class="px-4 py-3">
-                                    <span class="{{ $campaign['roas'] >= 2 ? 'text-emerald-400' : ($campaign['roas'] >= 1 ? 'text-amber-400' : 'text-red-400') }} font-medium">{{ number_format($campaign['roas'], 2) }}x</span>
-                                </td>
                                 <td class="px-4 py-3 text-gray-300">{{ number_format($campaign['ctr'], 2) }}%</td>
                                 <td class="px-4 py-3">
                                     @php $st = strtolower($campaign['status']); @endphp
@@ -203,7 +197,7 @@
                                 </td>
                             </tr>
                             @empty
-                            <tr><td colspan="11" class="px-4 py-12 text-center text-gray-500">No campaigns found. Connect ad accounts or create a campaign.</td></tr>
+                            <tr><td colspan="7" class="px-4 py-12 text-center text-gray-500">No campaigns found. Connect ad accounts or create a campaign.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -329,7 +323,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                     <h2 class="text-lg font-semibold text-white">Daily Performance Overview</h2>
                     <div class="flex gap-1">
-                        @foreach(['spend' => 'Spend', 'leads' => 'Leads', 'purchases' => 'Purchases', 'revenue' => 'Revenue', 'profit' => 'Profit'] as $key => $label)
+                        @foreach(['spend' => 'Spend', 'leads' => 'Leads'] as $key => $label)
                         <button @click="activeChart = '{{ $key }}'; updateDailyChart()"
                             class="px-2.5 py-1 text-xs rounded-lg transition"
                             :class="activeChart === '{{ $key }}' ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-500 hover:text-white'">{{ $label }}</button>
@@ -379,7 +373,7 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-xs">
                             <thead><tr class="text-gray-500 uppercase border-b border-white/5">
-                                <th class="px-3 py-2 text-left">Audience</th><th class="px-3 py-2 text-right">Spend</th><th class="px-3 py-2 text-right">Leads</th><th class="px-3 py-2 text-right">ROAS</th>
+                                <th class="px-3 py-2 text-left">Audience</th><th class="px-3 py-2 text-right">Spend</th><th class="px-3 py-2 text-right">Leads</th><th class="px-3 py-2 text-right">Cost of Lead</th>
                             </tr></thead>
                             <tbody class="divide-y divide-white/5">
                                 @foreach($dashboard['audience'] as $row)
@@ -390,7 +384,7 @@
                                     </td>
                                     <td class="px-3 py-2.5 text-right text-gray-300">${{ number_format($row['spend'], 0) }}</td>
                                     <td class="px-3 py-2.5 text-right text-gray-300">{{ number_format($row['leads']) }}</td>
-                                    <td class="px-3 py-2.5 text-right text-emerald-400 font-medium">{{ number_format($row['roas'], 2) }}x</td>
+                                    <td class="px-3 py-2.5 text-right text-gray-300">${{ number_format($row['cpl'], 2) }}</td>
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -402,15 +396,15 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-xs">
                             <thead><tr class="text-gray-500 uppercase border-b border-white/5">
-                                <th class="px-3 py-2 text-left">Placement</th><th class="px-3 py-2 text-right">Spend</th><th class="px-3 py-2 text-right">Purchases</th><th class="px-3 py-2 text-right">ROAS</th>
+                                <th class="px-3 py-2 text-left">Placement</th><th class="px-3 py-2 text-right">Spend</th><th class="px-3 py-2 text-right">Leads</th><th class="px-3 py-2 text-right">Cost per Lead</th>
                             </tr></thead>
                             <tbody class="divide-y divide-white/5">
                                 @foreach($dashboard['placements'] as $row)
                                 <tr class="hover:bg-white/[0.02]">
                                     <td class="px-3 py-2.5 text-white font-medium">{{ $row['placement'] }}</td>
                                     <td class="px-3 py-2.5 text-right text-gray-300">${{ number_format($row['spend'], 0) }}</td>
-                                    <td class="px-3 py-2.5 text-right text-gray-300">{{ number_format($row['purchases']) }}</td>
-                                    <td class="px-3 py-2.5 text-right text-emerald-400 font-medium">{{ number_format($row['roas'], 2) }}x</td>
+                                    <td class="px-3 py-2.5 text-right text-gray-300">{{ number_format($row['leads']) }}</td>
+                                    <td class="px-3 py-2.5 text-right text-gray-300">${{ number_format($row['cpl'], 2) }}</td>
                                 </tr>
                                 @endforeach
                             </tbody>

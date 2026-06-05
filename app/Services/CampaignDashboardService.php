@@ -558,18 +558,14 @@ class CampaignDashboardService
     {
         $impressions = (int) $totals['impressions'];
         $clicks = (int) $totals['clicks'];
-        $landingViews = (int) round($clicks * 0.72);
-        $addToCart = (int) round($landingViews * 0.18);
-        $checkout = (int) round($addToCart * 0.55);
-        $purchases = (int) $totals['purchases'] ?: (int) round($checkout * 0.65);
+        $landingViews = (int) ($totals['link_clicks'] ?? 0) ?: (int) round($clicks * 0.72);
+        $leads = (int) $totals['leads'];
 
         $steps = [
             ['label' => 'Impressions', 'value' => $impressions],
             ['label' => 'Clicks', 'value' => $clicks],
             ['label' => 'Landing Page Views', 'value' => $landingViews],
-            ['label' => 'Add To Cart', 'value' => $addToCart],
-            ['label' => 'Checkout Initiated', 'value' => $checkout],
-            ['label' => 'Purchases', 'value' => $purchases],
+            ['label' => 'Leads', 'value' => $leads],
         ];
 
         $maxDrop = ['from' => '', 'to' => '', 'rate' => 0];
@@ -593,9 +589,8 @@ class CampaignDashboardService
         $recommendation = match ($maxDrop['from']) {
             'Impressions' => 'Improve ad creatives and hooks to increase click-through rate.',
             'Clicks' => 'Optimize landing page load speed and message match.',
-            'Landing Page Views' => 'Add stronger CTAs and trust signals on product pages.',
-            'Add To Cart' => 'Simplify checkout flow and reduce cart abandonment.',
-            'Checkout Initiated' => 'Offer limited-time incentives to complete purchase.',
+            'Landing Page Views' => 'Strengthen lead capture forms, CTAs, and trust signals on landing pages.',
+            'Leads' => 'Review lead quality and follow-up workflows to maximize conversion from captured leads.',
             default => 'Review full funnel analytics and A/B test each step.',
         };
 
@@ -672,7 +667,7 @@ class CampaignDashboardService
                 'cpp' => $purchases > 0 ? round($spend / $purchases, 2) : 0,
                 'roas' => $spend > 0 ? round($revenue / $spend, 2) : 0,
             ]);
-        })->sortByDesc('roas')->values()->all();
+        })->sortByDesc('leads')->values()->all();
     }
 
     private function buildPlacementPerformance(
