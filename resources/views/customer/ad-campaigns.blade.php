@@ -4,10 +4,10 @@
 
 @php
     $kpiIcons = [
-        'spend' => 'payments', 'leads' => 'groups', 'cpl' => 'price_change', 'purchases' => 'shopping_cart',
-        'cpp' => 'sell', 'impressions' => 'visibility', 'clicks' => 'ads_click', 'link_clicks' => 'link',
+        'spend' => 'payments', 'leads' => 'groups', 'cpl' => 'price_change',
+        'impressions' => 'visibility', 'clicks' => 'ads_click', 'link_clicks' => 'link',
         'ctr' => 'trending_up', 'cpc' => 'touch_app', 'cpm' => 'monetization_on', 'frequency' => 'repeat',
-        'conversion_rate' => 'percent', 'revenue' => 'account_balance_wallet', 'roas' => 'show_chart', 'net_profit' => 'savings',
+        'conversion_rate' => 'percent',
     ];
     $formatKpi = function ($kpi) {
         $v = $kpi['value'];
@@ -128,7 +128,7 @@
     </div>
 
     {{-- KPI Cards --}}
-    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
         @foreach($dashboard['kpis'] as $kpi)
         <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-3 hover:border-white/20 transition">
             <div class="flex items-center justify-between mb-1">
@@ -318,19 +318,42 @@
             </div>
             @endif
 
-            {{-- Daily Performance Charts --}}
-            <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-5">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            {{-- Daily Performance Table --}}
+            <div class="bg-[#0f1c2e] border border-white/10 rounded-xl overflow-hidden">
+                <div class="px-5 py-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <h2 class="text-lg font-semibold text-white">Daily Performance Overview</h2>
-                    <div class="flex gap-1">
-                        @foreach(['spend' => 'Spend', 'leads' => 'Leads'] as $key => $label)
-                        <button @click="activeChart = '{{ $key }}'; updateDailyChart()"
-                            class="px-2.5 py-1 text-xs rounded-lg transition"
-                            :class="activeChart === '{{ $key }}' ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-500 hover:text-white'">{{ $label }}</button>
-                        @endforeach
-                    </div>
+                    <a href="{{ route('app.ad-campaigns.export', request()->query()) }}" class="text-sm text-emerald-400 hover:text-emerald-300 transition">View Report</a>
                 </div>
-                <div class="h-64"><canvas id="dailyChart"></canvas></div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-left text-xs uppercase tracking-wider text-gray-500 border-b border-white/5">
+                                <th class="px-4 py-3 font-medium">Date</th>
+                                <th class="px-4 py-3 font-medium text-right">Spent</th>
+                                <th class="px-4 py-3 font-medium text-right">Leads</th>
+                                <th class="px-4 py-3 font-medium text-right">Purchases</th>
+                                <th class="px-4 py-3 font-medium text-right">CPP</th>
+                                <th class="px-4 py-3 font-medium text-right">CPL</th>
+                                <th class="px-4 py-3 font-medium text-right">Cost/Lead</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5">
+                            @forelse(collect($dashboard['dailyPerformance'])->sortByDesc('full_date') as $day)
+                            <tr class="hover:bg-white/[0.02] transition">
+                                <td class="px-4 py-3 text-gray-300 whitespace-nowrap">{{ \Carbon\Carbon::parse($day['full_date'])->format('M j, Y') }}</td>
+                                <td class="px-4 py-3 text-right text-white font-medium">${{ number_format($day['spend'], 2) }}</td>
+                                <td class="px-4 py-3 text-right text-gray-300">{{ number_format($day['leads']) }}</td>
+                                <td class="px-4 py-3 text-right text-gray-300">{{ number_format($day['purchases']) }}</td>
+                                <td class="px-4 py-3 text-right text-gray-300">${{ number_format($day['cpp'], 2) }}</td>
+                                <td class="px-4 py-3 text-right text-gray-300">${{ number_format($day['cpl'], 2) }}</td>
+                                <td class="px-4 py-3 text-right text-gray-300">${{ number_format($day['cost_per_lead'], 2) }}</td>
+                            </tr>
+                            @empty
+                            <tr><td colspan="7" class="px-4 py-12 text-center text-gray-500">No daily performance data for the selected period.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {{-- Funnel Analysis --}}
@@ -549,7 +572,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-const dailyData = @json($dashboard['dailyPerformance']);
 const forecastData = @json($dashboard['forecast']['chart']);
 
 function campaignDashboard() {
@@ -557,13 +579,11 @@ function campaignDashboard() {
         searchQuery: '',
         sortColumn: 'spend',
         sortDir: 'desc',
-        activeChart: 'spend',
         datePreset: '{{ $dateFrom ? "custom" : "30d" }}',
         showAnalysisModal: false,
         isAnalyzing: false,
         analysisResult: null,
         analysisError: null,
-        dailyChart: null,
         forecastChart: null,
         analyzeUrl: '{{ route('app.ad-campaigns.analyze') }}',
         csrfToken: '{{ csrf_token() }}',
@@ -597,7 +617,6 @@ function campaignDashboard() {
 
         initCharts() {
             this.$nextTick(() => {
-                this.renderDailyChart();
                 this.renderForecastChart();
                 requestAnimationFrame(() => {
                     setTimeout(() => {
@@ -612,39 +631,6 @@ function campaignDashboard() {
         chartColors() {
             return { grid: 'rgba(255,255,255,0.05)', text: '#9ca3af', emerald: '#10b981', blue: '#3b82f6', violet: '#8b5cf6' };
         },
-
-        renderDailyChart() {
-            const ctx = document.getElementById('dailyChart');
-            if (!ctx) return;
-            if (this.dailyChart) this.dailyChart.destroy();
-            const c = this.chartColors();
-            const labels = dailyData.map(d => d.date);
-            const values = dailyData.map(d => d[this.activeChart] ?? 0);
-            this.dailyChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: this.activeChart.charAt(0).toUpperCase() + this.activeChart.slice(1),
-                        data: values,
-                        backgroundColor: c.emerald + '80',
-                        borderColor: c.emerald,
-                        borderWidth: 1,
-                        borderRadius: 4,
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { grid: { color: c.grid }, ticks: { color: c.text, maxRotation: 45, font: { size: 10 } } },
-                        y: { grid: { color: c.grid }, ticks: { color: c.text, font: { size: 10 } }, beginAtZero: true }
-                    }
-                }
-            });
-        },
-
-        updateDailyChart() { this.renderDailyChart(); },
 
         renderForecastChart() {
             const ctx = document.getElementById('forecastChart');

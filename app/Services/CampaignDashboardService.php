@@ -160,8 +160,6 @@ class CampaignDashboardService
             ['key' => 'spend', 'label' => 'Total Ad Spend', 'format' => 'currency', 'invert' => true],
             ['key' => 'leads', 'label' => 'Total Leads', 'format' => 'number', 'invert' => false],
             ['key' => 'cpl', 'label' => 'Cost Per Lead', 'format' => 'currency', 'invert' => true],
-            ['key' => 'purchases', 'label' => 'Total Purchases', 'format' => 'number', 'invert' => false],
-            ['key' => 'cpp', 'label' => 'Cost Per Purchase', 'format' => 'currency', 'invert' => true],
             ['key' => 'impressions', 'label' => 'Impressions', 'format' => 'number', 'invert' => false],
             ['key' => 'clicks', 'label' => 'Clicks', 'format' => 'number', 'invert' => false],
             ['key' => 'link_clicks', 'label' => 'Link Clicks', 'format' => 'number', 'invert' => false],
@@ -170,9 +168,6 @@ class CampaignDashboardService
             ['key' => 'cpm', 'label' => 'CPM', 'format' => 'currency', 'invert' => true],
             ['key' => 'frequency', 'label' => 'Frequency', 'format' => 'decimal', 'invert' => true],
             ['key' => 'conversion_rate', 'label' => 'Conversion Rate', 'format' => 'percent', 'invert' => false],
-            ['key' => 'revenue', 'label' => 'Revenue Generated', 'format' => 'currency', 'invert' => false],
-            ['key' => 'roas', 'label' => 'ROAS', 'format' => 'multiplier', 'invert' => false],
-            ['key' => 'net_profit', 'label' => 'Net Profit', 'format' => 'currency', 'invert' => false],
         ];
 
         return collect($definitions)->map(function ($def) use ($current, $previous) {
@@ -464,7 +459,13 @@ class CampaignDashboardService
             unset($day);
         }
 
-        return array_values($days);
+        return collect($days)->map(function ($day) {
+            $day['cpp'] = $day['purchases'] > 0 ? round($day['spend'] / $day['purchases'], 2) : 0;
+            $day['cpl'] = $day['leads'] > 0 ? round($day['spend'] / $day['leads'], 2) : 0;
+            $day['cost_per_lead'] = $day['cpl'];
+
+            return $day;
+        })->values()->all();
     }
 
     private function distributionWeights(int $count): array
