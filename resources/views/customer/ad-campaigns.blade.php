@@ -331,8 +331,6 @@
                                 <th class="px-4 py-3 font-medium">Date</th>
                                 <th class="px-4 py-3 font-medium text-right">Spent</th>
                                 <th class="px-4 py-3 font-medium text-right">Leads</th>
-                                <th class="px-4 py-3 font-medium text-right">Purchases</th>
-                                <th class="px-4 py-3 font-medium text-right">CPP</th>
                                 <th class="px-4 py-3 font-medium text-right">CPL</th>
                                 <th class="px-4 py-3 font-medium text-right">Cost/Lead</th>
                             </tr>
@@ -343,13 +341,11 @@
                                 <td class="px-4 py-3 text-gray-300 whitespace-nowrap">{{ \Carbon\Carbon::parse($day['full_date'])->format('M j, Y') }}</td>
                                 <td class="px-4 py-3 text-right text-white font-medium">${{ number_format($day['spend'], 2) }}</td>
                                 <td class="px-4 py-3 text-right text-gray-300">{{ number_format($day['leads']) }}</td>
-                                <td class="px-4 py-3 text-right text-gray-300">{{ number_format($day['purchases']) }}</td>
-                                <td class="px-4 py-3 text-right text-gray-300">${{ number_format($day['cpp'], 2) }}</td>
                                 <td class="px-4 py-3 text-right text-gray-300">${{ number_format($day['cpl'], 2) }}</td>
                                 <td class="px-4 py-3 text-right text-gray-300">${{ number_format($day['cost_per_lead'], 2) }}</td>
                             </tr>
                             @empty
-                            <tr><td colspan="7" class="px-4 py-12 text-center text-gray-500">No daily performance data for the selected period.</td></tr>
+                            <tr><td colspan="5" class="px-4 py-12 text-center text-gray-500">No daily performance data for the selected period.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
