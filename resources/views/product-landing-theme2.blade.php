@@ -41,12 +41,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $product->name }}</title>
     <meta name="description" content="{{ Str::limit(strip_tags($product->description), 160) }}">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@400;600;700;800;900&family=Bebas+Neue&family=Oswald:wght@400;600;700&family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:wght@400;600;700;800;900&family=Roboto:wght@400;500;700;900&family=Poppins:wght@400;600;700;800;900&family=Anton&family=Raleway:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-    @include('partials.facebook-pixels', ['store' => $store, 'product' => $product, 'trackViewContent' => true])
-
+    @php
+        $tdHead = $product->theme_data ?? [];
+        $titleFontHead = $tdHead['title_font'] ?? 'bebas';
+        $enabledLangsHead = $product->landing_page_languages ?? ['fr'];
+        $rtlLangsHead = ['ar', 'he', 'fa', 'ur'];
+        $fontGoogleFamilies = [
+            'bebas' => 'family=Bebas+Neue',
+            'inter' => 'family=Inter:wght@400;600;700',
+            'cairo' => 'family=Cairo:wght@400;600;700',
+            'oswald' => 'family=Oswald:wght@400;600;700',
+            'montserrat' => 'family=Montserrat:wght@400;600;700',
+            'playfair' => 'family=Playfair+Display:wght@400;600;700',
+            'roboto' => 'family=Roboto:wght@400;500;700',
+            'poppins' => 'family=Poppins:wght@400;600;700',
+            'anton' => 'family=Anton',
+            'raleway' => 'family=Raleway:wght@400;600;700',
+        ];
+        $googleFontParams = ['family=Inter:wght@400;600;700', 'family=Bebas+Neue'];
+        if ($titleFontHead !== 'inter' && $titleFontHead !== 'bebas' && isset($fontGoogleFamilies[$titleFontHead])) {
+            $googleFontParams[] = $fontGoogleFamilies[$titleFontHead];
+        }
+        if (count(array_intersect($enabledLangsHead, $rtlLangsHead)) > 0) {
+            $googleFontParams[] = 'family=Cairo:wght@400;600;700';
+        }
+        $googleFontsUrl = 'https://fonts.googleapis.com/css2?' . implode('&', $googleFontParams) . '&display=swap';
+    @endphp
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="{{ $googleFontsUrl }}" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ $googleFontsUrl }}"></noscript>
+    @vite(['resources/css/app.css', 'resources/js/landing.js'])
     <style>
         [x-cloak] { display: none !important; }
         body { font-family: 'Inter', sans-serif; background: #f5f5f0; }
@@ -437,7 +462,7 @@
 
                     @if(!empty($images))
                     <div class="relative mx-auto lg:max-w-none">
-                        <img src="{{ $images[0] }}" alt="{{ $product->name }}" class="w-full h-auto object-contain rounded-xl shadow-lg" style="max-height: 550px;">
+                        <img src="{{ $images[0] }}" alt="{{ $product->name }}" class="w-full h-auto object-contain rounded-xl shadow-lg" style="max-height: 550px;" width="800" height="800" fetchpriority="high" decoding="async">
                     </div>
                     @endif
 
@@ -778,7 +803,7 @@
                 <div class="container mx-auto px-4 max-w-4xl space-y-5">
                     @if($sectionImg)
                     <div class="rounded-2xl overflow-hidden shadow-xl border-4 border-white ring-1 ring-gray-200">
-                        <img src="{{ $sectionImg }}" alt="{{ $fallbackTitle }}" class="w-full h-auto object-cover">
+                        <img src="{{ $sectionImg }}" alt="{{ $fallbackTitle }}" class="w-full h-auto object-cover" loading="lazy" decoding="async" width="800" height="600">
                     </div>
                     @endif
                     @if($fallbackDesc)
@@ -1056,6 +1081,8 @@
         });
     </script>
     @endif
+
+    @include('partials.facebook-pixels', ['store' => $store, 'product' => $product, 'trackViewContent' => true])
 
 </body>
 </html>

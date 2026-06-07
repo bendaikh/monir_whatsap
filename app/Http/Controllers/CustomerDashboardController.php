@@ -16,6 +16,9 @@ use App\Models\GoogleSheetConnection;
 
 class CustomerDashboardController extends Controller
 {
+    /** Max product/landing image upload size in kilobytes (10 MB). */
+    private const PRODUCT_IMAGE_MAX_KB = 10240;
+
     protected function getActiveStoreId()
     {
         return session('active_store_id');
@@ -417,7 +420,7 @@ class CustomerDashboardController extends Controller
             'compare_at_price' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:categories,id',
             'images' => 'nullable|array',
-            'images.*' => 'image|max:2048',
+            'images.*' => 'image|max:' . self::PRODUCT_IMAGE_MAX_KB,
             'stock' => 'nullable|integer|min:0',
             'sku' => 'nullable|string|max:255',
             'has_variations' => 'nullable|boolean',
@@ -436,7 +439,7 @@ class CustomerDashboardController extends Controller
             'promotions.*.price' => 'required_with:promotions|numeric|min:0',
             'promotions.*.label' => 'nullable|string|max:255',
             'landing_sections' => 'nullable|array',
-            'landing_sections.*.image' => 'nullable|image|max:2048',
+            'landing_sections.*.image' => 'nullable|image|max:' . self::PRODUCT_IMAGE_MAX_KB,
             'landing_sections.*.title_fr' => 'nullable|string|max:255',
             'landing_sections.*.description_fr' => 'nullable|string',
             'landing_sections.*.title_en' => 'nullable|string|max:255',
@@ -724,7 +727,7 @@ class CustomerDashboardController extends Controller
             'compare_at_price' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:categories,id',
             'images' => 'nullable|array',
-            'images.*' => 'image|max:2048',
+            'images.*' => 'image|max:' . self::PRODUCT_IMAGE_MAX_KB,
             'stock' => 'nullable|integer|min:0',
             'sku' => 'nullable|string|max:255',
             'has_variations' => 'nullable|boolean',
@@ -745,7 +748,7 @@ class CustomerDashboardController extends Controller
             'promotions.*.price' => 'required_with:promotions|numeric|min:0',
             'promotions.*.label' => 'nullable|string|max:255',
             'landing_sections' => 'nullable|array',
-            'landing_sections.*.image' => 'nullable|image|max:2048',
+            'landing_sections.*.image' => 'nullable|image|max:' . self::PRODUCT_IMAGE_MAX_KB,
             'landing_sections.*.existing_image' => 'nullable|string',
             'landing_sections.*.title_fr' => 'nullable|string|max:255',
             'landing_sections.*.description_fr' => 'nullable|string',
@@ -1252,7 +1255,7 @@ class CustomerDashboardController extends Controller
             ->findOrFail($id);
         
         $request->validate([
-            'image' => 'required|image|max:2048'
+            'image' => 'required|image|max:' . self::PRODUCT_IMAGE_MAX_KB
         ]);
         
         $path = $request->file('image')->store('products/landing-sections', 'public');

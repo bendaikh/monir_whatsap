@@ -58,22 +58,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ __('Thank You') }} - {{ $product->name }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@400;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-    @php
-        $pixelOrderValue = $selectedPromotion ? (float) $selectedPromotion->price : (float) $product->price;
-        $pixelCurrency = $product->landing_page_currency ?? 'MAD';
-    @endphp
-    @include('partials.facebook-pixels', [
-        'store' => $store,
-        'product' => $product,
-        'trackLead' => true,
-        'leadValue' => $pixelOrderValue,
-        'leadCurrency' => $pixelCurrency,
-    ])
-
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Bebas+Neue&family=Cairo:wght@400;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Bebas+Neue&family=Cairo:wght@400;600;700&display=swap"></noscript>
+    @vite(['resources/css/app.css', 'resources/js/landing.js'])
     <style>
         [x-cloak] { display: none !important; }
         body { font-family: 'Inter', sans-serif; background: #f5f5f0; }
@@ -235,7 +224,7 @@
                 <div class="flex gap-4 mb-4">
                     @if(!empty($images))
                     <div class="w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden border-2 border-gray-200">
-                        <img src="{{ $images[0] }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
+                        <img src="{{ $images[0] }}" alt="{{ $product->name }}" class="w-full h-full object-cover" fetchpriority="high" decoding="async" width="400" height="400">
                     </div>
                     @endif
                     <div class="flex-1">
@@ -334,7 +323,7 @@
                 <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-200 hover:shadow-md transition">
                     <div class="aspect-square bg-white flex items-center justify-center overflow-hidden cursor-pointer" 
                          @click="$dispatch('open-upsell-modal', { upsell: @js($upsell) })">
-                        <img src="{{ $upsell->first_image }}" alt="{{ $upsell->title }}" class="w-full h-full object-cover">
+                        <img src="{{ $upsell->first_image }}" alt="{{ $upsell->title }}" class="w-full h-full object-cover" loading="lazy" decoding="async" width="300" height="300">
                     </div>
                     <div class="p-4">
                         <h4 class="font-bold text-gray-900 mb-2 cursor-pointer" 
@@ -368,7 +357,7 @@
                             <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
                                 <div class="aspect-square bg-white flex items-center justify-center overflow-hidden cursor-pointer"
                                      @click="$dispatch('open-upsell-modal', { upsell: @js($upsell) })">
-                                    <img src="{{ $upsell->first_image }}" alt="{{ $upsell->title }}" class="w-full h-full object-cover">
+                                    <img src="{{ $upsell->first_image }}" alt="{{ $upsell->title }}" class="w-full h-full object-cover" loading="lazy" decoding="async" width="300" height="300">
                                 </div>
                                 <div class="p-4">
                                     <h4 class="font-bold text-gray-900 mb-2 cursor-pointer"
@@ -565,6 +554,18 @@
             </div>
         </div>
     </div>
+
+    @php
+        $pixelOrderValue = $selectedPromotion ? (float) $selectedPromotion->price : (float) $product->price;
+        $pixelCurrency = $product->landing_page_currency ?? 'MAD';
+    @endphp
+    @include('partials.facebook-pixels', [
+        'store' => $store,
+        'product' => $product,
+        'trackLead' => true,
+        'leadValue' => $pixelOrderValue,
+        'leadCurrency' => $pixelCurrency,
+    ])
 
 </body>
 </html>

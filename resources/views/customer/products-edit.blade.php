@@ -1305,7 +1305,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                             </svg>
                             <p class="text-gray-400 mb-1">Click to upload images</p>
-                            <p class="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
+                            <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
                         </label>
                     </div>
                     <div id="imagePreview" class="grid grid-cols-4 gap-4 mt-4"></div>

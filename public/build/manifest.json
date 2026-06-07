@@ -1,4 +1,8 @@
 {
+  "_module.esm-L4ggBBWN.js": {
+    "file": "assets/module.esm-L4ggBBWN.js",
+    "name": "module.esm"
+  },
   "resources/css/app.css": {
     "file": "assets/app-DbnrePtU.css",
     "src": "resources/css/app.css",
@@ -9,9 +13,21 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-BIJoUbyE.js",
+    "file": "assets/app-Cbg4N9Lk.js",
     "name": "app",
     "src": "resources/js/app.js",
-    "isEntry": true
+    "isEntry": true,
+    "imports": [
+      "_module.esm-L4ggBBWN.js"
+    ]
+  },
+  "resources/js/landing.js": {
+    "file": "assets/landing-Cj2KnPvb.js",
+    "name": "landing",
+    "src": "resources/js/landing.js",
+    "isEntry": true,
+    "imports": [
+      "_module.esm-L4ggBBWN.js"
+    ]
   }
 }
