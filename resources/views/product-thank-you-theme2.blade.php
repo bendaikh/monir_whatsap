@@ -62,7 +62,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Bebas+Neue&family=Cairo:wght@400;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Bebas+Neue&family=Cairo:wght@400;600;700&display=swap"></noscript>
-    @vite(['resources/css/app.css', 'resources/js/landing.js'])
+    @vite(['resources/css/landing.css', 'resources/js/landing.js'])
     <style>
         [x-cloak] { display: none !important; }
         body { font-family: 'Inter', sans-serif; background: #f5f5f0; }
@@ -224,7 +224,7 @@
                 <div class="flex gap-4 mb-4">
                     @if(!empty($images))
                     <div class="w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden border-2 border-gray-200">
-                        <img src="{{ $images[0] }}" alt="{{ $product->name }}" class="w-full h-full object-cover" fetchpriority="high" decoding="async" width="400" height="400">
+                        <img src="{{ optimized_image_url($images[0], 400) }}" srcset="{{ optimized_image_srcset($images[0], [200, 400, 640]) }}" sizes="(max-width: 640px) 50vw, 200px" alt="{{ $product->name }}" class="w-full h-full object-cover" fetchpriority="high" decoding="async" width="400" height="400">
                     </div>
                     @endif
                     <div class="flex-1">

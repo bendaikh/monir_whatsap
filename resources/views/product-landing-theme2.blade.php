@@ -66,12 +66,18 @@
             $googleFontParams[] = 'family=Cairo:wght@400;600;700';
         }
         $googleFontsUrl = 'https://fonts.googleapis.com/css2?' . implode('&', $googleFontParams) . '&display=swap';
+        $headImages = $product->all_images ?? [];
+        $headHeroOptimized = !empty($headImages) ? optimized_image_url($headImages[0], 640) : null;
+        $headHeroSrcset = !empty($headImages) ? optimized_image_srcset($headImages[0], [400, 640, 800]) : null;
     @endphp
+    @if($headHeroOptimized)
+    <link rel="preload" as="image" href="{{ $headHeroOptimized }}" imagesrcset="{{ $headHeroSrcset }}" imagesizes="(max-width: 640px) 100vw, 800px" fetchpriority="high">
+    @endif
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="style" href="{{ $googleFontsUrl }}" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="{{ $googleFontsUrl }}"></noscript>
-    @vite(['resources/css/app.css', 'resources/js/landing.js'])
+    @vite(['resources/css/landing.css', 'resources/js/landing.js'])
     <style>
         [x-cloak] { display: none !important; }
         body { font-family: 'Inter', sans-serif; background: #f5f5f0; }
@@ -461,8 +467,12 @@
                     </h1>
 
                     @if(!empty($images))
+                    @php
+                        $heroSrc = optimized_image_url($images[0], 800);
+                        $heroSrcset = optimized_image_srcset($images[0], [400, 640, 800, 1200]);
+                    @endphp
                     <div class="relative mx-auto lg:max-w-none">
-                        <img src="{{ $images[0] }}" alt="{{ $product->name }}" class="w-full h-auto object-contain rounded-xl shadow-lg" style="max-height: 550px;" width="800" height="800" fetchpriority="high" decoding="async">
+                        <img src="{{ $heroSrc }}" srcset="{{ $heroSrcset }}" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 800px" alt="{{ $product->name }}" class="w-full h-auto object-contain rounded-xl shadow-lg" style="max-height: 550px;" width="800" height="800" fetchpriority="high" decoding="async">
                     </div>
                     @endif
 
@@ -803,7 +813,7 @@
                 <div class="container mx-auto px-4 max-w-4xl space-y-5">
                     @if($sectionImg)
                     <div class="rounded-2xl overflow-hidden shadow-xl border-4 border-white ring-1 ring-gray-200">
-                        <img src="{{ $sectionImg }}" alt="{{ $fallbackTitle }}" class="w-full h-auto object-cover" loading="lazy" decoding="async" width="800" height="600">
+                        <img src="{{ optimized_image_url($sectionImg, 800) }}" srcset="{{ optimized_image_srcset($sectionImg, [400, 640, 800]) }}" sizes="(max-width: 640px) 100vw, 800px" alt="{{ $fallbackTitle }}" class="w-full h-auto object-cover" loading="lazy" decoding="async" width="800" height="600">
                     </div>
                     @endif
                     @if($fallbackDesc)

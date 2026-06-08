@@ -95,10 +95,16 @@ class ProductController extends Controller
             || $product->landing_page_ar;
         
         if ($hasLandingPageContent) {
-            return view('product-landing-theme2', compact('product', 'relatedProducts', 'store', 'whatsappProfile'));
+            return response()
+                ->view('product-landing-theme2', compact('product', 'relatedProducts', 'store', 'whatsappProfile'))
+                ->header('Cache-Control', 'public, max-age=300, s-maxage=600')
+                ->header('Vary', 'Accept-Encoding');
         }
 
-        return view('product-detail', compact('product', 'relatedProducts', 'store'));
+        return response()
+            ->view('product-detail', compact('product', 'relatedProducts', 'store'))
+            ->header('Cache-Control', 'public, max-age=300, s-maxage=600')
+            ->header('Vary', 'Accept-Encoding');
     }
 
     public function submitLead(Request $request, $subdomain, $slug)

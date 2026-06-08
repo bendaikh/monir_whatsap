@@ -1,5 +1,19 @@
 <?php
 
+if (!function_exists('optimized_image_url')) {
+    function optimized_image_url(?string $url, int $width = 800, string $format = 'webp'): ?string
+    {
+        return app(\App\Services\ImageOptimizationService::class)->url($url, $width, $format);
+    }
+}
+
+if (!function_exists('optimized_image_srcset')) {
+    function optimized_image_srcset(?string $url, array $widths = [400, 640, 800, 1200]): ?string
+    {
+        return app(\App\Services\ImageOptimizationService::class)->srcset($url, $widths);
+    }
+}
+
 if (!function_exists('store_url')) {
     /**
      * Generate a store URL that works with both subdomain and custom domain

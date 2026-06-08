@@ -7,6 +7,7 @@ use App\Models\WhatsappProfile;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Services\AiLandingPageService;
+use App\Services\ImageOptimizationService;
 use App\Jobs\GenerateProductLandingPageJob;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
@@ -22,6 +23,13 @@ class CustomerDashboardController extends Controller
     protected function getActiveStoreId()
     {
         return session('active_store_id');
+    }
+
+    protected function storeOptimizedImage($file, string $directory): string
+    {
+        $path = $file->store($directory, 'public');
+
+        return app(ImageOptimizationService::class)->optimizeUploadedFile($path);
     }
 
     protected function getGoogleSheetConnections()
@@ -499,7 +507,7 @@ class CustomerDashboardController extends Controller
         if ($request->hasFile('images')) {
             $imagePaths = [];
             foreach ($request->file('images') as $image) {
-                $imagePaths[] = $image->store('products', 'public');
+                $imagePaths[] = $this->storeOptimizedImage($image, 'products');
             }
             $validated['images'] = $imagePaths;
         }
@@ -525,7 +533,7 @@ class CustomerDashboardController extends Controller
                     ];
                     
                     if ($request->hasFile("landing_sections.{$index}.image")) {
-                        $sectionData['image'] = $request->file("landing_sections.{$index}.image")->store('products/landing-sections', 'public');
+                        $sectionData['image'] = $this->storeOptimizedImage($request->file("landing_sections.{$index}.image"), 'products/landing-sections');
                     }
                     
                     if (!empty($sectionData['title_fr']) || !empty($sectionData['description_fr'])) {
@@ -826,7 +834,7 @@ class CustomerDashboardController extends Controller
                 // Delete the old image
                 \Storage::disk('public')->delete($existingImage);
                 // Store the new image in its place
-                $imagePaths[$index] = $request->file("replace_image_{$index}")->store('products', 'public');
+                $imagePaths[$index] = $this->storeOptimizedImage($request->file("replace_image_{$index}"), 'products');
                 \Log::info("Replaced image at index {$index}: {$existingImage} -> {$imagePaths[$index]}");
             }
         }
@@ -834,7 +842,7 @@ class CustomerDashboardController extends Controller
         // Handle new images (append to existing)
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
-                $imagePaths[] = $image->store('products', 'public');
+                $imagePaths[] = $this->storeOptimizedImage($image, 'products');
             }
         }
         
@@ -853,7 +861,7 @@ class CustomerDashboardController extends Controller
                 ];
                 
                 if ($request->hasFile("landing_sections.{$index}.image")) {
-                    $sectionData['image'] = $request->file("landing_sections.{$index}.image")->store('products/landing-sections', 'public');
+                    $sectionData['image'] = $this->storeOptimizedImage($request->file("landing_sections.{$index}.image"), 'products/landing-sections');
                 } elseif (!empty($section['existing_image'])) {
                     $sectionData['image'] = $section['existing_image'];
                 }
@@ -1258,7 +1266,7 @@ class CustomerDashboardController extends Controller
             'image' => 'required|image|max:' . self::PRODUCT_IMAGE_MAX_KB
         ]);
         
-        $path = $request->file('image')->store('products/landing-sections', 'public');
+        $path = $this->storeOptimizedImage($request->file('image'), 'products/landing-sections');
         $url = \Storage::url($path);
         
         return response()->json([

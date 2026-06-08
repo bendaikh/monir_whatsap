@@ -4,10 +4,16 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CustomerDashboardController;
 use App\Http\Controllers\WhatsAppController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ImageController;
 use App\Http\Controllers\SocialMediaAdsController;
 use App\Http\Controllers\SuperAdminController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+
+Route::get('/img/{width}/{path}', [ImageController::class, 'show'])
+    ->where('width', '[0-9]+')
+    ->where('path', '.*')
+    ->name('image.optimized');
 
 // Fallback storage route for hosts without symlink support
 Route::get('/storage/{path}', function ($path) {

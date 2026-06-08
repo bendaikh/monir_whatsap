@@ -12,6 +12,15 @@
       "app.css"
     ]
   },
+  "resources/css/landing.css": {
+    "file": "assets/landing-DbGGsXAP.css",
+    "src": "resources/css/landing.css",
+    "isEntry": true,
+    "name": "landing",
+    "names": [
+      "landing.css"
+    ]
+  },
   "resources/js/app.js": {
     "file": "assets/app-Cbg4N9Lk.js",
     "name": "app",
