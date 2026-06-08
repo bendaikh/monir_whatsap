@@ -10,10 +10,7 @@ use App\Http\Controllers\SuperAdminController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
-Route::get('/img/{width}/{path}', [ImageController::class, 'show'])
-    ->where('width', '[0-9]+')
-    ->where('path', '.*')
-    ->name('image.optimized');
+Route::get('/img', [ImageController::class, 'show'])->name('image.optimized');
 
 // Fallback storage route for hosts without symlink support
 Route::get('/storage/{path}', function ($path) {
