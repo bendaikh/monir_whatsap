@@ -42,53 +42,65 @@ class DetectCustomDomain
             // Share the store with views
             view()->share('customDomainStore', $store);
             
-            // Use StartSession middleware to ensure session is available and cookies are handled
-            return app(StartSession::class)->handle($request, function($request) use ($store) {
-                $path = $request->path();
-                
-                // Root path - show store home
-                if ($path === '/' || $path === '') {
-                    $request->merge(['is_custom_domain' => true]);
-                    $content = app(ProductController::class)->index($store->subdomain, $request);
-                    return $content instanceof Response ? $content : response($content);
-                }
-                
-                // Product detail page: /product/{slug}
-                if (preg_match('#^product/([^/]+)$#', $path, $matches)) {
-                    $request->merge(['is_custom_domain' => true]);
-                    $content = app(ProductController::class)->show($store->subdomain, $matches[1], $request);
-                    return $content instanceof Response ? $content : response($content);
-                }
-                
-                // Product submission: /product/{slug}/submit-lead
-                if (preg_match('#^product/([^/]+)/submit-lead$#', $path, $matches)) {
-                    $request->merge(['is_custom_domain' => true]);
-                    return app(ProductController::class)->submitLead($request, $store->subdomain, $matches[1]);
-                }
-                
-                // Global thank you page: /thank-you
-                if ($path === 'thank-you') {
-                    $request->merge(['is_custom_domain' => true]);
-                    $content = app(ProductController::class)->thankYouPage($request);
-                    return $content instanceof Response ? $content : response($content);
-                }
+            $path = $request->path();
+            
+            // Only wrap in StartSession for paths we handle directly here
+            $isHandledPath = $path === '/' || $path === '' || 
+                             preg_match('#^product/([^/]+)$#', $path) ||
+                             preg_match('#^product/([^/]+)/submit-lead$#', $path) ||
+                             $path === 'thank-you' ||
+                             preg_match('#^product/([^/]+)/thank-you/([0-9]+)$#', $path) ||
+                             preg_match('#^product/([^/]+)/buy-upsell$#', $path);
 
-                // Legacy thank you URLs → redirect to /thank-you
-                if (preg_match('#^product/([^/]+)/thank-you/([0-9]+)$#', $path, $matches)) {
-                    $request->merge(['is_custom_domain' => true]);
-                    $request->session()->put('thank_you_lead_id', (int) $matches[2]);
-                    return redirect(thank_you_url());
-                }
-                
-                // Buy upsell: /product/{slug}/buy-upsell
-                if (preg_match('#^product/([^/]+)/buy-upsell$#', $path, $matches)) {
-                    $request->merge(['is_custom_domain' => true]);
-                    return app(ProductController::class)->buyUpsell($store->subdomain, $matches[1], $request);
-                }
+            if ($isHandledPath) {
+                // Use StartSession middleware to ensure session is available and cookies are handled
+                return app(StartSession::class)->handle($request, function($request) use ($store, $path) {
+                    // Root path - show store home
+                    if ($path === '/' || $path === '') {
+                        $request->merge(['is_custom_domain' => true]);
+                        $content = app(ProductController::class)->index($store->subdomain, $request);
+                        return $content instanceof Response ? $content : response($content);
+                    }
+                    
+                    // Product detail page: /product/{slug}
+                    if (preg_match('#^product/([^/]+)$#', $path, $matches)) {
+                        $request->merge(['is_custom_domain' => true]);
+                        $content = app(ProductController::class)->show($store->subdomain, $matches[1], $request);
+                        return $content instanceof Response ? $content : response($content);
+                    }
+                    
+                    // Product submission: /product/{slug}/submit-lead
+                    if (preg_match('#^product/([^/]+)/submit-lead$#', $path, $matches)) {
+                        $request->merge(['is_custom_domain' => true]);
+                        return app(ProductController::class)->submitLead($request, $store->subdomain, $matches[1]);
+                    }
+                    
+                    // Global thank you page: /thank-you
+                    if ($path === 'thank-you') {
+                        $request->merge(['is_custom_domain' => true]);
+                        $content = app(ProductController::class)->thankYouPage($request);
+                        return $content instanceof Response ? $content : response($content);
+                    }
 
-                return $next($request);
-            });
+                    // Legacy thank you URLs → redirect to /thank-you
+                    if (preg_match('#^product/([^/]+)/thank-you/([0-9]+)$#', $path, $matches)) {
+                        $request->merge(['is_custom_domain' => true]);
+                        $request->session()->put('thank_you_lead_id', (int) $matches[2]);
+                        return redirect(thank_you_url());
+                    }
+                    
+                    // Buy upsell: /product/{slug}/buy-upsell
+                    if (preg_match('#^product/([^/]+)/buy-upsell$#', $path, $matches)) {
+                        $request->merge(['is_custom_domain' => true]);
+                        return app(ProductController::class)->buyUpsell($store->subdomain, $matches[1], $request);
+                    }
+
+                    return $next($request);
+                });
+            }
         }
+        
+        return $next($request);
         
         return $next($request);
     }

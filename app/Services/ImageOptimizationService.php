@@ -132,6 +132,10 @@ class ImageOptimizationService
 
             return $this->fileResponse($sourcePath, $ext);
         } catch (\Throwable $e) {
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+                throw $e;
+            }
+
             Log::warning('Image optimization failed, serving original.', [
                 'path' => $path,
                 'width' => $width,
@@ -341,21 +345,34 @@ class ImageOptimizationService
         ]);
     }
 
-    private function fileResponse(string $path, string $format): BinaryFileResponse
+    private function fileResponse(string $path, string $format): Response
     {
+        if (! is_file($path) || ! is_readable($path)) {
+            Log::error('Image file not found or not readable for response.', ['path' => $path]);
+            abort(404);
+        }
+
         $mime = match ($format) {
             'png' => 'image/png',
             'gif' => 'image/gif',
             'svg' => 'image/svg+xml',
             'webp' => 'image/webp',
-            'jpeg' => 'image/jpeg',
+            'jpeg', 'jpg' => 'image/jpeg',
             default => 'image/jpeg',
         };
 
-        return response()->file($path, [
-            'Content-Type' => $mime,
-            'Cache-Control' => 'public, max-age=31536000, immutable',
-            'Vary' => 'Accept',
-        ]);
+        try {
+            return response()->file($path, [
+                'Content-Type' => $mime,
+                'Cache-Control' => 'public, max-age=31536000, immutable',
+                'Vary' => 'Accept',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to create file response.', [
+                'path' => $path,
+                'error' => $e->getMessage()
+            ]);
+            abort(500);
+        }
     }
 }
