@@ -51,6 +51,10 @@
         }
     }
     $mainImage = $product->first_image ?? ($product->all_images[0] ?? null);
+    $heroImagePath = $product->main_image ?? (($product->images ?? [])[0] ?? null);
+    if (!$heroImagePath && !empty($product->ai_generated_images)) {
+        $heroImagePath = $product->ai_generated_images[0];
+    }
     $previewUrl = $store ? ($store->domain ? 'https://' . $store->domain . '/product/' . $product->slug : route('store.product.show', [$store->subdomain, $product->slug])) : null;
     $sectionColors = ['bg-gray-900', 'bg-red-500', 'bg-amber-400', 'bg-emerald-600', 'bg-indigo-600'];
 @endphp
@@ -131,6 +135,15 @@
 
             <!-- Hero -->
             <div x-show="activeTab === 'hero'" class="space-y-3">
+                <div>
+                    <label class="text-gray-400 text-xs">Hero image</label>
+                    <label class="mt-1 block border border-dashed border-white/20 rounded p-3 text-center text-gray-500 text-xs cursor-pointer">
+                        <img x-show="heroImage" :src="imgUrl(heroImage)" class="max-h-32 mx-auto mb-2 rounded-lg object-cover">
+                        <span x-text="heroImage ? 'Change hero image' : 'Upload hero image'"></span>
+                        <input type="file" accept="image/*" class="hidden" @change="uploadHeroImage($event)">
+                    </label>
+                    <p class="text-gray-500 text-xs mt-1">This is the main product image shown at the top of the hero section.</p>
+                </div>
                 <div><label class="text-gray-400 text-xs">Hero title (<span x-text="currentLang"></span>)</label>
                     <input :value="getPageField('hero_title')" @input="setPageField('hero_title', $event.target.value)"
                            class="w-full mt-1 px-3 py-2 bg-[#0f1c2e] border border-white/10 rounded text-white font-bold"></div>
@@ -275,7 +288,7 @@
             <!-- Hero -->
             <div @click="activeTab = 'hero'" class="preview-block p-4 text-white stripe-bg" :class="[activeTab === 'hero' ? 'ring-active' : '']" :style="heroStyle()">
                 <div class="text-center mb-2"><span class="bg-yellow-300 text-gray-900 text-[10px] font-extrabold px-2 py-0.5 rounded-full" x-text="themeData.promo_badge"></span></div>
-                @if($mainImage)<img src="{{ $mainImage }}" class="w-full h-32 object-cover rounded-lg mb-2 shadow">@endif
+                <img x-show="heroImage" :src="imgUrl(heroImage)" class="w-full h-32 object-cover rounded-lg mb-2 shadow">
                 <h1 class="font-black uppercase text-center text-xl mb-1" :style="'color:'+themeData.title_color" x-text="getPageField('hero_title') || @js($product->name)"></h1>
                 <p class="text-center text-xs opacity-90 mb-2" x-text="getPageField('hero_description')"></p>
                 <div class="bg-white/95 rounded-xl p-3 text-center text-gray-800">
@@ -363,6 +376,7 @@ function landingBuilder() {
         selectedBlock: 0,
         saving: false,
         saved: false,
+        heroImage: @json($heroImagePath),
         showProductSections: @json(($translations[$product->getDefaultLanguageCode()] ?? [])['show_product_sections'] ?? true),
         sections: @json($sections),
         pageData: @json($translations),
@@ -432,7 +446,13 @@ function landingBuilder() {
         },
         ctaBtn() { const m={orange:'bg-orange-500',green:'bg-emerald-500',red:'bg-red-500',blue:'bg-blue-500'}; return m[this.themeData.cta_color]||m.orange; },
         bandColor(i) { return this.bandColors[i % this.bandColors.length] + ' text-white'; },
-        imgUrl(p) { return !p ? '' : (p.startsWith('http') ? p : '/storage/'+p); },
+        imgUrl(p) {
+            if (!p) return '';
+            if (p.startsWith('http')) return p;
+            if (p.startsWith('/storage/') || p.startsWith('/')) return p;
+            if (p.startsWith('storage/')) return '/' + p;
+            return '/storage/' + p;
+        },
         addSection() {
             this.sections.push({title_fr:'',description_fr:'',title_en:'',description_en:'',title_ar:'',description_ar:'',image:null,bg_color:'#ffffff',band_color:'#111827'});
         },
@@ -440,6 +460,22 @@ function landingBuilder() {
             const fd = new FormData(); fd.append('image', ev.target.files[0]);
             fetch(@json(route('app.products.upload-image', $product->id)), {method:'POST',headers:{'X-CSRF-TOKEN':@json(csrf_token())},body:fd})
                 .then(r=>r.json()).then(d=>{ if(d.success) this.sections[idx].image = d.path; });
+        },
+        uploadHeroImage(ev) {
+            const file = ev.target.files[0];
+            if (!file) return;
+            const fd = new FormData(); fd.append('image', file);
+            fetch(@json(route('app.products.upload-image', $product->id)), {method:'POST',headers:{'X-CSRF-TOKEN':@json(csrf_token())},body:fd})
+                .then(r=>r.json()).then(d=>{
+                    if (!d.success) return;
+                    fetch(@json(route('app.products.set-main-image', $product->id)), {
+                        method:'POST',
+                        headers:{'Content-Type':'application/json','X-CSRF-TOKEN':@json(csrf_token())},
+                        body: JSON.stringify({image_path: d.path})
+                    }).then(r=>r.json()).then(res=>{
+                        if (res.success) this.heroImage = d.path;
+                    });
+                });
         },
         save() {
             this.saving = true;

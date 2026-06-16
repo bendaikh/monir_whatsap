@@ -1167,14 +1167,17 @@ class CustomerDashboardController extends Controller
             'sections.*.title_ar' => 'nullable|string|max:255',
             'sections.*.description_ar' => 'nullable|string',
             'sections.*.image' => 'nullable|string',
+            'sections.*.band_color' => 'nullable|string|max:20',
+            'sections.*.bg_color' => 'nullable|string|max:20',
             'page_data' => 'nullable|array',
-            'page_data.fr' => 'nullable|array',
-            'page_data.en' => 'nullable|array',
-            'page_data.ar' => 'nullable|array',
+            'page_data.*' => 'nullable|array',
             'show_product_sections' => 'nullable|boolean',
             'theme_data' => 'nullable|array',
             'builder_sections' => 'nullable|array',
         ]);
+
+        // Keep full section payloads (dynamic language keys + colors) — validated() strips unlisted keys
+        $sections = $request->input('sections', []);
         
         // Add show_product_sections to each language's page data
         $pageDataFr = $validated['page_data']['fr'] ?? [];
@@ -1187,7 +1190,7 @@ class CustomerDashboardController extends Controller
         $pageDataAr['show_product_sections'] = $showSections;
         
         $updateData = [
-            'landing_page_sections' => $validated['sections'] ?? [],
+            'landing_page_sections' => $sections,
             'landing_page_fr' => $pageDataFr,
             'landing_page_en' => $pageDataEn,
             'landing_page_ar' => $pageDataAr,
@@ -1207,9 +1210,10 @@ class CustomerDashboardController extends Controller
 
         // Sync unified translations (source of truth for multilingual content)
         $translations = $product->landing_page_translations ?? [];
-        $sections = $validated['sections'] ?? [];
-        foreach (['fr', 'en', 'ar'] as $lang) {
-            $langData = $validated['page_data'][$lang] ?? [];
+        $pageDataByLang = $validated['page_data'] ?? [];
+        $enabledLangs = $product->landing_page_languages ?? array_keys($pageDataByLang) ?: ['fr', 'en', 'ar'];
+        foreach ($enabledLangs as $lang) {
+            $langData = $pageDataByLang[$lang] ?? [];
             if (!isset($translations[$lang])) {
                 $translations[$lang] = [];
             }
@@ -1297,7 +1301,7 @@ class CustomerDashboardController extends Controller
         $images = array_values(array_diff($images, [$imagePath]));
         array_unshift($images, $imagePath);
         
-        $product->update(['images' => $images]);
+        $product->update(['images' => $images, 'main_image' => $imagePath]);
         
         return response()->json([
             'success' => true,
