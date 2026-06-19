@@ -90,7 +90,8 @@
     $currencySymbol = match($product->landing_page_currency ?? 'MAD') {
         'USD' => '$', 'EUR' => '€', 'GBP' => '£', 'SAR' => 'ر.س', 'AED' => 'د.إ',
         'JPY' => '¥', 'CNY' => '¥', 'INR' => '₹', 'KRW' => '₩', 'RUB' => '₽',
-        'TRY' => '₺', 'TZS' => 'TSh', 'KES' => 'KSh', default => 'د.م.'
+        'TRY' => '₺', 'TZS' => 'TSh', 'KES' => 'KSh', 'UGX' => 'USh', 'XAF' => 'FCFA',
+        'XOF' => 'CFA', 'ZMW' => 'ZK', default => 'د.م.'
     };
     $currencyCode = $product->landing_page_currency ?? 'MAD';
     

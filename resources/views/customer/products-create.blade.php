@@ -174,7 +174,11 @@
                                 <option value="TND" data-symbol="د.ت">TND - Tunisian Dinar (د.ت)</option>
                                 <option value="TRY" data-symbol="₺">TRY - Turkish Lira (₺)</option>
                                 <option value="TZS" data-symbol="TSh">TZS - Tanzanian Shilling (TSh)</option>
+                                <option value="UGX" data-symbol="USh">UGX - Ugandan Shilling (USh)</option>
+                                <option value="XAF" data-symbol="FCFA">XAF - Central African CFA Franc (FCFA)</option>
+                                <option value="XOF" data-symbol="CFA">XOF - West African CFA Franc (CFA)</option>
                                 <option value="ZAR" data-symbol="R">ZAR - South African Rand (R)</option>
+                                <option value="ZMW" data-symbol="ZK">ZMW - Zambian Kwacha (ZK)</option>
                             </optgroup>
                             <optgroup label="🇪🇺 Europe">
                                 <option value="BGN" data-symbol="лв">BGN - Bulgarian Lev (лв)</option>

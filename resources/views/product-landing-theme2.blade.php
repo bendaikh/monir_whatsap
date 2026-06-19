@@ -400,6 +400,7 @@
             'JPY' => '¥', 'CNY' => '¥', 'INR' => '₹', 'KRW' => '₩', 'RUB' => '₽',
             'TRY' => '₺', 'CAD' => 'C$', 'AUD' => 'A$', 'CHF' => 'CHF', 'BRL' => 'R$',
             'TZS' => 'TSh', 'KES' => 'KSh', 'EGP' => 'E£', 'NGN' => '₦', 'ZAR' => 'R',
+            'UGX' => 'USh', 'XAF' => 'FCFA', 'XOF' => 'CFA', 'ZMW' => 'ZK',
             'THB' => '฿', 'IDR' => 'Rp', 'VND' => '₫', 'PHP' => '₱', 'MYR' => 'RM',
             'SGD' => 'S$', 'HKD' => 'HK$', 'TWD' => 'NT$', 'NZD' => 'NZ$',
             'DKK' => 'kr', 'NOK' => 'kr', 'SEK' => 'kr', 'PLN' => 'zł', 'CZK' => 'Kč',
