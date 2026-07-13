@@ -136,12 +136,10 @@ class ProductController extends Controller
             'selected_promotion_id' => 'nullable|exists:product_promotions,id',
         ]);
 
-        // Get selected promotion if any
-        $selectedPromotionId = $request->input('selected_promotion_id');
-        $selectedPromotion = null;
-        if ($selectedPromotionId) {
-            $selectedPromotion = \App\Models\ProductPromotion::find($selectedPromotionId);
-        }
+        // Empty string from the form must become null (MySQL rejects '' for integer columns)
+        $selectedPromotionId = $request->filled('selected_promotion_id')
+            ? (int) $request->input('selected_promotion_id')
+            : null;
 
         $lead = \App\Models\ProductLead::create([
             'product_id' => $product->id,
