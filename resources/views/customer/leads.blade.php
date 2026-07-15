@@ -1,10 +1,61 @@
 <x-customer-layout>
     <x-slot name="header">
         <div>
-            <h2 class="text-2xl font-bold text-white">Leads</h2>
-            <p class="text-sm text-gray-400 mt-1">Gérez les demandes de contact de vos produits</p>
+            <h2 class="text-2xl font-bold text-white">Orders</h2>
+            <p class="text-sm text-gray-400 mt-1">Gérez les commandes et demandes de contact de vos produits</p>
         </div>
     </x-slot>
+
+    @if(session('success'))
+        <div class="mb-4 px-4 py-3 bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 rounded-lg text-sm">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="mb-4 px-4 py-3 bg-red-500/20 border border-red-500/30 text-red-300 rounded-lg text-sm">
+            <ul class="list-disc list-inside">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    {{-- Filters --}}
+    <div class="bg-[#0f1c2e] border border-white/10 rounded-xl p-4 mb-4">
+        <form method="GET" action="{{ route('app.leads') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Produit</label>
+                <select name="product_id" class="w-full bg-[#0a1628] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">Tous les produits</option>
+                    @foreach($products as $product)
+                        <option value="{{ $product->id }}" {{ (string)($productId ?? '') === (string)$product->id ? 'selected' : '' }}>
+                            {{ $product->nickname ?: $product->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Date de début</label>
+                <input type="date" name="date_from" value="{{ $dateFrom ?? '' }}" class="w-full bg-[#0a1628] border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Date de fin</label>
+                <input type="date" name="date_to" value="{{ $dateTo ?? '' }}" class="w-full bg-[#0a1628] border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
+            </div>
+            <div class="flex items-end gap-2">
+                <button type="submit" class="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition">
+                    Filtrer
+                </button>
+                @if($productId || $dateFrom || $dateTo)
+                    <a href="{{ route('app.leads') }}" class="px-4 py-2 bg-white/10 hover:bg-white/15 text-gray-300 rounded-lg text-sm transition">
+                        Réinitialiser
+                    </a>
+                @endif
+            </div>
+        </form>
+    </div>
 
     <div class="bg-[#0f1c2e] border border-white/10 rounded-xl overflow-hidden">
         @if($leads->isEmpty())
@@ -12,12 +63,19 @@
                 <svg class="w-24 h-24 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
-                <h3 class="text-xl font-semibold text-gray-400 mb-2">Aucun lead pour le moment</h3>
-                <p class="text-gray-500">Les demandes de contact des visiteurs apparaîtront ici</p>
+                <h3 class="text-xl font-semibold text-gray-400 mb-2">Aucune commande</h3>
+                <p class="text-gray-500">
+                    @if($productId || $dateFrom || $dateTo)
+                        Aucun résultat pour ces filtres
+                    @else
+                        Les commandes et demandes de contact apparaîtront ici
+                    @endif
+                </p>
             </div>
         @else
-            <div class="flex justify-end px-6 py-3 border-b border-white/10">
-                <a href="{{ route('app.leads.export') }}"
+            <div class="flex justify-between items-center px-6 py-3 border-b border-white/10">
+                <p class="text-sm text-gray-400">{{ $leadsCount }} commande{{ $leadsCount > 1 ? 's' : '' }}</p>
+                <a href="{{ route('app.leads.export', request()->query()) }}"
                    class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg transition text-sm">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -112,19 +170,40 @@
                                         <span class="text-gray-500 italic">-</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-center">
-                                    <button 
-                                        type="button"
-                                        onclick="showLeadDetails({{ $lead->id }})"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 hover:text-cyan-300 rounded-lg transition text-sm font-medium"
-                                        title="Voir les détails de la commande"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                        </svg>
-                                        Détails
-                                    </button>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button
+                                            type="button"
+                                            onclick="showLeadDetails({{ $lead->id }})"
+                                            class="p-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 rounded-lg transition"
+                                            title="Voir les détails"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                            </svg>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onclick="openEditLead({{ $lead->id }})"
+                                            class="p-2 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 rounded-lg transition"
+                                            title="Modifier"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onclick="openDeleteLead({{ $lead->id }}, {{ json_encode($lead->name) }})"
+                                            class="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition"
+                                            title="Supprimer"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
@@ -171,9 +250,112 @@
         </div>
     </div>
 
+    <!-- Edit Lead Modal -->
+    <div id="editLeadModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/80" onclick="closeEditLead()"></div>
+        <div class="relative bg-[#0f1c2e] border border-white/10 rounded-xl w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
+            <div class="px-6 py-4 border-b border-white/10 flex justify-between items-center sticky top-0 bg-[#0f1c2e] z-10">
+                <h3 class="text-lg font-bold text-white">Modifier la commande</h3>
+                <button type="button" onclick="closeEditLead()" class="text-gray-400 hover:text-white transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <form id="editLeadForm" method="POST" class="px-6 py-4 space-y-4">
+                @csrf
+                @method('PUT')
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Produit</label>
+                    <select name="product_id" id="edit_product_id" required class="w-full bg-[#0a1628] border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
+                        @foreach($products as $product)
+                            <option value="{{ $product->id }}">{{ $product->nickname ?: $product->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Nom</label>
+                        <input type="text" name="name" id="edit_name" required class="w-full bg-[#0a1628] border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Téléphone</label>
+                        <input type="text" name="phone" id="edit_phone" required class="w-full bg-[#0a1628] border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Email</label>
+                        <input type="email" name="email" id="edit_email" class="w-full bg-[#0a1628] border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Ville</label>
+                        <input type="text" name="city" id="edit_city" class="w-full bg-[#0a1628] border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Adresse</label>
+                    <input type="text" name="address" id="edit_address" class="w-full bg-[#0a1628] border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Langue</label>
+                    <select name="language" id="edit_language" class="w-full bg-[#0a1628] border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
+                        <option value="fr">FR</option>
+                        <option value="en">EN</option>
+                        <option value="ar">AR</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Note</label>
+                    <textarea name="note" id="edit_note" rows="3" class="w-full bg-[#0a1628] border border-white/10 rounded-lg px-3 py-2 text-sm text-white resize-none"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeEditLead()" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition text-sm">
+                        Annuler
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition text-sm font-medium">
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteLeadModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80" onclick="closeDeleteLead()"></div>
+        <div class="relative bg-[#0f1c2e] border border-white/10 rounded-xl p-6 max-w-md w-full">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">Supprimer la commande</h3>
+                    <p class="text-sm text-gray-400">Cette action est irréversible</p>
+                </div>
+            </div>
+            <p class="text-gray-300 mb-6">Voulez-vous vraiment supprimer la commande de <span id="deleteLeadName" class="font-semibold text-white"></span> ?</p>
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeDeleteLead()" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition">
+                    Annuler
+                </button>
+                <form id="deleteLeadForm" method="POST">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition">
+                        Supprimer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         const leadsData = @json($leads->keyBy('id'));
-        
+        const leadUpdateUrlTemplate = @json(url('/app/leads'));
+
         function showLeadDetails(leadId) {
             const modal = document.getElementById('leadDetailsModal');
             const content = document.getElementById('leadDetailsContent');
@@ -433,9 +615,54 @@
         function closeLeadDetails() {
             document.getElementById('leadDetailsModal').classList.add('hidden');
         }
+
+        function openEditLead(leadId) {
+            const lead = leadsData[leadId];
+            if (!lead) return;
+
+            const form = document.getElementById('editLeadForm');
+            form.action = leadUpdateUrlTemplate + '/' + leadId;
+
+            document.getElementById('edit_product_id').value = lead.product_id || '';
+            document.getElementById('edit_name').value = lead.name || '';
+            document.getElementById('edit_phone').value = lead.phone || '';
+            document.getElementById('edit_email').value = lead.email || '';
+            document.getElementById('edit_city').value = lead.city || '';
+            document.getElementById('edit_address').value = lead.address || '';
+            document.getElementById('edit_language').value = lead.language || 'fr';
+            document.getElementById('edit_note').value = lead.note || '';
+
+            const modal = document.getElementById('editLeadModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeEditLead() {
+            const modal = document.getElementById('editLeadModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function openDeleteLead(leadId, leadName) {
+            document.getElementById('deleteLeadName').textContent = leadName;
+            document.getElementById('deleteLeadForm').action = leadUpdateUrlTemplate + '/' + leadId;
+            const modal = document.getElementById('deleteLeadModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeDeleteLead() {
+            const modal = document.getElementById('deleteLeadModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
         
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeLeadDetails();
+            if (e.key === 'Escape') {
+                closeLeadDetails();
+                closeEditLead();
+                closeDeleteLead();
+            }
         });
     </script>
 </x-customer-layout>

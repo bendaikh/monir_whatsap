@@ -113,6 +113,8 @@ Route::middleware(['auth', 'require.workspace', 'require.store'])->prefix('app')
     Route::get('/campaigns', [CustomerDashboardController::class, 'campaigns'])->name('campaigns');
     Route::get('/leads', [CustomerDashboardController::class, 'leads'])->name('leads');
     Route::get('/leads/export', [CustomerDashboardController::class, 'exportLeads'])->name('leads.export');
+    Route::put('/leads/{id}', [CustomerDashboardController::class, 'leadsUpdate'])->name('leads.update');
+    Route::delete('/leads/{id}', [CustomerDashboardController::class, 'leadsDestroy'])->name('leads.destroy');
     
     // Categories
     Route::get('/categories', [CustomerDashboardController::class, 'categories'])->name('categories');

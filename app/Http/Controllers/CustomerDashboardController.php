@@ -1346,41 +1346,118 @@ class CustomerDashboardController extends Controller
         return view('customer.campaigns');
     }
 
-    public function leads()
+    public function leads(Request $request)
     {
         $user = auth()->user();
         $storeId = $this->getActiveStoreId();
-        
-        $leads = \App\Models\ProductLead::with([
+        $productId = $request->get('product_id');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+
+        $leadsQuery = \App\Models\ProductLead::with([
                 'product.activeVariations',
                 'product.activePromotions',
                 'selectedPromotion',
                 'upsellOrders.upsellProduct'
             ])
             ->where('user_id', $user->id)
-            ->when($storeId, function($q) use ($storeId) {
-                $q->whereHas('product', function($q) use ($storeId) {
-                    $q->where('store_id', $storeId);
-                });
-            })
-            ->latest()
-            ->paginate(20);
-
-        $leadsCount = \App\Models\ProductLead::where('user_id', $user->id)
             ->when($storeId, function ($q) use ($storeId) {
                 $q->whereHas('product', function ($q) use ($storeId) {
                     $q->where('store_id', $storeId);
                 });
             })
-            ->count();
-        
-        return view('customer.leads', compact('leads', 'leadsCount'));
+            ->when($productId, function ($q) use ($productId) {
+                $q->where('product_id', $productId);
+            })
+            ->when($dateFrom, function ($q) use ($dateFrom) {
+                $q->whereDate('created_at', '>=', $dateFrom);
+            })
+            ->when($dateTo, function ($q) use ($dateTo) {
+                $q->whereDate('created_at', '<=', $dateTo);
+            });
+
+        $leads = (clone $leadsQuery)->latest()->paginate(20)->withQueryString();
+        $leadsCount = (clone $leadsQuery)->count();
+
+        $products = \App\Models\Product::where('user_id', $user->id)
+            ->when($storeId, function ($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'nickname']);
+
+        return view('customer.leads', compact('leads', 'leadsCount', 'products', 'productId', 'dateFrom', 'dateTo'));
     }
 
-    public function exportLeads()
+    public function leadsUpdate(Request $request, $id)
     {
         $user = auth()->user();
         $storeId = $this->getActiveStoreId();
+
+        $lead = \App\Models\ProductLead::where('user_id', $user->id)
+            ->when($storeId, function ($q) use ($storeId) {
+                $q->whereHas('product', function ($q) use ($storeId) {
+                    $q->where('store_id', $storeId);
+                });
+            })
+            ->findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:50',
+            'email' => 'nullable|email|max:255',
+            'city' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:1000',
+            'note' => 'nullable|string|max:2000',
+            'language' => 'nullable|string|max:10',
+            'product_id' => 'required|exists:products,id',
+        ]);
+
+        $product = \App\Models\Product::where('user_id', $user->id)
+            ->when($storeId, function ($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            })
+            ->findOrFail($validated['product_id']);
+
+        $lead->update([
+            'name' => $validated['name'],
+            'phone' => $validated['phone'],
+            'email' => $validated['email'] ?? null,
+            'city' => $validated['city'] ?? null,
+            'address' => $validated['address'] ?? null,
+            'note' => $validated['note'] ?? null,
+            'language' => $validated['language'] ?? $lead->language,
+            'product_id' => $product->id,
+        ]);
+
+        return redirect()->back()->with('success', 'Commande mise à jour avec succès.');
+    }
+
+    public function leadsDestroy(Request $request, $id)
+    {
+        $user = auth()->user();
+        $storeId = $this->getActiveStoreId();
+
+        $lead = \App\Models\ProductLead::where('user_id', $user->id)
+            ->when($storeId, function ($q) use ($storeId) {
+                $q->whereHas('product', function ($q) use ($storeId) {
+                    $q->where('store_id', $storeId);
+                });
+            })
+            ->findOrFail($id);
+
+        $lead->delete();
+
+        return redirect()->back()->with('success', 'Commande supprimée avec succès.');
+    }
+
+    public function exportLeads(Request $request)
+    {
+        $user = auth()->user();
+        $storeId = $this->getActiveStoreId();
+        $productId = $request->get('product_id');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
 
         $leads = \App\Models\ProductLead::with(['product', 'selectedPromotion'])
             ->where('user_id', $user->id)
@@ -1388,6 +1465,15 @@ class CustomerDashboardController extends Controller
                 $q->whereHas('product', function ($q) use ($storeId) {
                     $q->where('store_id', $storeId);
                 });
+            })
+            ->when($productId, function ($q) use ($productId) {
+                $q->where('product_id', $productId);
+            })
+            ->when($dateFrom, function ($q) use ($dateFrom) {
+                $q->whereDate('created_at', '>=', $dateFrom);
+            })
+            ->when($dateTo, function ($q) use ($dateTo) {
+                $q->whereDate('created_at', '<=', $dateTo);
             })
             ->latest()
             ->get();
